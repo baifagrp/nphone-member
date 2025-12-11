@@ -456,7 +456,66 @@ const BookingAPI = {
         paramCount: Object.keys(finalParams).length
       });
       
-      const { data, error } = await client.rpc('create_booking', finalParams);
+      // 確保沒有傳遞任何 "0" 值給 Supabase
+      // 最後檢查：序列化和反序列化以確保沒有任何隱藏的問題
+      const sanitizedParams = JSON.parse(JSON.stringify(finalParams));
+      
+      // 檢查每個參數
+      for (const [key, value] of Object.entries(sanitizedParams)) {
+        if (value === '0' || value === 0 || String(value).trim() === '0') {
+          CONFIG.error(`❌ 最終檢查：發現 "${key}" 的值是 "0"`, {
+            key,
+            value,
+            allParams: sanitizedParams
+          });
+          
+          // 如果是可選參數，刪除它
+          if (key === 'p_service_option_id' || key === 'p_notes') {
+            delete sanitizedParams[key];
+            CONFIG.log(`已從參數中移除 ${key}`);
+          } else {
+            throw new Error(`參數 ${key} 的值無效: ${value}`);
+          }
+        }
+      }
+      
+      CONFIG.log('🔍 最終發送的參數（已清理）', {
+        params: sanitizedParams,
+        keys: Object.keys(sanitizedParams),
+        count: Object.keys(sanitizedParams).length
+      });
+      
+      // 最後一次檢查：確保 sanitizedParams 中沒有任何問題
+      const finalCheckParams = {};
+      for (const [key, value] of Object.entries(sanitizedParams)) {
+        // 絕對不能傳遞 "0" 給任何參數
+        if (value === '0' || value === 0 || String(value).trim() === '0') {
+          CONFIG.error(`❌❌❌ 致命錯誤：sanitizedParams 中仍有 "0" 值在 "${key}"`, {
+            key,
+            value,
+            allSanitizedParams: JSON.stringify(sanitizedParams, null, 2)
+          });
+          
+          // 如果是可選參數，跳過它
+          if (key === 'p_service_option_id' || key === 'p_notes') {
+            CONFIG.log(`跳過參數 ${key}（值為 "0"）`);
+            continue;
+          } else {
+            throw new Error(`參數 ${key} 的值為 "0"，這是不允許的`);
+          }
+        }
+        finalCheckParams[key] = value;
+      }
+      
+      CONFIG.log('🚀 準備發送給 Supabase 的最終參數', {
+        params: JSON.stringify(finalCheckParams, null, 2),
+        keys: Object.keys(finalCheckParams),
+        count: Object.keys(finalCheckParams).length,
+        hasServiceOptionId: 'p_service_option_id' in finalCheckParams,
+        serviceOptionIdValue: finalCheckParams.p_service_option_id
+      });
+      
+      const { data, error } = await client.rpc('create_booking', finalCheckParams);
       
       if (error) {
         CONFIG.error('❌ RPC 錯誤詳情', {
@@ -465,10 +524,12 @@ const BookingAPI = {
           errorMessage: error.message,
           errorDetails: error.details,
           errorHint: error.hint,
-          paramsSent: JSON.stringify(finalParams, null, 2),
-          paramsKeys: Object.keys(finalParams),
-          hasServiceOptionId: 'p_service_option_id' in finalParams,
-          serviceOptionIdValue: finalParams.p_service_option_id
+          paramsSent: JSON.stringify(finalCheckParams, null, 2),
+          paramsKeys: Object.keys(finalCheckParams),
+          hasServiceOptionId: 'p_service_option_id' in finalCheckParams,
+          serviceOptionIdValue: finalCheckParams.p_service_option_id,
+          originalParams: JSON.stringify(params, null, 2),
+          sanitizedParams: JSON.stringify(sanitizedParams, null, 2)
         });
         
         // 如果是 UUID 類型錯誤，可能是函數定義問題

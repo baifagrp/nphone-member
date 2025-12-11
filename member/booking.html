@@ -545,51 +545,98 @@
                     bookingTime = bookingTime + ':00';
                 }
                 
+                // 最終驗證：確保 serviceId 不是 "0" 或無效值
+                if (!selectedService.id || selectedService.id === '0' || selectedService.id === 0 || String(selectedService.id).trim() === '0') {
+                    CONFIG.error('❌ 服務 ID 無效', {
+                        serviceId: selectedService.id,
+                        selectedService: selectedService
+                    });
+                    showMessage('服務項目資料錯誤，請重新選擇', 'error');
+                    return;
+                }
+                
+                // 驗證 serviceId 是有效的 UUID 格式
+                const serviceIdStr = String(selectedService.id).trim();
+                if (!uuidPattern.test(serviceIdStr)) {
+                    CONFIG.error('❌ 服務 ID 格式錯誤', {
+                        serviceId: selectedService.id,
+                        serviceIdStr: serviceIdStr
+                    });
+                    showMessage('服務項目資料錯誤，請重新選擇', 'error');
+                    return;
+                }
+                
                 // 確保 serviceOptionId 是有效的 UUID 或 null
                 let serviceOptionId = null;
-                if (selectedServiceOption) {
-                    const optionId = selectedServiceOption.id;
+                if (selectedServiceOption && selectedServiceOption.id) {
+                    const optionId = String(selectedServiceOption.id).trim();
                     
-                    // 如果有 id 且不是無效值
-                    if (optionId && optionId !== '0' && optionId !== '' && optionId !== 'null') {
+                    // 檢查是否為無效值
+                    if (optionId && 
+                        optionId !== '0' && 
+                        optionId !== '' && 
+                        optionId !== 'null' && 
+                        optionId !== 'undefined' &&
+                        optionId !== 'false') {
                         // 驗證 UUID 格式
-                        if (uuidPattern.test(String(optionId))) {
-                            serviceOptionId = String(optionId);
+                        if (uuidPattern.test(optionId)) {
+                            serviceOptionId = optionId;
+                            CONFIG.log('✅ 服務選項 ID 驗證通過', serviceOptionId);
                         } else {
-                            CONFIG.error('無效的服務選項 ID 格式', optionId);
+                            CONFIG.error('❌ 無效的服務選項 ID 格式', {
+                                original: selectedServiceOption.id,
+                                trimmed: optionId
+                            });
                             showMessage('服務選項資料錯誤，請重新選擇', 'error');
                             return;
                         }
-                    } else if (optionId === '0' || optionId === '') {
-                        // 如果選項 ID 是 "0" 或空字串，記錄但不傳遞
-                        CONFIG.log('服務選項 ID 為無效值，將不傳遞此參數', optionId);
+                    } else {
+                        // 如果選項 ID 是無效值，記錄但不傳遞
+                        CONFIG.log('⚠️ 服務選項 ID 為無效值，將不傳遞此參數', {
+                            original: selectedServiceOption.id,
+                            trimmed: optionId
+                        });
                         serviceOptionId = null;
                     }
                 }
                 
                 // 最終檢查：確保 serviceOptionId 不是 "0"
-                if (serviceOptionId === '0' || serviceOptionId === 0) {
-                    CONFIG.error('服務選項 ID 為 "0"，將其設為 null', serviceOptionId);
+                if (serviceOptionId === '0' || serviceOptionId === 0 || String(serviceOptionId).trim() === '0') {
+                    CONFIG.error('❌ 服務選項 ID 為 "0"，將其設為 null', serviceOptionId);
                     serviceOptionId = null;
                 }
                 
-                CONFIG.log('建立預約參數', {
+                // 最終驗證所有參數
+                CONFIG.log('📋 建立預約參數（最終檢查）', {
                     lineUserId: session.lineUserId,
-                    serviceId: selectedService.id,
-                    serviceIdType: typeof selectedService.id,
+                    serviceId: serviceIdStr,
+                    serviceIdType: typeof serviceIdStr,
+                    serviceIdIsValid: uuidPattern.test(serviceIdStr),
                     bookingDate: bookingDate,
                     bookingTime: bookingTime,
                     serviceOptionId: serviceOptionId,
                     serviceOptionIdType: typeof serviceOptionId,
+                    serviceOptionIdIsNull: serviceOptionId === null,
+                    serviceOptionIdIsValid: serviceOptionId ? uuidPattern.test(String(serviceOptionId)) : true,
                     notes: notes
                 });
                 
+                // 最後一次檢查：確保 serviceId 絕對不是 "0"
+                if (serviceIdStr === '0') {
+                    CONFIG.error('❌❌❌ 致命錯誤：serviceId 仍然是 "0"', {
+                        selectedService: selectedService,
+                        serviceIdStr: serviceIdStr
+                    });
+                    showMessage('服務項目資料錯誤，請重新選擇', 'error');
+                    return;
+                }
+                
                 const booking = await BookingAPI.createBooking(
                     session.lineUserId,
-                    selectedService.id,
+                    serviceIdStr,  // 使用已驗證的 serviceIdStr
                     bookingDate,
                     bookingTime,
-                    serviceOptionId,
+                    serviceOptionId,  // 這已經是 null 或有效的 UUID 字串
                     notes
                 );
                 
