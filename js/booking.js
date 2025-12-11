@@ -320,51 +320,87 @@ const BookingAPI = {
         params.p_notes = String(notes);
       }
       
-      // 記錄最終傳遞的參數（用於除錯）
-      CONFIG.log('調用 create_booking RPC', {
-        params: params,
-        paramKeys: Object.keys(params),
-        paramValues: Object.values(params).map(v => typeof v === 'string' ? v.substring(0, 50) : v)
-      });
-      
-      // 最後檢查：確保沒有任何參數是 "0" 或無效值
+      // 最後檢查：確保沒有任何參數是 "0" 或無效值（在傳遞前檢查）
       for (const [key, value] of Object.entries(params)) {
-        // 檢查無效值
-        if (value === '0' || value === 0 || value === 'null' || value === 'undefined' || value === '') {
-          CONFIG.error(`發現無效參數值 "${key}": ${value}`, {
+        // 檢查無效值（包括各種可能的 "0" 表示形式）
+        const valueStr = String(value).trim();
+        if (value === '0' || value === 0 || valueStr === '0' || 
+            value === 'null' || value === 'undefined' || value === '' || 
+            valueStr === 'null' || valueStr === 'undefined' || valueStr === '') {
+          CONFIG.error(`❌ 發現無效參數值 "${key}": ${value} (類型: ${typeof value})`, {
             key: key,
             value: value,
+            valueString: valueStr,
             type: typeof value,
-            allParams: params
+            allParams: JSON.stringify(params, null, 2)
           });
           throw new Error(`參數 ${key} 的值無效: ${value}`);
         }
         
         // 檢查 UUID 欄位（必須是有效的 UUID 格式）
         if (key === 'p_service_id' || key === 'p_service_option_id') {
-          if (!value) {
-            CONFIG.error(`UUID 參數為空 "${key}"`, params);
-            throw new Error(`參數 ${key} 不能為空`);
-          }
-          const valueStr = String(value).trim();
-          if (!uuidPattern.test(valueStr)) {
-            CONFIG.error(`UUID 參數格式錯誤 "${key}": ${value}`, {
+          if (!value || value === null || value === undefined) {
+            CONFIG.error(`❌ UUID 參數為空 "${key}"`, {
               key: key,
               value: value,
+              allParams: JSON.stringify(params, null, 2)
+            });
+            throw new Error(`參數 ${key} 不能為空`);
+          }
+          if (!uuidPattern.test(valueStr)) {
+            CONFIG.error(`❌ UUID 參數格式錯誤 "${key}": ${value}`, {
+              key: key,
+              value: value,
+              valueString: valueStr,
               type: typeof value,
-              allParams: params
+              isValid: uuidPattern.test(valueStr),
+              allParams: JSON.stringify(params, null, 2)
             });
             throw new Error(`參數 ${key} 的 UUID 格式錯誤: ${value}`);
           }
         }
       }
       
-      const { data, error } = await client.rpc('create_booking', params);
+      // 記錄最終傳遞的參數（用於除錯）- 在檢查通過後記錄
+      CONFIG.log('✅ 調用 create_booking RPC（所有參數檢查通過）', {
+        params: JSON.parse(JSON.stringify(params)), // 深拷貝，避免引用問題
+        paramKeys: Object.keys(params),
+        paramCount: Object.keys(params).length
+      });
+      
+      // 再次確保 params 中沒有任何 "0" 值（最後一道防線）
+      const finalParams = {};
+      for (const [key, value] of Object.entries(params)) {
+        const valueStr = String(value).trim();
+        if (value === '0' || value === 0 || valueStr === '0') {
+          CONFIG.error(`❌❌❌ 最後檢查發現 "0" 值在 "${key}": ${value}`, {
+            key: key,
+            value: value,
+            allParams: JSON.stringify(params, null, 2)
+          });
+          // 對於 service_option_id，如果是 "0" 則完全不傳遞
+          if (key === 'p_service_option_id') {
+            CONFIG.log('跳過 p_service_option_id（因為是 "0"）');
+            continue; // 跳過這個參數
+          } else {
+            throw new Error(`參數 ${key} 的值無效: ${value}`);
+          }
+        }
+        finalParams[key] = value;
+      }
+      
+      CONFIG.log('📤 最終傳遞給 RPC 的參數', JSON.stringify(finalParams, null, 2));
+      
+      const { data, error } = await client.rpc('create_booking', finalParams);
       
       if (error) {
-        CONFIG.error('RPC 錯誤詳情', {
+        CONFIG.error('❌ RPC 錯誤詳情', {
           error: error,
-          params: params
+          errorCode: error.code,
+          errorMessage: error.message,
+          errorDetails: error.details,
+          errorHint: error.hint,
+          paramsSent: JSON.stringify(finalParams, null, 2)
         });
         // 提供更友好的錯誤訊息
         const errorMessage = error.message || error.details || error.hint || '建立預約失敗';
