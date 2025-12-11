@@ -276,7 +276,35 @@ DECLARE
     v_booking public.bookings;
     v_service_option_id UUID;  -- 用於轉換 TEXT 到 UUID
     v_has_valid_option BOOLEAN := FALSE;  -- 判斷是否有有效的選項 ID
+    v_cleaned_option_id TEXT;  -- 用於清理選項 ID
 BEGIN
+    -- ============================================
+    -- 參數驗證和清理（防止無效值導致類型錯誤）
+    -- ============================================
+    
+    -- 驗證必要參數
+    IF p_service_id IS NULL THEN
+        RAISE EXCEPTION '服務 ID 不能為空';
+    END IF;
+    
+    -- 清理 p_service_option_id：將所有無效值轉為 NULL
+    -- 這可以防止 Supabase PostgREST 在參數驗證階段出錯
+    IF p_service_option_id IS NOT NULL THEN
+        v_cleaned_option_id := TRIM(p_service_option_id);
+        
+        -- 檢查是否為無效值
+        IF v_cleaned_option_id = '' 
+           OR v_cleaned_option_id = '0' 
+           OR v_cleaned_option_id = 'null'
+           OR v_cleaned_option_id = 'undefined'
+           OR v_cleaned_option_id = 'NULL'
+           OR v_cleaned_option_id = 'UNDEFINED' THEN
+            p_service_option_id := NULL;
+        ELSE
+            p_service_option_id := v_cleaned_option_id;
+        END IF;
+    END IF;
+    
     -- 查找會員
     SELECT id INTO v_member_id
     FROM public.members
@@ -381,12 +409,7 @@ BEGIN
         v_service.duration,
         v_final_price,
         CASE 
-            WHEN p_service_option_id IS NOT NULL 
-                 AND p_service_option_id != '0' 
-                 AND p_service_option_id != '' 
-                 AND p_service_option_id != 'null'
-                 AND p_service_option_id != 'undefined'
-            THEN p_service_option_id::UUID 
+            WHEN v_has_valid_option THEN v_service_option_id
             ELSE NULL 
         END,
         v_option_name,

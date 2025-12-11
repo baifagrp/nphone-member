@@ -387,6 +387,8 @@ const BookingAPI = {
       // 再次確保 params 中沒有任何 "0" 值（最後一道防線）
       // 同時確保 null/undefined 參數不被傳遞
       const finalParams = {};
+      
+      // 強制驗證所有參數
       for (const [key, value] of Object.entries(params)) {
         // 跳過 null 和 undefined（讓函數使用預設值）
         if (value === null || value === undefined) {
@@ -395,28 +397,54 @@ const BookingAPI = {
         }
         
         const valueStr = String(value).trim();
-        if (value === '0' || value === 0 || valueStr === '0') {
-          CONFIG.error(`❌❌❌ 最後檢查發現 "0" 值在 "${key}": ${value}`, {
-            key: key,
-            value: value,
-            allParams: JSON.stringify(params, null, 2)
-          });
-          // 對於 service_option_id，如果是 "0" 則完全不傳遞（使用預設值 NULL）
-          if (key === 'p_service_option_id') {
-            CONFIG.log('跳過 p_service_option_id（因為是 "0"，將使用函數預設值 NULL）');
-            continue; // 跳過這個參數
-          } else {
-            throw new Error(`參數 ${key} 的值無效: ${value}`);
+        
+        // 檢查所有 UUID 參數，確保不是 "0"
+        if (key === 'p_service_id' || key === 'p_service_option_id') {
+          if (value === '0' || value === 0 || valueStr === '0') {
+            CONFIG.error(`❌❌❌ 發現 UUID 參數 "${key}" 的值是 "0": ${value}`, {
+              key: key,
+              value: value,
+              valueType: typeof value,
+              allParams: JSON.stringify(params, null, 2)
+            });
+            
+            // 對於 service_option_id，如果是 "0" 則完全不傳遞
+            if (key === 'p_service_option_id') {
+              CONFIG.log('⚠️ 跳過 p_service_option_id（因為是 "0"，將使用函數預設值 NULL）');
+              continue;
+            } else {
+              // p_service_id 不能是 "0"
+              throw new Error(`服務 ID 參數無效: ${value}`);
+            }
           }
         }
         
         // 對於 p_service_option_id，如果是空字串也不傳遞
-        if (key === 'p_service_option_id' && (valueStr === '' || valueStr === 'null' || valueStr === 'undefined')) {
-          CONFIG.log(`跳過參數 ${key}（因為是空值: "${valueStr}"，將使用函數預設值 NULL）`);
-          continue;
+        if (key === 'p_service_option_id') {
+          if (valueStr === '' || valueStr === 'null' || valueStr === 'undefined') {
+            CONFIG.log(`跳過參數 ${key}（因為是空值: "${valueStr}"，將使用函數預設值 NULL）`);
+            continue;
+          }
         }
         
         finalParams[key] = value;
+      }
+      
+      // 最終驗證：確保沒有 "0" 值殘留
+      for (const [key, value] of Object.entries(finalParams)) {
+        if (value === '0' || value === 0 || String(value).trim() === '0') {
+          CONFIG.error(`❌❌❌ 最終驗證失敗：參數 "${key}" 仍然是 "0"`, {
+            key: key,
+            value: value,
+            finalParams: JSON.stringify(finalParams, null, 2)
+          });
+          if (key === 'p_service_option_id') {
+            delete finalParams[key];
+            CONFIG.log('已從 finalParams 中移除 p_service_option_id');
+          } else {
+            throw new Error(`參數 ${key} 的值無效: ${value}`);
+          }
+        }
       }
       
       CONFIG.log('📤 最終傳遞給 RPC 的參數', JSON.stringify(finalParams, null, 2));
