@@ -35,6 +35,7 @@ const CONFIG = {
   // =============================================
   // 部署 Edge Function 後，從 Supabase 取得此 URL
   LINE_CALLBACK_FUNCTION_URL: 'https://czjdqxfhuhtwzxhrczir.supabase.co/functions/v1/line-login-callback',
+  CREATE_BOOKING_FUNCTION_URL: 'https://czjdqxfhuhtwzxhrczir.supabase.co/functions/v1/create-booking',
   
   // =============================================
   // 應用程式 URL 設定

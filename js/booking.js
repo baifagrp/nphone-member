@@ -587,39 +587,41 @@ const BookingAPI = {
         serviceOptionIdValue: finalCheckParams.p_service_option_id
       });
       
-      // 根據是否有服務選項來決定調用哪個函數重載版本
-      // Supabase 會根據參數數量自動選擇正確的函數
-      const { data, error } = await client.rpc('create_booking', finalCheckParams);
+      // 使用 Edge Function 作為中間層，避免 PostgREST 參數驗證問題
+      const response = await fetch(CONFIG.CREATE_BOOKING_FUNCTION_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': CONFIG.SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${CONFIG.SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify(finalCheckParams),
+      });
       
-      if (error) {
-        CONFIG.error('❌ RPC 錯誤詳情', {
-          error: error,
-          errorCode: error.code,
-          errorMessage: error.message,
-          errorDetails: error.details,
-          errorHint: error.hint,
-          paramsSent: JSON.stringify(finalCheckParams, null, 2),
-          paramsKeys: Object.keys(finalCheckParams),
-          hasServiceOptionId: 'p_service_option_id' in finalCheckParams,
-          serviceOptionIdValue: finalCheckParams.p_service_option_id,
-          originalParams: JSON.stringify(params, null, 2),
-          sanitizedParams: JSON.stringify(sanitizedParams, null, 2)
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: `HTTP ${response.status}` }));
+        CONFIG.error('❌ Edge Function 錯誤詳情', {
+          status: response.status,
+          error: errorData,
+          paramsSent: JSON.stringify(finalCheckParams, null, 2)
         });
         
-        // 如果是 UUID 類型錯誤，可能是函數定義問題
-        if (error.code === '22P02' && error.message.includes('uuid')) {
-          CONFIG.error('⚠️ UUID 類型錯誤，可能是資料庫中的函數定義未更新', {
-            suggestion: '請確認已執行更新後的 booking-rls-policies.sql，並且函數簽名是 TEXT 類型'
-          });
-        }
-        
-        // 提供更友好的錯誤訊息
-        const errorMessage = error.message || error.details || error.hint || '建立預約失敗';
+        const errorMessage = errorData.error || `建立預約失敗 (${response.status})`;
         throw new Error(errorMessage);
       }
       
-      CONFIG.log('預約建立成功', data);
-      return data;
+      const result = await response.json();
+      
+      if (!result.success) {
+        CONFIG.error('❌ Edge Function 返回失敗', {
+          result: result,
+          paramsSent: JSON.stringify(finalCheckParams, null, 2)
+        });
+        throw new Error(result.error || '建立預約失敗');
+      }
+      
+      CONFIG.log('預約建立成功', result.data);
+      return result.data;
     } catch (error) {
       CONFIG.error('建立預約失敗', error);
       throw error;
