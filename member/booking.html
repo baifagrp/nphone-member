@@ -202,6 +202,23 @@
                     return;
                 }
                 
+                // 標準化服務資料（確保價格欄位存在）
+                availableServices = availableServices.map(service => {
+                    // 確保 base_price 存在（向後兼容）
+                    if (service.base_price === null || service.base_price === undefined) {
+                        service.base_price = service.price || 0;
+                    }
+                    // 為了向後兼容，也保留 price 欄位
+                    if (!service.price) {
+                        service.price = service.base_price || 0;
+                    }
+                    // 確保 service_options 是陣列
+                    if (!service.service_options) {
+                        service.service_options = [];
+                    }
+                    return service;
+                });
+                
                 // 顯示服務列表
                 document.getElementById('services-list').innerHTML = availableServices.map(service => `
                     <div class="service-card" data-service-id="${service.id}" onclick="selectService('${service.id}')">
@@ -210,7 +227,7 @@
                             ${service.description ? `<p style="color: #86868B; margin-top: 8px;">${service.description}</p>` : ''}
                             <div style="margin-top: 16px; display: flex; gap: 16px;">
                                 <span style="color: #007AFF;">⏱ ${service.duration} 分鐘</span>
-                                <span style="color: #34C759; font-weight: 600;">NT$ ${service.price.toLocaleString()}</span>
+                                <span style="color: #34C759; font-weight: 600;">NT$ ${(service.base_price || service.price || 0).toLocaleString()}</span>
                             </div>
                         </div>
                     </div>
