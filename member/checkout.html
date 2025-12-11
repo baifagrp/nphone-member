@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>結帳 - NPHONE</title>
+    <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+    <!-- 導航列 -->
+    <nav class="navbar">
+        <div class="container navbar-container">
+            <a href="../index.html" class="navbar-brand">NPHONE</a>
+            <div class="navbar-menu">
+                <a href="profile.html" class="navbar-link">個人資料</a>
+                <a href="booking.html" class="navbar-link">線上預約</a>
+                <a href="bookings.html" class="navbar-link">我的預約</a>
+                <button id="btn-logout" class="btn btn-sm btn-secondary">登出</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主要內容 -->
+    <div class="container-sm" style="margin-top: 40px;">
+        <h1 style="font-size: 32px; font-weight: 700; margin-bottom: 24px;">結帳</h1>
+        
+        <!-- 結帳表單 -->
+        <div id="checkout-form" class="card" style="display: none;">
+            <!-- 預約資訊 -->
+            <div id="booking-info" style="margin-bottom: 32px;">
+                <h2 style="font-size: 24px; margin-bottom: 16px;">預約資訊</h2>
+                <div id="booking-details" style="background: #F5F5F7; padding: 20px; border-radius: 12px;">
+                    <!-- 動態載入 -->
+                </div>
+            </div>
+            
+            <!-- 付款資訊 -->
+            <div id="payment-info">
+                <h2 style="font-size: 24px; margin-bottom: 16px;">付款資訊</h2>
+                
+                <!-- 金額 -->
+                <div style="background: #F5F5F7; padding: 20px; border-radius: 12px; margin-bottom: 24px;">
+                    <div class="flex-between" style="margin-bottom: 12px;">
+                        <span style="font-size: 18px; color: #1D1D1F;">總金額</span>
+                        <span id="total-amount" style="font-size: 24px; font-weight: 700; color: #1D1D1F;">NT$ 0</span>
+                    </div>
+                    <div id="discount-section" style="display: none; margin-top: 12px; padding-top: 12px; border-top: 1px solid #D2D2D7;">
+                        <div class="flex-between" style="margin-bottom: 8px;">
+                            <span style="color: #86868B;">折扣</span>
+                            <span id="discount-amount" style="color: #34C759;">-NT$ 0</span>
+                        </div>
+                        <div class="flex-between" style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #D2D2D7;">
+                            <span style="font-size: 18px; font-weight: 600;">實付金額</span>
+                            <span id="final-amount" style="font-size: 24px; font-weight: 700; color: #007AFF;">NT$ 0</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 付款方式 -->
+                <div class="form-group" style="margin-bottom: 24px;">
+                    <label class="form-label">付款方式 <span style="color: #FF3B30;">*</span></label>
+                    <div id="payment-methods-list" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px;">
+                        <!-- 動態載入 -->
+                    </div>
+                </div>
+                
+                <!-- 備註 -->
+                <div class="form-group" style="margin-bottom: 24px;">
+                    <label for="checkout-notes" class="form-label">備註（選填）</label>
+                    <textarea 
+                        id="checkout-notes" 
+                        class="form-input" 
+                        rows="3"
+                        placeholder="如有特殊需求或備註，請在此填寫"
+                    ></textarea>
+                </div>
+                
+                <!-- 按鈕 -->
+                <div style="display: flex; gap: 12px; margin-top: 32px;">
+                    <button id="btn-cancel" class="btn btn-secondary" style="flex: 1;">取消</button>
+                    <button id="btn-submit-checkout" class="btn btn-success" style="flex: 2;">確認結帳</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 載入中 -->
+        <div id="loading" class="card">
+            <div style="text-align: center; padding: 40px;">
+                <div class="loading-spinner"></div>
+                <p style="margin-top: 16px; color: #86868B;">載入中...</p>
+            </div>
+        </div>
+        
+        <!-- 錯誤訊息 -->
+        <div id="error-message" class="card" style="display: none;">
+            <div style="text-align: center; padding: 40px; color: #FF3B30;">
+                <p id="error-text">載入失敗</p>
+                <a href="bookings.html" class="btn btn-primary" style="margin-top: 16px;">返回預約列表</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../js/config.js"></script>
+    <script src="../js/supabase-client.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/member.js"></script>
+    <script src="../js/booking.js"></script>
+    <script src="../js/checkout.js"></script>
+    
+    <script>
+        let currentBooking = null;
+        let paymentMethods = [];
+        let selectedPaymentMethod = null;
+        
+        // 頁面載入時初始化
+        window.addEventListener('DOMContentLoaded', async () => {
+            try {
+                if (!Auth.requireMemberLogin()) {
+                    return;
+                }
+                
+                // 取得預約 ID
+                const urlParams = new URLSearchParams(window.location.search);
+                const bookingId = urlParams.get('booking_id');
+                
+                if (!bookingId) {
+                    showError('缺少預約資訊');
+                    return;
+                }
+                
+                await loadBooking(bookingId);
+                await loadPaymentMethods();
+                
+            } catch (error) {
+                CONFIG.error('初始化失敗', error);
+                showError('載入失敗，請重新整理');
+            }
+        });
+        
+        // 載入預約資訊
+        async function loadBooking(bookingId) {
+            try {
+                const session = Auth.getMemberSession();
+                if (!session) {
+                    showError('請先登入');
+                    return;
+                }
+                
+                const bookings = await BookingAPI.getMyBookings(session.lineUserId);
+                currentBooking = bookings.find(b => b.id === bookingId);
+                
+                if (!currentBooking) {
+                    showError('找不到預約記錄');
+                    return;
+                }
+                
+                // 檢查付款狀態
+                if (currentBooking.payment_status === 'paid') {
+                    showError('此預約已付款');
+                    return;
+                }
+                
+                if (currentBooking.payment_status === 'refunded') {
+                    showError('此預約已退款');
+                    return;
+                }
+                
+                // 顯示預約資訊
+                displayBookingInfo();
+                
+                // 顯示表單
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('checkout-form').style.display = 'block';
+                
+            } catch (error) {
+                CONFIG.error('載入預約失敗', error);
+                showError('載入預約失敗');
+            }
+        }
+        
+        // 顯示預約資訊
+        function displayBookingInfo() {
+            if (!currentBooking) return;
+            
+            const bookingDetails = document.getElementById('booking-details');
+            bookingDetails.innerHTML = `
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
+                    <div>
+                        <div style="color: #86868B; font-size: 14px; margin-bottom: 4px;">服務項目</div>
+                        <div style="font-size: 18px; font-weight: 600;">${currentBooking.service_name}</div>
+                    </div>
+                    <div>
+                        <div style="color: #86868B; font-size: 14px; margin-bottom: 4px;">預約日期</div>
+                        <div style="font-size: 18px; font-weight: 600;">${formatDateDisplay(currentBooking.booking_date)}</div>
+                    </div>
+                    <div>
+                        <div style="color: #86868B; font-size: 14px; margin-bottom: 4px;">預約時間</div>
+                        <div style="font-size: 18px; font-weight: 600;">${currentBooking.booking_time}</div>
+                    </div>
+                    ${currentBooking.service_option_name ? `
+                        <div>
+                            <div style="color: #86868B; font-size: 14px; margin-bottom: 4px;">型號</div>
+                            <div style="font-size: 18px; font-weight: 600;">${currentBooking.service_option_name}</div>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+            
+            // 更新金額
+            const totalAmount = currentBooking.service_price || 0;
+            const paidAmount = currentBooking.paid_amount || 0;
+            const remainingAmount = Math.max(0, totalAmount - paidAmount);
+            
+            document.getElementById('total-amount').textContent = `NT$ ${totalAmount.toLocaleString()}`;
+            document.getElementById('final-amount').textContent = `NT$ ${remainingAmount.toLocaleString()}`;
+            
+            if (paidAmount > 0) {
+                document.getElementById('discount-section').style.display = 'block';
+                // 這裡可以顯示已付金額
+            }
+        }
+        
+        // 載入付款方式
+        async function loadPaymentMethods() {
+            try {
+                paymentMethods = await CheckoutAPI.getActivePaymentMethods();
+                
+                const paymentMethodsList = document.getElementById('payment-methods-list');
+                paymentMethodsList.innerHTML = paymentMethods.map(method => `
+                    <label style="display: block; cursor: pointer;">
+                        <input 
+                            type="radio" 
+                            name="payment-method" 
+                            value="${method.code}" 
+                            style="display: none;"
+                            onchange="selectPaymentMethod('${method.code}')"
+                        >
+                        <div class="payment-method-card" data-code="${method.code}" style="
+                            padding: 16px;
+                            border: 2px solid #D2D2D7;
+                            border-radius: 12px;
+                            text-align: center;
+                            transition: all 0.2s;
+                            background: white;
+                        ">
+                            <div style="font-size: 16px; font-weight: 600;">${method.name}</div>
+                        </div>
+                    </label>
+                `).join('');
+                
+            } catch (error) {
+                CONFIG.error('載入付款方式失敗', error);
+                showMessage('載入付款方式失敗', 'error');
+            }
+        }
+        
+        // 選擇付款方式
+        function selectPaymentMethod(code) {
+            selectedPaymentMethod = code;
+            
+            // 更新 UI
+            document.querySelectorAll('.payment-method-card').forEach(card => {
+                if (card.dataset.code === code) {
+                    card.style.borderColor = '#007AFF';
+                    card.style.background = '#F0F7FF';
+                } else {
+                    card.style.borderColor = '#D2D2D7';
+                    card.style.background = 'white';
+                }
+            });
+        }
+        
+        // 格式化日期顯示
+        function formatDateDisplay(dateString) {
+            const date = new Date(dateString);
+            const weekdays = ['週日', '週一', '週二', '週三', '週四', '週五', '週六'];
+            const month = date.getMonth() + 1;
+            const day = date.getDate();
+            const weekday = weekdays[date.getDay()];
+            return `${date.getFullYear()}年${month}月${day}日 (${weekday})`;
+        }
+        
+        // 顯示錯誤
+        function showError(message) {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('checkout-form').style.display = 'none';
+            document.getElementById('error-message').style.display = 'block';
+            document.getElementById('error-text').textContent = message;
+        }
+        
+        // 顯示訊息
+        function showMessage(message, type = 'info') {
+            // 簡單的 alert，可以後續改為更美觀的提示
+            if (type === 'error') {
+                alert('❌ ' + message);
+            } else if (type === 'success') {
+                alert('✅ ' + message);
+            } else {
+                alert(message);
+            }
+        }
+        
+        // 顯示載入中
+        function showLoading(message = '處理中...') {
+            // 可以加入載入動畫
+        }
+        
+        // 隱藏載入中
+        function hideLoading() {
+            // 移除載入動畫
+        }
+        
+        // 取消按鈕
+        document.getElementById('btn-cancel').addEventListener('click', () => {
+            window.location.href = 'bookings.html';
+        });
+        
+        // 確認結帳按鈕（會員端暫時不允許，只顯示資訊，實際結帳由管理員操作）
+        document.getElementById('btn-submit-checkout').addEventListener('click', () => {
+            showMessage('結帳功能需由店員在後台操作，請至店面完成付款', 'info');
+        });
+    </script>
+</body>
+</html>
+

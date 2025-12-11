@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>結帳管理 - NPHONE</title>
+    <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+    <!-- 導航列 -->
+    <nav class="navbar">
+        <div class="container navbar-container">
+            <a href="dashboard.html" class="navbar-brand">NPHONE</a>
+            <div class="navbar-menu">
+                <a href="dashboard.html" class="navbar-link">首頁</a>
+                <a href="members.html" class="navbar-link">會員管理</a>
+                <a href="bookings.html" class="navbar-link">預約管理</a>
+                <a href="services.html" class="navbar-link">服務項目</a>
+                <a href="checkout.html" class="navbar-link active">結帳管理</a>
+                <button id="btn-admin-logout" class="btn btn-sm btn-secondary">登出</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主要內容 -->
+    <div class="container-sm" style="margin-top: 40px;">
+        <div class="flex-between" style="margin-bottom: 24px;">
+            <h1 style="font-size: 32px; font-weight: 700;">結帳管理</h1>
+            <button id="btn-new-transaction" class="btn btn-success">+ 新增交易</button>
+        </div>
+        
+        <!-- 結帳表單 -->
+        <div id="checkout-form" class="card" style="margin-bottom: 24px; display: none;">
+            <h2 style="font-size: 24px; margin-bottom: 24px;" id="form-title">新增交易</h2>
+            
+            <!-- 會員選擇 -->
+            <div class="form-group" style="margin-bottom: 24px;">
+                <label for="member-select" class="form-label">選擇會員 <span style="color: #FF3B30;">*</span></label>
+                <select id="member-select" class="form-input" required>
+                    <option value="">請選擇會員</option>
+                </select>
+            </div>
+            
+            <!-- 預約選擇（可選） -->
+            <div class="form-group" style="margin-bottom: 24px;">
+                <label for="booking-select" class="form-label">關聯預約（選填）</label>
+                <select id="booking-select" class="form-input">
+                    <option value="">不關聯預約</option>
+                </select>
+                <div id="booking-preview" style="margin-top: 12px; padding: 16px; background: #F5F5F7; border-radius: 8px; display: none;">
+                    <!-- 動態載入預約詳情 -->
+                </div>
+            </div>
+            
+            <!-- 交易類型 -->
+            <div class="form-group" style="margin-bottom: 24px;">
+                <label for="transaction-type" class="form-label">交易類型 <span style="color: #FF3B30;">*</span></label>
+                <select id="transaction-type" class="form-input" required>
+                    <option value="payment">付款</option>
+                    <option value="refund">退款</option>
+                </select>
+            </div>
+            
+            <!-- 金額 -->
+            <div class="form-group" style="margin-bottom: 24px;">
+                <label for="amount" class="form-label">金額 <span style="color: #FF3B30;">*</span></label>
+                <input 
+                    type="number" 
+                    id="amount" 
+                    class="form-input" 
+                    step="0.01"
+                    min="0.01"
+                    required
+                    placeholder="請輸入金額"
+                >
+            </div>
+            
+            <!-- 折扣金額（可選） -->
+            <div class="form-group" style="margin-bottom: 24px;">
+                <label for="discount-amount" class="form-label">折扣金額（選填）</label>
+                <input 
+                    type="number" 
+                    id="discount-amount" 
+                    class="form-input" 
+                    step="0.01"
+                    min="0"
+                    value="0"
+                    placeholder="0"
+                >
+            </div>
+            
+            <!-- 付款方式 -->
+            <div class="form-group" style="margin-bottom: 24px;">
+                <label for="payment-method" class="form-label">付款方式 <span style="color: #FF3B30;">*</span></label>
+                <select id="payment-method" class="form-input" required>
+                    <option value="">請選擇付款方式</option>
+                </select>
+            </div>
+            
+            <!-- 交易描述 -->
+            <div class="form-group" style="margin-bottom: 24px;">
+                <label for="description" class="form-label">交易描述（選填）</label>
+                <input 
+                    type="text" 
+                    id="description" 
+                    class="form-input" 
+                    placeholder="例如：服務費用、退款說明等"
+                >
+            </div>
+            
+            <!-- 收據編號（可選，系統會自動生成） -->
+            <div class="form-group" style="margin-bottom: 24px;">
+                <label for="receipt-number" class="form-label">收據編號（選填，留空將自動生成）</label>
+                <input 
+                    type="text" 
+                    id="receipt-number" 
+                    class="form-input" 
+                    placeholder="留空將自動生成"
+                >
+            </div>
+            
+            <!-- 參考編號（可選） -->
+            <div class="form-group" style="margin-bottom: 24px;">
+                <label for="reference-number" class="form-label">參考編號（選填）</label>
+                <input 
+                    type="text" 
+                    id="reference-number" 
+                    class="form-input" 
+                    placeholder="例如：信用卡授權碼、轉帳帳號等"
+                >
+            </div>
+            
+            <!-- 備註 -->
+            <div class="form-group" style="margin-bottom: 24px;">
+                <label for="notes" class="form-label">備註（選填）</label>
+                <textarea 
+                    id="notes" 
+                    class="form-input" 
+                    rows="3"
+                    placeholder="客戶可見的備註"
+                ></textarea>
+            </div>
+            
+            <!-- 管理員備註 -->
+            <div class="form-group" style="margin-bottom: 24px;">
+                <label for="admin-notes" class="form-label">管理員備註（選填）</label>
+                <textarea 
+                    id="admin-notes" 
+                    class="form-input" 
+                    rows="3"
+                    placeholder="僅管理員可見的備註"
+                ></textarea>
+            </div>
+            
+            <!-- 按鈕 -->
+            <div style="display: flex; gap: 12px; margin-top: 32px;">
+                <button id="btn-cancel-form" class="btn btn-secondary" style="flex: 1;">取消</button>
+                <button id="btn-submit-transaction" class="btn btn-success" style="flex: 2;">確認交易</button>
+            </div>
+        </div>
+        
+        <!-- 交易記錄列表 -->
+        <div id="transactions-list">
+            <!-- 動態載入 -->
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../js/config.js"></script>
+    <script src="../js/supabase-client.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/admin.js"></script>
+    <script src="../js/booking.js"></script>
+    <script src="../js/checkout.js"></script>
+    
+    <script>
+        let allMembers = [];
+        let memberBookings = [];
+        
+        // 頁面載入時初始化
+        window.addEventListener('DOMContentLoaded', async () => {
+            try {
+                if (!Auth.requireAdminLogin()) {
+                    return;
+                }
+                
+                await loadMembers();
+                await loadPaymentMethods();
+                await loadAllTransactions();
+                
+                // 綁定事件
+                setupEventListeners();
+                
+            } catch (error) {
+                CONFIG.error('初始化失敗', error);
+            }
+        });
+        
+        // 設定事件監聽器
+        function setupEventListeners() {
+            // 新增交易按鈕
+            document.getElementById('btn-new-transaction').addEventListener('click', () => {
+                showCheckoutForm();
+            });
+            
+            // 取消表單
+            document.getElementById('btn-cancel-form').addEventListener('click', () => {
+                hideCheckoutForm();
+                resetForm();
+            });
+            
+            // 會員選擇變更
+            document.getElementById('member-select').addEventListener('change', async (e) => {
+                const memberId = e.target.value;
+                if (memberId) {
+                    await loadMemberBookings(memberId);
+                } else {
+                    document.getElementById('booking-select').innerHTML = '<option value="">不關聯預約</option>';
+                }
+            });
+            
+            // 預約選擇變更
+            document.getElementById('booking-select').addEventListener('change', (e) => {
+                const bookingId = e.target.value;
+                if (bookingId) {
+                    displayBookingPreview(bookingId);
+                } else {
+                    document.getElementById('booking-preview').style.display = 'none';
+                }
+            });
+            
+            // 交易類型變更
+            document.getElementById('transaction-type').addEventListener('change', (e) => {
+                const type = e.target.value;
+                if (type === 'refund') {
+                    document.getElementById('form-title').textContent = '新增退款';
+                } else {
+                    document.getElementById('form-title').textContent = '新增交易';
+                }
+            });
+            
+            // 提交交易
+            document.getElementById('btn-submit-transaction').addEventListener('click', async () => {
+                await submitTransaction();
+            });
+            
+            // 管理員登出
+            document.getElementById('btn-admin-logout').addEventListener('click', () => {
+                Auth.adminLogout();
+            });
+        }
+        
+        // 載入會員列表
+        async function loadMembers() {
+            try {
+                allMembers = await AdminAPI.getAllMembers();
+                
+                const memberSelect = document.getElementById('member-select');
+                memberSelect.innerHTML = '<option value="">請選擇會員</option>' +
+                    allMembers.map(member => `
+                        <option value="${member.line_user_id}" data-member-id="${member.id}">${member.name} (${member.phone || '無電話'})</option>
+                    `).join('');
+                
+            } catch (error) {
+                CONFIG.error('載入會員列表失敗', error);
+                showMessage('載入會員列表失敗', 'error');
+            }
+        }
+        
+        // 載入付款方式
+        async function loadPaymentMethods() {
+            try {
+                const methods = await CheckoutAPI.getActivePaymentMethods();
+                
+                const paymentMethodSelect = document.getElementById('payment-method');
+                paymentMethodSelect.innerHTML = '<option value="">請選擇付款方式</option>' +
+                    methods.map(method => `
+                        <option value="${method.code}">${method.name}</option>
+                    `).join('');
+                
+            } catch (error) {
+                CONFIG.error('載入付款方式失敗', error);
+                showMessage('載入付款方式失敗', 'error');
+            }
+        }
+        
+        // 載入會員的預約
+        async function loadMemberBookings(memberId) {
+            try {
+                const member = allMembers.find(m => m.id === memberId || m.line_user_id === memberId);
+                if (!member) return;
+                
+                const bookings = await BookingAPI.getMyBookings(member.line_user_id, 100);
+                
+                // 只顯示未付款或部分付款的預約
+                memberBookings = bookings.filter(b => 
+                    b.status !== 'cancelled' && 
+                    (b.payment_status === 'unpaid' || b.payment_status === 'partial')
+                );
+                
+                const bookingSelect = document.getElementById('booking-select');
+                bookingSelect.innerHTML = '<option value="">不關聯預約</option>' +
+                    memberBookings.map(booking => `
+                        <option value="${booking.id}">${booking.service_name} - ${booking.booking_date} ${booking.booking_time} (NT$ ${booking.service_price.toLocaleString()})</option>
+                    `).join('');
+                
+            } catch (error) {
+                CONFIG.error('載入預約失敗', error);
+                showMessage('載入預約失敗', 'error');
+            }
+        }
+        
+        // 顯示預約預覽
+        function displayBookingPreview(bookingId) {
+            const booking = memberBookings.find(b => b.id === bookingId);
+            if (!booking) return;
+            
+            const preview = document.getElementById('booking-preview');
+            preview.style.display = 'block';
+            preview.innerHTML = `
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px;">
+                    <div>
+                        <div style="color: #86868B; font-size: 12px;">服務</div>
+                        <div style="font-weight: 600;">${booking.service_name}</div>
+                    </div>
+                    <div>
+                        <div style="color: #86868B; font-size: 12px;">日期時間</div>
+                        <div style="font-weight: 600;">${booking.booking_date} ${booking.booking_time}</div>
+                    </div>
+                    <div>
+                        <div style="color: #86868B; font-size: 12px;">金額</div>
+                        <div style="font-weight: 600;">NT$ ${booking.service_price.toLocaleString()}</div>
+                    </div>
+                    <div>
+                        <div style="color: #86868B; font-size: 12px;">付款狀態</div>
+                        <div style="font-weight: 600;">${booking.payment_status === 'unpaid' ? '未付款' : '部分付款'}</div>
+                    </div>
+                </div>
+                ${booking.paid_amount > 0 ? `
+                    <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #D2D2D7;">
+                        <div style="color: #86868B; font-size: 12px;">已付金額</div>
+                        <div style="font-weight: 600; color: #34C759;">NT$ ${booking.paid_amount.toLocaleString()}</div>
+                    </div>
+                ` : ''}
+            `;
+            
+            // 自動填入金額（如果沒有填寫）
+            if (!document.getElementById('amount').value) {
+                const remaining = booking.service_price - (booking.paid_amount || 0);
+                document.getElementById('amount').value = remaining.toFixed(2);
+            }
+        }
+        
+        // 載入所有交易記錄
+        async function loadAllTransactions() {
+            try {
+                const client = getSupabase();
+                
+                const { data, error } = await client
+                    .from('transactions')
+                    .select('*, members(line_user_id, name, phone)')
+                    .order('created_at', { ascending: false })
+                    .limit(50);
+                
+                if (error) throw error;
+                
+                displayTransactions(data || []);
+                
+            } catch (error) {
+                CONFIG.error('載入交易記錄失敗', error);
+                showMessage('載入交易記錄失敗', 'error');
+            }
+        }
+        
+        // 顯示交易記錄
+        function displayTransactions(transactions) {
+            const transactionsList = document.getElementById('transactions-list');
+            
+            if (transactions.length === 0) {
+                transactionsList.innerHTML = `
+                    <div class="card">
+                        <div style="text-align: center; padding: 40px; color: #999;">
+                            <p>尚無交易記錄</p>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+            
+            transactionsList.innerHTML = transactions.map(transaction => {
+                const typeMap = {
+                    'payment': { text: '付款', class: 'status-success' },
+                    'refund': { text: '退款', class: 'status-error' },
+                    'deposit': { text: '儲值', class: 'status-info' },
+                    'withdrawal': { text: '提領', class: 'status-warning' },
+                };
+                const statusMap = {
+                    'pending': { text: '待處理', class: 'status-warning' },
+                    'completed': { text: '已完成', class: 'status-success' },
+                    'failed': { text: '失敗', class: 'status-error' },
+                    'cancelled': { text: '已取消', class: 'status-gray' },
+                    'refunded': { text: '已退款', class: 'status-gray' },
+                };
+                
+                const type = typeMap[transaction.transaction_type] || { text: transaction.transaction_type, class: 'status-gray' };
+                const status = statusMap[transaction.status] || { text: transaction.status, class: 'status-gray' };
+                const member = transaction.members || {};
+                const amountColor = transaction.amount >= 0 ? '#1D1D1F' : '#FF3B30';
+                
+                return `
+                    <div class="card" style="margin-bottom: 16px;">
+                        <div class="flex-between">
+                            <div style="flex: 1;">
+                                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+                                    <span class="status-badge ${type.class}">${type.text}</span>
+                                    <span class="status-badge ${status.class}">${status.text}</span>
+                                    ${transaction.receipt_number ? `<span style="color: #86868B; font-size: 14px;">收據：${transaction.receipt_number}</span>` : ''}
+                                </div>
+                                <div style="color: #86868B; font-size: 14px;">
+                                    <div>會員：${member.name || '未知'} (${member.phone || '無電話'})</div>
+                                    <div>金額：<span style="color: ${amountColor}; font-weight: 600; font-size: 18px;">NT$ ${Math.abs(transaction.amount).toLocaleString()}</span></div>
+                                    <div>付款方式：${transaction.payment_method_name || '未知'}</div>
+                                    ${transaction.description ? `<div>說明：${transaction.description}</div>` : ''}
+                                    ${transaction.created_at ? `<div>時間：${formatDateTime(transaction.created_at)}</div>` : ''}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        // 顯示結帳表單
+        function showCheckoutForm() {
+            document.getElementById('checkout-form').style.display = 'block';
+            document.getElementById('checkout-form').scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        // 隱藏結帳表單
+        function hideCheckoutForm() {
+            document.getElementById('checkout-form').style.display = 'none';
+        }
+        
+        // 重置表單
+        function resetForm() {
+            document.getElementById('checkout-form').reset();
+            document.getElementById('booking-preview').style.display = 'none';
+            document.getElementById('booking-select').innerHTML = '<option value="">不關聯預約</option>';
+            document.getElementById('discount-amount').value = '0';
+        }
+        
+        // 提交交易
+        async function submitTransaction() {
+            try {
+                const memberSelect = document.getElementById('member-select');
+                const bookingSelect = document.getElementById('booking-select');
+                const transactionType = document.getElementById('transaction-type').value;
+                const amount = parseFloat(document.getElementById('amount').value);
+                const discountAmount = parseFloat(document.getElementById('discount-amount').value) || 0;
+                const paymentMethod = document.getElementById('payment-method').value;
+                const description = document.getElementById('description').value.trim();
+                const receiptNumber = document.getElementById('receipt-number').value.trim();
+                const referenceNumber = document.getElementById('reference-number').value.trim();
+                const notes = document.getElementById('notes').value.trim();
+                const adminNotes = document.getElementById('admin-notes').value.trim();
+                
+                // 驗證
+                if (!memberSelect.value) {
+                    showMessage('請選擇會員', 'error');
+                    return;
+                }
+                
+                if (!amount || amount <= 0) {
+                    showMessage('請輸入有效的金額', 'error');
+                    return;
+                }
+                
+                if (!paymentMethod) {
+                    showMessage('請選擇付款方式', 'error');
+                    return;
+                }
+                
+                // 計算總金額
+                const totalAmount = amount + discountAmount;
+                
+                showMessage('建立交易中...', 'info');
+                
+                const transaction = await CheckoutAPI.createTransaction({
+                    lineUserId: memberSelect.value,
+                    bookingId: bookingSelect.value || null,
+                    transactionType: transactionType,
+                    amount: amount,
+                    totalAmount: totalAmount,
+                    discountAmount: discountAmount,
+                    paymentMethodCode: paymentMethod,
+                    description: description || null,
+                    receiptNumber: receiptNumber || null,
+                    referenceNumber: referenceNumber || null,
+                    notes: notes || null,
+                    adminNotes: adminNotes || null,
+                });
+                
+                showMessage('交易建立成功！', 'success');
+                
+                // 重置表單並重新載入交易列表
+                resetForm();
+                hideCheckoutForm();
+                await loadAllTransactions();
+                
+            } catch (error) {
+                CONFIG.error('建立交易失敗', error);
+                showMessage(error.message || '建立交易失敗', 'error');
+            }
+        }
+        
+        // 格式化日期時間
+        function formatDateTime(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleString('zh-TW', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+            });
+        }
+        
+        // 顯示訊息
+        function showMessage(message, type = 'info') {
+            if (type === 'error') {
+                alert('❌ ' + message);
+            } else if (type === 'success') {
+                alert('✅ ' + message);
+            } else {
+                alert(message);
+            }
+        }
+    </script>
+</body>
+</html>
+

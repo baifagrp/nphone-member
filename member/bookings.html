@@ -10,7 +10,7 @@
     <!-- 導航列 -->
     <nav class="navbar">
         <div class="container navbar-container">
-            <a href="../index.html" class="navbar-brand">會員系統</a>
+            <a href="../index.html" class="navbar-brand">NPHONE</a>
             <div class="navbar-menu">
                 <a href="profile.html" class="navbar-link">個人資料</a>
                 <a href="booking.html" class="navbar-link">線上預約</a>
@@ -44,6 +44,7 @@
     <script src="../js/auth.js"></script>
     <script src="../js/member.js"></script>
     <script src="../js/booking.js"></script>
+    <script src="../js/checkout.js"></script>
     
     <script>
         // 頁面載入時初始化
@@ -96,10 +97,20 @@
                     const bookingDateTime = new Date(`${booking.booking_date}T${booking.booking_time}`);
                     const isPast = bookingDateTime < new Date();
                     
+                    // 付款狀態
+                    const paymentStatusMap = {
+                        'unpaid': { text: '未付款', class: 'status-warning' },
+                        'paid': { text: '已付款', class: 'status-success' },
+                        'partial': { text: '部分付款', class: 'status-info' },
+                        'refunded': { text: '已退款', class: 'status-gray' },
+                    };
+                    const paymentStatus = paymentStatusMap[booking.payment_status || 'unpaid'] || { text: booking.payment_status || '未付款', class: 'status-warning' };
+                    const canCheckout = (booking.status === 'confirmed' || booking.status === 'completed') && booking.payment_status !== 'paid' && booking.payment_status !== 'refunded';
+                    
                     return `
                         <div class="card" style="margin-bottom: 16px;">
                             <div class="flex-between">
-                                <div>
+                                <div style="flex: 1;">
                                     <h3 style="margin-bottom: 8px;">${booking.service_name}</h3>
                                     <div style="color: #86868B; font-size: 14px;">
                                         <div>📅 ${formatDateDisplay(booking.booking_date)}</div>
@@ -107,11 +118,21 @@
                                         <div>⏱ ${booking.service_duration} 分鐘</div>
                                         ${booking.service_option_name ? `<div>📱 型號：${booking.service_option_name}</div>` : ''}
                                         <div>💰 NT$ ${booking.service_price.toLocaleString()}</div>
+                                        <div style="margin-top: 8px;">
+                                            <span class="status-badge ${paymentStatus.class}" style="font-size: 12px;">${paymentStatus.text}</span>
+                                            ${booking.paid_amount > 0 ? `<span style="margin-left: 8px; color: #34C759;">已付：NT$ ${booking.paid_amount.toLocaleString()}</span>` : ''}
+                                        </div>
                                     </div>
                                     ${booking.notes ? `<div style="margin-top: 12px; padding: 12px; background: #F5F5F7; border-radius: 8px; color: #666;">📝 ${booking.notes}</div>` : ''}
                                 </div>
-                                <div style="text-align: right;">
+                                <div style="text-align: right; margin-left: 16px;">
                                     <div class="status-badge ${status.class}" style="margin-bottom: 12px;">${status.text}</div>
+                                    ${canCheckout ? `
+                                        <a href="checkout.html?booking_id=${booking.id}" class="btn btn-sm btn-success" style="margin-bottom: 8px; display: inline-block;">
+                                            前往結帳
+                                        </a>
+                                        <br>
+                                    ` : ''}
                                     ${canCancel && !isPast ? `
                                         <button class="btn btn-sm btn-danger" onclick="cancelBooking('${booking.id}', '${booking.service_name}')">
                                             取消預約

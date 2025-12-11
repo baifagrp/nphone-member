@@ -150,7 +150,7 @@ CONFIG.getLineLoginUrl = function() {
 // =============================================
 CONFIG.log = function(message, data = null) {
   if (this.FEATURES.debug) {
-    console.log(`[會員系統] ${message}`, data || '');
+    console.log(`[NPHONE] ${message}`, data || '');
   }
 };
 
@@ -158,7 +158,7 @@ CONFIG.log = function(message, data = null) {
 // 輔助函數：錯誤日誌
 // =============================================
 CONFIG.error = function(message, error = null) {
-  console.error(`[會員系統錯誤] ${message}`, error || '');
+  console.error(`[NPHONE錯誤] ${message}`, error || '');
 };
 
 // =============================================

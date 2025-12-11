@@ -5,6 +5,7 @@
 
 -- 刪除舊的政策
 DROP POLICY IF EXISTS "Members can view own bookings" ON public.bookings;
+DROP POLICY IF EXISTS "Members can view own bookings by member_id" ON public.bookings;
 
 -- 創建新的政策：允許會員查看自己的預約記錄
 -- 注意：這個政策需要會員先通過 members 表查詢到 member_id
@@ -20,6 +21,9 @@ CREATE POLICY "Members can view own bookings by member_id"
 
 -- 更好的方案是創建一個 RPC 函數來查詢預約記錄
 -- 這樣可以更安全地控制訪問
+
+-- 如果函數已存在，先刪除（使用完整的函數簽名）
+DROP FUNCTION IF EXISTS public.get_member_bookings(TEXT, INTEGER);
 
 -- 創建查詢會員預約記錄的 RPC 函數
 CREATE OR REPLACE FUNCTION public.get_member_bookings(
@@ -52,39 +56,40 @@ AS $$
 DECLARE
     v_member_id UUID;
 BEGIN
-    -- 查找會員 ID
-    SELECT id INTO v_member_id
+    -- 查找會員 ID（明確指定欄位名稱避免歧義）
+    SELECT members.id INTO v_member_id
     FROM public.members
-    WHERE line_user_id = p_line_user_id;
+    WHERE members.line_user_id = p_line_user_id;
     
     IF v_member_id IS NULL THEN
         RAISE EXCEPTION '找不到對應的會員資料';
     END IF;
     
     -- 返回該會員的預約記錄
+    -- 使用完整的表格名稱前綴來避免欄位名稱衝突
     RETURN QUERY
     SELECT 
-        b.id,
-        b.member_id,
-        b.service_id,
-        b.booking_date,
-        b.booking_time,
-        b.status,
-        b.service_name,
-        b.service_duration,
-        b.service_price,
-        b.service_option_id,
-        b.service_option_name,
-        b.notes,
-        b.admin_notes,
-        b.created_at,
-        b.updated_at,
-        b.confirmed_at,
-        b.cancelled_at,
-        b.completed_at
-    FROM public.bookings b
-    WHERE b.member_id = v_member_id
-    ORDER BY b.booking_date DESC, b.booking_time DESC
+        public.bookings.id,
+        public.bookings.member_id,
+        public.bookings.service_id,
+        public.bookings.booking_date,
+        public.bookings.booking_time,
+        public.bookings.status,
+        public.bookings.service_name,
+        public.bookings.service_duration,
+        public.bookings.service_price,
+        public.bookings.service_option_id,
+        public.bookings.service_option_name,
+        public.bookings.notes,
+        public.bookings.admin_notes,
+        public.bookings.created_at,
+        public.bookings.updated_at,
+        public.bookings.confirmed_at,
+        public.bookings.cancelled_at,
+        public.bookings.completed_at
+    FROM public.bookings
+    WHERE public.bookings.member_id = v_member_id
+    ORDER BY public.bookings.booking_date DESC, public.bookings.booking_time DESC
     LIMIT p_limit;
 END;
 $$;
