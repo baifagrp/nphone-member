@@ -503,6 +503,14 @@
                     return;
                 }
                 
+                // 驗證服務 ID 格式
+                const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+                if (!uuidPattern.test(selectedService.id)) {
+                    CONFIG.error('無效的服務 ID', selectedService.id);
+                    showMessage('服務項目資料錯誤，請重新選擇', 'error');
+                    return;
+                }
+                
                 if (!selectedDate) {
                     showMessage('請選擇預約日期', 'error');
                     return;
@@ -539,15 +547,23 @@
                 
                 // 確保 serviceOptionId 是有效的 UUID 或 null
                 let serviceOptionId = null;
-                if (selectedServiceOption && selectedServiceOption.id) {
-                    // 驗證 UUID 格式
-                    const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-                    if (uuidPattern.test(selectedServiceOption.id)) {
-                        serviceOptionId = selectedServiceOption.id;
-                    } else {
-                        CONFIG.error('無效的服務選項 ID', selectedServiceOption.id);
-                        showMessage('服務選項資料錯誤，請重新選擇', 'error');
-                        return;
+                if (selectedServiceOption) {
+                    const optionId = selectedServiceOption.id;
+                    
+                    // 如果有 id 且不是無效值
+                    if (optionId && optionId !== '0' && optionId !== '' && optionId !== 'null') {
+                        // 驗證 UUID 格式
+                        if (uuidPattern.test(String(optionId))) {
+                            serviceOptionId = String(optionId);
+                        } else {
+                            CONFIG.error('無效的服務選項 ID 格式', optionId);
+                            showMessage('服務選項資料錯誤，請重新選擇', 'error');
+                            return;
+                        }
+                    } else if (optionId === '0' || optionId === '') {
+                        // 如果選項 ID 是 "0" 或空字串，記錄但不傳遞
+                        CONFIG.log('服務選項 ID 為無效值，將不傳遞此參數', optionId);
+                        serviceOptionId = null;
                     }
                 }
                 

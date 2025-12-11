@@ -230,29 +230,45 @@ const BookingAPI = {
         throw new Error('請選擇預約時間');
       }
       
+      // UUID 格式驗證函數
+      const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      
+      // 驗證 serviceId 是有效的 UUID
+      const serviceIdStr = String(serviceId).trim();
+      if (!uuidPattern.test(serviceIdStr)) {
+        CONFIG.error('無效的服務 ID 格式', serviceId);
+        throw new Error('服務項目資料錯誤，請重新選擇');
+      }
+      
       // 準備參數（只包含有值的參數，避免傳遞 undefined）
       const params = {
         p_line_user_id: String(lineUserId),
-        p_service_id: serviceId,
+        p_service_id: serviceIdStr,
         p_booking_date: String(bookingDate),
         p_booking_time: String(bookingTime),
       };
       
       // 檢查並處理服務選項 ID
       // 只有當 serviceOptionId 是有效的 UUID 字串時才加入
-      // 排除 null, undefined, "", "0", "null" 等無效值
-      if (serviceOptionId && 
-          serviceOptionId !== 'null' && 
-          serviceOptionId !== '0' && 
-          serviceOptionId !== '' &&
-          serviceOptionId !== 'undefined') {
-        // 簡單驗證 UUID 格式（至少看起來像 UUID）
-        const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-        if (uuidPattern.test(serviceOptionId)) {
-          params.p_service_option_id = serviceOptionId;
-        } else {
-          CONFIG.error('無效的服務選項 ID 格式', serviceOptionId);
-          // 不加入無效的 ID，讓 RPC 使用預設值 NULL
+      // 先轉為字串並去除空白，然後驗證
+      if (serviceOptionId != null) {
+        const optionIdStr = String(serviceOptionId).trim();
+        
+        // 排除明顯的無效值
+        if (optionIdStr && 
+            optionIdStr !== 'null' && 
+            optionIdStr !== '0' && 
+            optionIdStr !== '' &&
+            optionIdStr !== 'undefined' &&
+            optionIdStr !== 'false') {
+          
+          // 驗證 UUID 格式
+          if (uuidPattern.test(optionIdStr)) {
+            params.p_service_option_id = optionIdStr;
+          } else {
+            CONFIG.error('無效的服務選項 ID 格式', optionIdStr);
+            // 不加入無效的 ID，讓 RPC 使用預設值 NULL
+          }
         }
       }
       // 如果 serviceOptionId 是 null/undefined/無效值，不加入參數（RPC 會使用預設值 NULL）
@@ -262,12 +278,33 @@ const BookingAPI = {
         params.p_notes = String(notes);
       }
       
-      CONFIG.log('調用 create_booking RPC', params);
+      // 記錄最終傳遞的參數（用於除錯）
+      CONFIG.log('調用 create_booking RPC', {
+        params: params,
+        paramKeys: Object.keys(params),
+        paramValues: Object.values(params).map(v => typeof v === 'string' ? v.substring(0, 50) : v)
+      });
+      
+      // 最後檢查：確保沒有任何參數是 "0"
+      for (const [key, value] of Object.entries(params)) {
+        if (value === '0' || value === 0) {
+          CONFIG.error(`發現無效參數值 "${key}": ${value}`, params);
+          throw new Error(`參數 ${key} 的值無效`);
+        }
+        // 檢查 UUID 欄位
+        if ((key === 'p_service_id' || key === 'p_service_option_id') && value && !uuidPattern.test(String(value))) {
+          CONFIG.error(`UUID 參數格式錯誤 "${key}": ${value}`, params);
+          throw new Error(`參數 ${key} 的 UUID 格式錯誤`);
+        }
+      }
       
       const { data, error } = await client.rpc('create_booking', params);
       
       if (error) {
-        CONFIG.error('RPC 錯誤詳情', error);
+        CONFIG.error('RPC 錯誤詳情', {
+          error: error,
+          params: params
+        });
         // 提供更友好的錯誤訊息
         const errorMessage = error.message || error.details || error.hint || '建立預約失敗';
         throw new Error(errorMessage);
