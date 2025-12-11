@@ -247,22 +247,53 @@ const BookingAPI = {
       
       // 驗證 serviceId 是有效的 UUID（先檢查是否為 "0"）
       const serviceIdStr = String(serviceId).trim();
-      if (serviceIdStr === '0' || serviceIdStr === 'null' || serviceIdStr === 'undefined' || serviceIdStr === '') {
-        CONFIG.error('服務 ID 為無效值', { serviceId, serviceIdStr });
+      if (!serviceIdStr || serviceIdStr === '0' || serviceIdStr === 'null' || serviceIdStr === 'undefined' || serviceIdStr === '') {
+        CONFIG.error('❌❌❌ 服務 ID 為無效值', { 
+          serviceId, 
+          serviceIdStr,
+          serviceIdType: typeof serviceId 
+        });
         throw new Error('服務項目資料錯誤，請重新選擇');
       }
       if (!uuidPattern.test(serviceIdStr)) {
-        CONFIG.error('無效的服務 ID 格式', { serviceId, serviceIdStr });
+        CONFIG.error('❌❌❌ 無效的服務 ID 格式', { 
+          serviceId, 
+          serviceIdStr,
+          isValid: uuidPattern.test(serviceIdStr)
+        });
         throw new Error('服務項目資料錯誤，請重新選擇');
       }
       
+      CONFIG.log('✅ serviceId 驗證通過', {
+        serviceId: serviceId,
+        serviceIdStr: serviceIdStr,
+        isValid: uuidPattern.test(serviceIdStr)
+      });
+      
       // 準備參數（只包含有值的參數，避免傳遞 undefined）
+      // 再次確認 serviceIdStr 不是 "0"
+      const validatedServiceId = serviceIdStr;
+      if (validatedServiceId === '0' || validatedServiceId === 0) {
+        CONFIG.error('❌❌❌ 致命錯誤：validatedServiceId 仍然是 "0"', {
+          serviceId,
+          serviceIdStr,
+          validatedServiceId
+        });
+        throw new Error('服務項目資料錯誤，請重新選擇服務項目');
+      }
+      
       const params = {
         p_line_user_id: String(lineUserId),
-        p_service_id: serviceIdStr,
+        p_service_id: validatedServiceId,  // 使用驗證過的 serviceId
         p_booking_date: String(bookingDate),
         p_booking_time: String(bookingTime),
       };
+      
+      CONFIG.log('✅ 基本參數已準備', {
+        p_service_id: params.p_service_id,
+        p_service_id_type: typeof params.p_service_id,
+        isUuid: uuidPattern.test(params.p_service_id)
+      });
       
       // 檢查並處理服務選項 ID
       // 只有當 serviceOptionId 是有效的 UUID 字串時才加入
@@ -487,6 +518,31 @@ const BookingAPI = {
       
       // 最後一次檢查：確保 sanitizedParams 中沒有任何問題
       const finalCheckParams = {};
+      
+      // 特別檢查 p_service_id（這是必填的 UUID 參數，絕對不能是 "0"）
+      if (!sanitizedParams.p_service_id || 
+          sanitizedParams.p_service_id === '0' || 
+          sanitizedParams.p_service_id === 0 || 
+          String(sanitizedParams.p_service_id).trim() === '0') {
+        CONFIG.error('❌❌❌ 致命錯誤：p_service_id 為 "0" 或無效值', {
+          p_service_id: sanitizedParams.p_service_id,
+          allParams: JSON.stringify(sanitizedParams, null, 2),
+          originalServiceId: serviceId,
+          serviceIdStr: serviceIdStr
+        });
+        throw new Error('服務項目資料錯誤，請重新選擇服務項目');
+      }
+      
+      // 驗證 p_service_id 是有效的 UUID 格式
+      const serviceIdPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      if (!serviceIdPattern.test(String(sanitizedParams.p_service_id).trim())) {
+        CONFIG.error('❌❌❌ 致命錯誤：p_service_id 格式無效', {
+          p_service_id: sanitizedParams.p_service_id,
+          allParams: JSON.stringify(sanitizedParams, null, 2)
+        });
+        throw new Error('服務項目 ID 格式錯誤，請重新選擇服務項目');
+      }
+      
       for (const [key, value] of Object.entries(sanitizedParams)) {
         // 絕對不能傳遞 "0" 給任何參數
         if (value === '0' || value === 0 || String(value).trim() === '0') {
@@ -500,10 +556,26 @@ const BookingAPI = {
           if (key === 'p_service_option_id' || key === 'p_notes') {
             CONFIG.log(`跳過參數 ${key}（值為 "0"）`);
             continue;
+          } else if (key === 'p_service_id') {
+            // p_service_id 絕對不能是 "0"
+            throw new Error(`參數 ${key} 的值為 "0"，這是不允許的`);
           } else {
             throw new Error(`參數 ${key} 的值為 "0"，這是不允許的`);
           }
         }
+        
+        // 對於 UUID 參數，確保格式正確
+        if (key === 'p_service_id') {
+          if (!serviceIdPattern.test(String(value).trim())) {
+            CONFIG.error(`❌❌❌ 致命錯誤：${key} 格式無效`, {
+              key,
+              value,
+              allParams: JSON.stringify(sanitizedParams, null, 2)
+            });
+            throw new Error(`參數 ${key} 的 UUID 格式無效`);
+          }
+        }
+        
         finalCheckParams[key] = value;
       }
       
@@ -515,6 +587,8 @@ const BookingAPI = {
         serviceOptionIdValue: finalCheckParams.p_service_option_id
       });
       
+      // 根據是否有服務選項來決定調用哪個函數重載版本
+      // Supabase 會根據參數數量自動選擇正確的函數
       const { data, error } = await client.rpc('create_booking', finalCheckParams);
       
       if (error) {
