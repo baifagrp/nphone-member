@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>編輯個人資料</title>
+    <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+    <!-- 導航列 -->
+    <nav class="navbar">
+        <div class="container navbar-container">
+            <a href="../index.html" class="navbar-brand">會員系統</a>
+            <div class="navbar-menu">
+                <a href="profile.html" class="navbar-link">個人資料</a>
+                <button id="btn-logout" class="btn btn-sm btn-secondary">登出</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主要內容 -->
+    <div class="container-sm" style="margin-top: 40px;">
+        <div class="card">
+            <div class="card-header">編輯個人資料</div>
+            
+            <div class="card-body">
+                <form id="form-edit-profile">
+                    <!-- 姓名 -->
+                    <div class="form-group">
+                        <label for="edit-name" class="form-label required">姓名</label>
+                        <input 
+                            type="text" 
+                            id="edit-name" 
+                            class="form-input" 
+                            required
+                            minlength="2"
+                            maxlength="50"
+                            placeholder="請輸入姓名"
+                        >
+                    </div>
+                    
+                    <!-- 電話 -->
+                    <div class="form-group">
+                        <label for="edit-phone" class="form-label">電話</label>
+                        <input 
+                            type="tel" 
+                            id="edit-phone" 
+                            class="form-input" 
+                            pattern="09\d{8}"
+                            placeholder="例如：0912345678"
+                        >
+                        <div class="form-help">台灣手機號碼格式：09 開頭 + 8 位數字</div>
+                    </div>
+                    
+                    <!-- Email -->
+                    <div class="form-group">
+                        <label for="edit-email" class="form-label">Email</label>
+                        <input 
+                            type="email" 
+                            id="edit-email" 
+                            class="form-input" 
+                            placeholder="example@email.com"
+                        >
+                    </div>
+                    
+                    <!-- 生日 -->
+                    <div class="form-group">
+                        <label for="edit-birthday" class="form-label">生日</label>
+                        <input 
+                            type="date" 
+                            id="edit-birthday" 
+                            class="form-input"
+                        >
+                    </div>
+                    
+                    <!-- 性別 -->
+                    <div class="form-group">
+                        <label for="edit-gender" class="form-label">性別</label>
+                        <select id="edit-gender" class="form-select">
+                            <option value="">請選擇</option>
+                            <option value="male">男性</option>
+                            <option value="female">女性</option>
+                            <option value="other">其他</option>
+                            <option value="prefer_not_to_say">不願透露</option>
+                        </select>
+                    </div>
+                    
+                    <!-- 按鈕 -->
+                    <div class="flex flex-gap" style="margin-top: 32px;">
+                        <button type="submit" class="btn btn-primary" style="flex: 1;">儲存</button>
+                        <button type="button" id="btn-cancel-edit" class="btn btn-secondary" style="flex: 1;">取消</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../js/config.js"></script>
+    <script src="../js/supabase-client.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/member.js"></script>
+    
+    <script>
+        // 頁面載入時初始化
+        window.addEventListener('DOMContentLoaded', async () => {
+            try {
+                await Member.init();
+                Member.loadEditForm();
+            } catch (error) {
+                CONFIG.error('初始化失敗', error);
+                alert('載入失敗，請重新登入');
+                Auth.memberLogout();
+            }
+        });
+        
+        // 取消按鈕事件
+        document.getElementById('btn-cancel-edit').addEventListener('click', () => {
+            window.location.href = 'profile.html';
+        });
+    </script>
+</body>
+</html>
+

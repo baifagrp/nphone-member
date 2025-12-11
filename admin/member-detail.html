@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>會員詳情</title>
+    <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+    <!-- 導航列 -->
+    <nav class="navbar">
+        <div class="container navbar-container">
+            <a href="dashboard.html" class="navbar-brand">管理後台</a>
+            <div class="navbar-menu">
+                <a href="dashboard.html" class="navbar-link">首頁</a>
+                <a href="members.html" class="navbar-link">會員管理</a>
+                <button id="btn-admin-logout" class="btn btn-sm btn-secondary">登出</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主要內容 -->
+    <div class="container-sm" style="margin-top: 40px;">
+        <div style="margin-bottom: 24px;">
+            <a href="members.html" style="color: #007AFF; text-decoration: none;">← 返回會員列表</a>
+        </div>
+        
+        <!-- 會員資料卡片 -->
+        <div class="card">
+            <div class="profile-header">
+                <div class="profile-avatar-container">
+                    <img id="detail-avatar" src="" alt="會員頭像" class="member-avatar">
+                </div>
+                <h2 class="profile-name" id="detail-name">載入中...</h2>
+                <div id="detail-line-status"></div>
+            </div>
+            
+            <div class="card-body">
+                <div class="profile-info-row">
+                    <span class="profile-label">電話</span>
+                    <span class="profile-value" id="detail-phone">-</span>
+                </div>
+                
+                <div class="profile-info-row">
+                    <span class="profile-label">Email</span>
+                    <span class="profile-value" id="detail-email">-</span>
+                </div>
+                
+                <div class="profile-info-row">
+                    <span class="profile-label">生日</span>
+                    <span class="profile-value" id="detail-birthday">-</span>
+                </div>
+                
+                <div class="profile-info-row">
+                    <span class="profile-label">性別</span>
+                    <span class="profile-value" id="detail-gender">-</span>
+                </div>
+                
+                <div class="profile-info-row">
+                    <span class="profile-label">加入時間</span>
+                    <span class="profile-value" id="detail-created">-</span>
+                </div>
+                
+                <div class="profile-info-row">
+                    <span class="profile-label">最後更新</span>
+                    <span class="profile-value" id="detail-updated">-</span>
+                </div>
+            </div>
+            
+            <div class="flex flex-gap" style="margin-top: 24px;">
+                <button id="btn-edit-member" class="btn btn-primary" style="flex: 1;">編輯</button>
+                <button id="btn-delete-member" class="btn btn-danger" style="flex: 1;">刪除</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../js/config.js"></script>
+    <script src="../js/supabase-client.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/admin.js"></script>
+    
+    <script>
+        let currentMember = null;
+        
+        // 頁面載入時初始化
+        window.addEventListener('DOMContentLoaded', async () => {
+            try {
+                await Admin.init();
+                
+                // 取得會員 ID
+                const urlParams = new URLSearchParams(window.location.search);
+                const memberId = urlParams.get('id');
+                
+                if (!memberId) {
+                    alert('缺少會員 ID');
+                    window.location.href = 'members.html';
+                    return;
+                }
+                
+                // 載入會員資料
+                currentMember = await Admin.loadMemberDetail(memberId);
+                Admin.displayMemberDetail(currentMember);
+                
+                // 編輯按鈕
+                document.getElementById('btn-edit-member').addEventListener('click', () => {
+                    window.location.href = `member-edit.html?id=${memberId}`;
+                });
+                
+                // 刪除按鈕
+                document.getElementById('btn-delete-member').addEventListener('click', async () => {
+                    const success = await Admin.deleteMember(memberId, currentMember.name);
+                    if (success) {
+                        setTimeout(() => {
+                            window.location.href = 'members.html';
+                        }, 1000);
+                    }
+                });
+                
+            } catch (error) {
+                CONFIG.error('初始化失敗', error);
+                alert('載入失敗');
+                window.location.href = 'members.html';
+            }
+        });
+    </script>
+</body>
+</html>
+

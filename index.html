@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>會員系統 - NPHONE-KHJG</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div class="hero">
+        <div class="container-sm">
+            <!-- Logo -->
+            <img src="images/logo.svg" alt="店家 Logo" class="hero-logo" id="shop-logo">
+            
+            <!-- 標題 -->
+            <h1 class="hero-title">歡迎光臨</h1>
+            <p class="hero-subtitle">使用 LINE 帳號快速登入會員系統</p>
+            
+            <!-- 登入按鈕 -->
+            <div style="margin-top: 40px;">
+                <button id="btn-line-login" class="btn btn-success btn-lg">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" style="margin-right: 8px;">
+                        <path d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63h2.386c.346 0 .627.285.627.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63.346 0 .628.285.628.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.282.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314" fill="white"/>
+                    </svg>
+                    使用 LINE 登入
+                </button>
+            </div>
+            
+            <!-- 說明文字 -->
+            <div style="margin-top: 60px; color: #86868B; font-size: 14px;">
+                <p>第一次使用？登入後自動建立會員帳號</p>
+                <p style="margin-top: 8px;">您的個人資料將受到保護</p>
+            </div>
+            
+            <!-- 管理員入口 -->
+            <div style="margin-top: 40px; padding-top: 40px; border-top: 1px solid #E5E7EB;">
+                <a href="admin/login.html" style="color: #007AFF; text-decoration: none; font-size: 14px;">
+                    管理員登入 →
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/config.js"></script>
+    <script src="js/supabase-client.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/member.js"></script>
+    
+    <script>
+        // 頁面載入時檢查登入狀態
+        window.addEventListener('DOMContentLoaded', () => {
+            // 如果已登入，直接導向會員中心
+            if (Auth.isMemberLoggedIn()) {
+                window.location.href = '/member/profile.html';
+            }
+            
+            // 設定店家名稱
+            document.querySelector('.hero-title').textContent = CONFIG.UI.shopName;
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>管理後台 - 首頁</title>
+    <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+    <!-- 導航列 -->
+    <nav class="navbar">
+        <div class="container navbar-container">
+            <a href="dashboard.html" class="navbar-brand">管理後台</a>
+            <div class="navbar-menu">
+                <a href="dashboard.html" class="navbar-link">首頁</a>
+                <a href="members.html" class="navbar-link">會員管理</a>
+                <button id="btn-admin-logout" class="btn btn-sm btn-secondary">登出</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主要內容 -->
+    <div class="container" style="margin-top: 40px;">
+        <h1 style="font-size: 32px; font-weight: 700; margin-bottom: 32px;">儀表板</h1>
+        
+        <!-- 統計卡片 -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">總會員數</div>
+                <div class="stat-value" id="stat-total-members">0</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-label">LINE 綁定數</div>
+                <div class="stat-value" id="stat-line-binding">0</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-label">綁定率</div>
+                <div class="stat-value" id="stat-binding-rate">0%</div>
+            </div>
+        </div>
+        
+        <!-- 快速操作 -->
+        <div class="card">
+            <div class="card-header">快速操作</div>
+            <div class="card-body">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
+                    <a href="members.html" class="btn btn-primary">
+                        查看所有會員
+                    </a>
+                    <a href="member-new.html" class="btn btn-success">
+                        新增會員
+                    </a>
+                    <a href="members.html" class="btn btn-outline">
+                        搜尋會員
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 最近加入的會員 -->
+        <div class="card" style="margin-top: 24px;">
+            <div class="card-header">最近加入的會員</div>
+            <div class="card-body" id="recent-members">
+                <div class="loading-spinner"></div>
+            </div>
+        </div>
+        
+        <!-- 系統資訊 -->
+        <div class="card" style="margin-top: 24px;">
+            <div class="card-header">系統資訊</div>
+            <div class="card-body">
+                <div class="profile-info-row">
+                    <span class="profile-label">系統版本</span>
+                    <span class="profile-value">v1.0.0（第一階段）</span>
+                </div>
+                <div class="profile-info-row">
+                    <span class="profile-label">已啟用功能</span>
+                    <span class="profile-value">會員管理、LINE 登入</span>
+                </div>
+                <div class="profile-info-row">
+                    <span class="profile-label">下階段功能</span>
+                    <span class="profile-value">預約系統、儲值金、點數</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../js/config.js"></script>
+    <script src="../js/supabase-client.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/admin.js"></script>
+    
+    <script>
+        // 頁面載入時初始化
+        window.addEventListener('DOMContentLoaded', async () => {
+            try {
+                await Admin.init();
+                await Admin.loadDashboardStats();
+            } catch (error) {
+                CONFIG.error('初始化失敗', error);
+            }
+        });
+    </script>
+</body>
+</html>
+

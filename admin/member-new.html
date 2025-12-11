@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>新增會員</title>
+    <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+    <!-- 導航列 -->
+    <nav class="navbar">
+        <div class="container navbar-container">
+            <a href="dashboard.html" class="navbar-brand">管理後台</a>
+            <div class="navbar-menu">
+                <a href="dashboard.html" class="navbar-link">首頁</a>
+                <a href="members.html" class="navbar-link">會員管理</a>
+                <button id="btn-admin-logout" class="btn btn-sm btn-secondary">登出</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主要內容 -->
+    <div class="container-sm" style="margin-top: 40px;">
+        <div style="margin-bottom: 24px;">
+            <a href="members.html" style="color: #007AFF; text-decoration: none;">← 返回會員列表</a>
+        </div>
+        
+        <div class="card">
+            <div class="card-header">新增會員</div>
+            
+            <div class="card-body">
+                <form id="form-new-member">
+                    <!-- 姓名 -->
+                    <div class="form-group">
+                        <label for="new-name" class="form-label required">姓名</label>
+                        <input 
+                            type="text" 
+                            id="new-name" 
+                            class="form-input" 
+                            required
+                            minlength="2"
+                            maxlength="50"
+                            placeholder="請輸入姓名"
+                        >
+                    </div>
+                    
+                    <!-- 電話 -->
+                    <div class="form-group">
+                        <label for="new-phone" class="form-label">電話</label>
+                        <input 
+                            type="tel" 
+                            id="new-phone" 
+                            class="form-input" 
+                            pattern="09\d{8}"
+                            placeholder="例如：0912345678"
+                        >
+                        <div class="form-help">台灣手機號碼格式：09 開頭 + 8 位數字</div>
+                    </div>
+                    
+                    <!-- Email -->
+                    <div class="form-group">
+                        <label for="new-email" class="form-label">Email</label>
+                        <input 
+                            type="email" 
+                            id="new-email" 
+                            class="form-input" 
+                            placeholder="example@email.com"
+                        >
+                    </div>
+                    
+                    <!-- 生日 -->
+                    <div class="form-group">
+                        <label for="new-birthday" class="form-label">生日</label>
+                        <input 
+                            type="date" 
+                            id="new-birthday" 
+                            class="form-input"
+                        >
+                    </div>
+                    
+                    <!-- 性別 -->
+                    <div class="form-group">
+                        <label for="new-gender" class="form-label">性別</label>
+                        <select id="new-gender" class="form-select">
+                            <option value="">請選擇</option>
+                            <option value="male">男性</option>
+                            <option value="female">女性</option>
+                            <option value="other">其他</option>
+                            <option value="prefer_not_to_say">不願透露</option>
+                        </select>
+                    </div>
+                    
+                    <!-- LINE User ID（選填） -->
+                    <div class="form-group">
+                        <label for="new-line-user-id" class="form-label">LINE User ID</label>
+                        <input 
+                            type="text" 
+                            id="new-line-user-id" 
+                            class="form-input" 
+                            placeholder="選填，如果已知的話"
+                        >
+                        <div class="form-help">如果會員已提供 LINE ID，可在此填入以綁定帳號</div>
+                    </div>
+                    
+                    <!-- 按鈕 -->
+                    <div class="flex flex-gap" style="margin-top: 32px;">
+                        <button type="submit" class="btn btn-success" style="flex: 1;">新增會員</button>
+                        <a href="members.html" class="btn btn-secondary" style="flex: 1; text-align: center; line-height: 24px;">取消</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../js/config.js"></script>
+    <script src="../js/supabase-client.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/admin.js"></script>
+    
+    <script>
+        // 頁面載入時初始化
+        window.addEventListener('DOMContentLoaded', async () => {
+            try {
+                await Admin.init();
+            } catch (error) {
+                CONFIG.error('初始化失敗', error);
+            }
+        });
+        
+        // 表單提交
+        document.getElementById('form-new-member').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = {
+                name: document.getElementById('new-name').value,
+                phone: document.getElementById('new-phone').value,
+                email: document.getElementById('new-email').value,
+                birthday: document.getElementById('new-birthday').value,
+                gender: document.getElementById('new-gender').value,
+                line_user_id: document.getElementById('new-line-user-id').value,
+            };
+            
+            try {
+                await Admin.createMember(formData);
+                
+                // 新增成功後導向會員列表
+                setTimeout(() => {
+                    window.location.href = 'members.html';
+                }, 1000);
+            } catch (error) {
+                // 錯誤已在 createMember 中處理
+            }
+        });
+    </script>
+</body>
+</html>
+

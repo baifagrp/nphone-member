@@ -1,0 +1,23 @@
+{
+  "name": "member-system",
+  "version": "1.0.0",
+  "description": "手機貼膜店會員管理系統 - 使用純 HTML/CSS/JavaScript + Supabase",
+  "main": "index.html",
+  "scripts": {
+    "start": "python -m http.server 8000",
+    "test": "echo \"No tests specified\""
+  },
+  "keywords": [
+    "member-system",
+    "crm",
+    "line-login",
+    "supabase"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/member-system.git"
+  }
+}
+

@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>會員管理</title>
+    <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+    <!-- 導航列 -->
+    <nav class="navbar">
+        <div class="container navbar-container">
+            <a href="dashboard.html" class="navbar-brand">管理後台</a>
+            <div class="navbar-menu">
+                <a href="dashboard.html" class="navbar-link">首頁</a>
+                <a href="members.html" class="navbar-link">會員管理</a>
+                <button id="btn-admin-logout" class="btn btn-sm btn-secondary">登出</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主要內容 -->
+    <div class="container" style="margin-top: 40px;">
+        <div class="flex-between" style="margin-bottom: 24px;">
+            <h1 style="font-size: 32px; font-weight: 700;">會員列表</h1>
+            <a href="member-new.html" class="btn btn-success">+ 新增會員</a>
+        </div>
+        
+        <!-- 搜尋框 -->
+        <div class="card">
+            <div class="search-box">
+                <input 
+                    type="text" 
+                    id="search-members" 
+                    class="search-input" 
+                    placeholder="搜尋會員（姓名、電話、Email）"
+                >
+            </div>
+        </div>
+        
+        <!-- 會員列表 -->
+        <div class="card">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th width="60">#</th>
+                        <th>姓名</th>
+                        <th>電話</th>
+                        <th>Email</th>
+                        <th width="120">LINE 綁定</th>
+                        <th width="120">加入日期</th>
+                    </tr>
+                </thead>
+                <tbody id="members-tbody">
+                    <tr>
+                        <td colspan="6" style="text-align: center; padding: 40px;">
+                            <div class="loading-spinner" style="margin: 0 auto;"></div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <!-- 分頁 -->
+            <div class="pagination">
+                <div class="pagination-info" id="pagination-info">
+                    載入中...
+                </div>
+                <div class="pagination-buttons">
+                    <button id="btn-prev-page" class="btn btn-sm btn-secondary">上一頁</button>
+                    <button id="btn-next-page" class="btn btn-sm btn-secondary">下一頁</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../js/config.js"></script>
+    <script src="../js/supabase-client.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/admin.js"></script>
+    
+    <script>
+        // 頁面載入時初始化
+        window.addEventListener('DOMContentLoaded', async () => {
+            try {
+                await Admin.init();
+                await Admin.loadMembers(1);
+                Admin.displayMemberList();
+            } catch (error) {
+                CONFIG.error('初始化失敗', error);
+            }
+        });
+    </script>
+</body>
+</html>
+

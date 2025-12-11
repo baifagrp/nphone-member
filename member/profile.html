@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>會員中心</title>
+    <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+    <!-- 導航列 -->
+    <nav class="navbar">
+        <div class="container navbar-container">
+            <a href="../index.html" class="navbar-brand">會員系統</a>
+            <div class="navbar-menu">
+                <a href="profile.html" class="navbar-link">個人資料</a>
+                <button id="btn-logout" class="btn btn-sm btn-secondary">登出</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主要內容 -->
+    <div class="container-sm" style="margin-top: 40px;">
+        <!-- 會員資料卡片 -->
+        <div class="card">
+            <div class="profile-header">
+                <div class="profile-avatar-container">
+                    <img id="member-avatar" src="" alt="會員頭像" class="member-avatar">
+                </div>
+                <h2 class="profile-name" id="member-name">載入中...</h2>
+                <div id="line-status"></div>
+            </div>
+            
+            <div class="card-body">
+                <div class="profile-info-row">
+                    <span class="profile-label">電話</span>
+                    <span class="profile-value" id="member-phone">-</span>
+                </div>
+                
+                <div class="profile-info-row">
+                    <span class="profile-label">Email</span>
+                    <span class="profile-value" id="member-email">-</span>
+                </div>
+                
+                <div class="profile-info-row">
+                    <span class="profile-label">生日</span>
+                    <span class="profile-value" id="member-birthday">-</span>
+                </div>
+                
+                <div class="profile-info-row">
+                    <span class="profile-label">性別</span>
+                    <span class="profile-value" id="member-gender">-</span>
+                </div>
+                
+                <div class="profile-info-row">
+                    <span class="profile-label">加入日期</span>
+                    <span class="profile-value" id="member-joined">-</span>
+                </div>
+            </div>
+            
+            <div style="margin-top: 24px; text-align: center;">
+                <a href="edit.html" class="btn btn-primary">編輯個人資料</a>
+            </div>
+        </div>
+        
+        <!-- 未來功能預告 -->
+        <div class="card" style="margin-top: 24px;">
+            <div class="card-header">即將推出</div>
+            <div class="card-body">
+                <ul style="list-style: none; padding: 0; color: #86868B;">
+                    <li style="padding: 8px 0;">📅 線上預約服務</li>
+                    <li style="padding: 8px 0;">💰 儲值金管理</li>
+                    <li style="padding: 8px 0;">🎁 紅利點數累積</li>
+                    <li style="padding: 8px 0;">📊 消費記錄查詢</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../js/config.js"></script>
+    <script src="../js/supabase-client.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/member.js"></script>
+    
+    <script>
+        // 頁面載入時初始化
+        window.addEventListener('DOMContentLoaded', async () => {
+            try {
+                await Member.init();
+                Member.displayProfile();
+            } catch (error) {
+                CONFIG.error('初始化失敗', error);
+                alert('載入失敗，請重新登入');
+                Auth.memberLogout();
+            }
+        });
+    </script>
+</body>
+</html>
+

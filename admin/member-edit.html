@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>編輯會員</title>
+    <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+    <!-- 導航列 -->
+    <nav class="navbar">
+        <div class="container navbar-container">
+            <a href="dashboard.html" class="navbar-brand">管理後台</a>
+            <div class="navbar-menu">
+                <a href="dashboard.html" class="navbar-link">首頁</a>
+                <a href="members.html" class="navbar-link">會員管理</a>
+                <button id="btn-admin-logout" class="btn btn-sm btn-secondary">登出</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主要內容 -->
+    <div class="container-sm" style="margin-top: 40px;">
+        <div style="margin-bottom: 24px;">
+            <a href="javascript:history.back()" style="color: #007AFF; text-decoration: none;">← 返回</a>
+        </div>
+        
+        <div class="card">
+            <div class="card-header">編輯會員</div>
+            
+            <div class="card-body">
+                <form id="form-edit-member">
+                    <!-- 姓名 -->
+                    <div class="form-group">
+                        <label for="edit-name" class="form-label required">姓名</label>
+                        <input 
+                            type="text" 
+                            id="edit-name" 
+                            class="form-input" 
+                            required
+                            minlength="2"
+                            maxlength="50"
+                            placeholder="請輸入姓名"
+                        >
+                    </div>
+                    
+                    <!-- 電話 -->
+                    <div class="form-group">
+                        <label for="edit-phone" class="form-label">電話</label>
+                        <input 
+                            type="tel" 
+                            id="edit-phone" 
+                            class="form-input" 
+                            pattern="09\d{8}"
+                            placeholder="例如：0912345678"
+                        >
+                        <div class="form-help">台灣手機號碼格式：09 開頭 + 8 位數字</div>
+                    </div>
+                    
+                    <!-- Email -->
+                    <div class="form-group">
+                        <label for="edit-email" class="form-label">Email</label>
+                        <input 
+                            type="email" 
+                            id="edit-email" 
+                            class="form-input" 
+                            placeholder="example@email.com"
+                        >
+                    </div>
+                    
+                    <!-- 生日 -->
+                    <div class="form-group">
+                        <label for="edit-birthday" class="form-label">生日</label>
+                        <input 
+                            type="date" 
+                            id="edit-birthday" 
+                            class="form-input"
+                        >
+                    </div>
+                    
+                    <!-- 性別 -->
+                    <div class="form-group">
+                        <label for="edit-gender" class="form-label">性別</label>
+                        <select id="edit-gender" class="form-select">
+                            <option value="">請選擇</option>
+                            <option value="male">男性</option>
+                            <option value="female">女性</option>
+                            <option value="other">其他</option>
+                            <option value="prefer_not_to_say">不願透露</option>
+                        </select>
+                    </div>
+                    
+                    <!-- LINE User ID -->
+                    <div class="form-group">
+                        <label for="edit-line-user-id" class="form-label">LINE User ID</label>
+                        <input 
+                            type="text" 
+                            id="edit-line-user-id" 
+                            class="form-input" 
+                            placeholder="LINE 使用者 ID"
+                            readonly
+                            style="background: #F5F5F7;"
+                        >
+                        <div class="form-help">LINE ID 由系統自動綁定，無法手動修改</div>
+                    </div>
+                    
+                    <!-- 按鈕 -->
+                    <div class="flex flex-gap" style="margin-top: 32px;">
+                        <button type="submit" class="btn btn-primary" style="flex: 1;">儲存變更</button>
+                        <button type="button" onclick="history.back()" class="btn btn-secondary" style="flex: 1;">取消</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../js/config.js"></script>
+    <script src="../js/supabase-client.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/admin.js"></script>
+    
+    <script>
+        let currentMember = null;
+        let memberId = null;
+        
+        // 頁面載入時初始化
+        window.addEventListener('DOMContentLoaded', async () => {
+            try {
+                await Admin.init();
+                
+                // 取得會員 ID
+                const urlParams = new URLSearchParams(window.location.search);
+                memberId = urlParams.get('id');
+                
+                if (!memberId) {
+                    alert('缺少會員 ID');
+                    window.location.href = 'members.html';
+                    return;
+                }
+                
+                // 載入會員資料
+                currentMember = await Admin.loadMemberDetail(memberId);
+                Admin.loadMemberEditForm(currentMember);
+                
+            } catch (error) {
+                CONFIG.error('初始化失敗', error);
+                alert('載入失敗');
+                window.location.href = 'members.html';
+            }
+        });
+        
+        // 表單提交
+        document.getElementById('form-edit-member').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = {
+                name: document.getElementById('edit-name').value,
+                phone: document.getElementById('edit-phone').value,
+                email: document.getElementById('edit-email').value,
+                birthday: document.getElementById('edit-birthday').value,
+                gender: document.getElementById('edit-gender').value,
+                line_user_id: currentMember.line_user_id, // 保持原值
+            };
+            
+            try {
+                await Admin.updateMember(memberId, formData);
+                
+                // 更新成功後返回詳情頁
+                setTimeout(() => {
+                    window.location.href = `member-detail.html?id=${memberId}`;
+                }, 1000);
+            } catch (error) {
+                // 錯誤已在 updateMember 中處理
+            }
+        });
+    </script>
+</body>
+</html>
+
