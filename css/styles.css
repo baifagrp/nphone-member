@@ -7,8 +7,8 @@
    ============================================= */
 :root {
   /* 顏色定義 */
-  --color-primary: #007AFF;
-  --color-secondary: #5856D6;
+  --color-primary: #303030;
+  --color-secondary: #cfcfcf;
   --color-success: #34C759;
   --color-warning: #FF9500;
   --color-error: #FF3B30;

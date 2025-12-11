@@ -633,29 +633,32 @@ const BookingAPI = {
     try {
       const client = getSupabase();
       
-      // 先取得會員 ID
-      const { data: member } = await client
-        .from('members')
-        .select('id')
-        .eq('line_user_id', lineUserId)
-        .single();
+      CONFIG.log('查詢預約記錄', { lineUserId, limit });
       
-      if (!member) {
-        throw new Error('找不到會員資料');
+      // 使用 RPC 函數查詢預約記錄（更安全，繞過 RLS 問題）
+      const { data, error } = await client.rpc('get_member_bookings', {
+        p_line_user_id: lineUserId,
+        p_limit: limit
+      });
+      
+      if (error) {
+        CONFIG.error('查詢預約記錄失敗', {
+          error,
+          lineUserId,
+          errorCode: error.code,
+          errorMessage: error.message,
+          errorDetails: error.details,
+          errorHint: error.hint
+        });
+        throw error;
       }
       
-      // 取得預約列表
-      const { data, error } = await client
-        .from('bookings')
-        .select('*, services(*)')
-        .eq('member_id', member.id)
-        .order('booking_date', { ascending: false })
-        .order('booking_time', { ascending: false })
-        .limit(limit);
+      CONFIG.log('查詢到預約記錄', { 
+        count: data ? data.length : 0,
+        bookings: data 
+      });
       
-      if (error) throw error;
-      
-      return data;
+      return data || [];
     } catch (error) {
       CONFIG.error('取得預約列表失敗', error);
       throw error;
