@@ -266,23 +266,33 @@ const BookingAPI = {
       
       // 檢查並處理服務選項 ID
       // 只有當 serviceOptionId 是有效的 UUID 字串時才加入
-      // 先轉為字串並去除空白，然後驗證
-      if (serviceOptionId != null && serviceOptionId !== undefined) {
+      // 嚴格檢查：先排除所有無效值，再驗證 UUID 格式
+      
+      // 第一步：檢查 serviceOptionId 是否存在且不是無效值
+      const hasValidOptionId = serviceOptionId != null && 
+                                serviceOptionId !== undefined &&
+                                serviceOptionId !== '0' &&
+                                serviceOptionId !== 0 &&
+                                serviceOptionId !== '' &&
+                                serviceOptionId !== 'null' &&
+                                serviceOptionId !== 'undefined' &&
+                                serviceOptionId !== 'false';
+      
+      if (hasValidOptionId) {
         const optionIdStr = String(serviceOptionId).trim();
         
-        // 排除明顯的無效值（包括數字 0、字串 "0"、空值等）
+        // 第二步：再次檢查轉換後的值
         if (optionIdStr && 
             optionIdStr !== 'null' && 
             optionIdStr !== '0' && 
             optionIdStr !== '' &&
             optionIdStr !== 'undefined' &&
-            optionIdStr !== 'false' &&
-            serviceOptionId !== 0 &&
-            serviceOptionId !== '0') {
+            optionIdStr !== 'false') {
           
-          // 驗證 UUID 格式（必須是標準 UUID 格式）
+          // 第三步：驗證 UUID 格式（必須是標準 UUID 格式）
           if (uuidPattern.test(optionIdStr)) {
             params.p_service_option_id = optionIdStr;
+            CONFIG.log('服務選項 ID 驗證通過，已加入參數', optionIdStr);
           } else {
             CONFIG.error('無效的服務選項 ID 格式，將不傳遞此參數', {
               original: serviceOptionId,
@@ -292,11 +302,16 @@ const BookingAPI = {
             // 不加入無效的 ID，讓 RPC 使用預設值 NULL
           }
         } else {
-          CONFIG.log('服務選項 ID 為無效值，將不傳遞此參數', {
+          CONFIG.log('服務選項 ID 轉換後仍為無效值，將不傳遞此參數', {
             original: serviceOptionId,
             converted: optionIdStr
           });
         }
+      } else {
+        CONFIG.log('服務選項 ID 為空或無效值，將不傳遞此參數（使用預設值 NULL）', {
+          serviceOptionId: serviceOptionId,
+          type: typeof serviceOptionId
+        });
       }
       // 如果 serviceOptionId 是 null/undefined/無效值，不加入參數（RPC 會使用預設值 NULL）
       

@@ -567,12 +567,20 @@
                     }
                 }
                 
+                // 最終檢查：確保 serviceOptionId 不是 "0"
+                if (serviceOptionId === '0' || serviceOptionId === 0) {
+                    CONFIG.error('服務選項 ID 為 "0"，將其設為 null', serviceOptionId);
+                    serviceOptionId = null;
+                }
+                
                 CONFIG.log('建立預約參數', {
                     lineUserId: session.lineUserId,
                     serviceId: selectedService.id,
+                    serviceIdType: typeof selectedService.id,
                     bookingDate: bookingDate,
                     bookingTime: bookingTime,
                     serviceOptionId: serviceOptionId,
+                    serviceOptionIdType: typeof serviceOptionId,
                     notes: notes
                 });
                 
