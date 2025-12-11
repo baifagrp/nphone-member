@@ -9,6 +9,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
 };
 
 interface LineTokenResponse {
@@ -34,10 +35,15 @@ serve(async (req) => {
   }
 
   try {
+    console.log('Edge Function called:', req.method, req.url);
+    
     // 取得 authorization code
     const url = new URL(req.url);
     const code = url.searchParams.get('code');
     const redirectUri = url.searchParams.get('redirect_uri');
+
+    console.log('Code:', code ? 'received' : 'missing');
+    console.log('Redirect URI:', redirectUri);
 
     if (!code) {
       throw new Error('Authorization code not provided');
@@ -47,8 +53,11 @@ serve(async (req) => {
     const LINE_CHANNEL_ID = Deno.env.get('LINE_CHANNEL_ID');
     const LINE_CHANNEL_SECRET = Deno.env.get('LINE_CHANNEL_SECRET');
 
+    console.log('LINE_CHANNEL_ID:', LINE_CHANNEL_ID ? 'set' : 'missing');
+    console.log('LINE_CHANNEL_SECRET:', LINE_CHANNEL_SECRET ? 'set' : 'missing');
+
     if (!LINE_CHANNEL_ID || !LINE_CHANNEL_SECRET) {
-      throw new Error('LINE credentials not configured');
+      throw new Error('LINE credentials not configured. Please set LINE_CHANNEL_ID and LINE_CHANNEL_SECRET in Edge Function secrets.');
     }
 
     // =============================================
@@ -70,10 +79,12 @@ serve(async (req) => {
 
     if (!tokenResponse.ok) {
       const error = await tokenResponse.text();
+      console.error('Token exchange error:', error);
       throw new Error(`Failed to get access token: ${error}`);
     }
 
     const tokenData: LineTokenResponse = await tokenResponse.json();
+    console.log('Token exchange successful');
 
     // =============================================
     // 步驟 2: 使用 access token 取得使用者資料
@@ -86,10 +97,12 @@ serve(async (req) => {
 
     if (!profileResponse.ok) {
       const error = await profileResponse.text();
+      console.error('Profile fetch error:', error);
       throw new Error(`Failed to get user profile: ${error}`);
     }
 
     const profileData: LineProfileResponse = await profileResponse.json();
+    console.log('Profile fetched:', profileData.userId, profileData.displayName);
 
     // =============================================
     // 步驟 3: 在 Supabase 建立或更新會員記錄
@@ -108,8 +121,11 @@ serve(async (req) => {
       });
 
     if (memberError) {
+      console.error('Member upsert error:', memberError);
       throw new Error(`Failed to upsert member: ${memberError.message}`);
     }
+
+    console.log('Member upserted successfully:', member?.id);
 
     // =============================================
     // 步驟 4: 回傳結果給前端
@@ -130,15 +146,16 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('Error:', error);
+    console.error('Edge Function Error:', error);
     
     return new Response(
       JSON.stringify({
         success: false,
-        error: error.message,
+        error: error.message || 'Unknown error occurred',
+        details: error.toString(),
       }),
       {
-        status: 400,
+        status: error.message.includes('credentials not configured') ? 500 : 400,
         headers: {
           ...corsHeaders,
           'Content-Type': 'application/json',

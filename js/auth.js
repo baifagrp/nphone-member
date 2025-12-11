@@ -46,12 +46,22 @@ const Auth = {
       CONFIG.log('收到 LINE 授權碼', code);
       
       // 呼叫 Supabase Edge Function 處理 OAuth
+      // 注意：需要加上 apikey header 才能通過 Supabase 認證
       const response = await fetch(
-        `${CONFIG.LINE_CALLBACK_FUNCTION_URL}?code=${code}&redirect_uri=${encodeURIComponent(CONFIG.getCallbackUrl())}`
+        `${CONFIG.LINE_CALLBACK_FUNCTION_URL}?code=${code}&redirect_uri=${encodeURIComponent(CONFIG.getCallbackUrl())}`,
+        {
+          method: 'GET',
+          headers: {
+            'apikey': CONFIG.SUPABASE_ANON_KEY,
+            'Authorization': `Bearer ${CONFIG.SUPABASE_ANON_KEY}`,
+          },
+        }
       );
       
       if (!response.ok) {
-        throw new Error('Edge Function 呼叫失敗');
+        const errorText = await response.text();
+        CONFIG.error('Edge Function 回應', { status: response.status, error: errorText });
+        throw new Error(`Edge Function 呼叫失敗 (${response.status}): ${errorText}`);
       }
       
       const result = await response.json();
