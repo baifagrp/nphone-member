@@ -246,12 +246,21 @@ CREATE POLICY "Admins can manage time slots"
 -- =============================================
 -- 輔助函數：建立預約（會員端使用）
 -- =============================================
+
+-- 先刪除舊版本的函數（如果存在），避免函數重載衝突
+-- 刪除所有可能的重載版本（需要指定參數類型列表）
+DROP FUNCTION IF EXISTS public.create_booking(TEXT, UUID, DATE, TIME, UUID, TEXT) CASCADE;
+DROP FUNCTION IF EXISTS public.create_booking(TEXT, UUID, DATE, TIME, TEXT, TEXT) CASCADE;
+DROP FUNCTION IF EXISTS public.create_booking(TEXT, UUID, DATE, TIME, UUID) CASCADE;
+DROP FUNCTION IF EXISTS public.create_booking(TEXT, UUID, DATE, TIME, TEXT) CASCADE;
+DROP FUNCTION IF EXISTS public.create_booking(TEXT, UUID, DATE, TIME) CASCADE;
+
 CREATE OR REPLACE FUNCTION public.create_booking(
     p_line_user_id TEXT,
     p_service_id UUID,
     p_booking_date DATE,
     p_booking_time TIME,
-    p_service_option_id UUID DEFAULT NULL,
+    p_service_option_id TEXT DEFAULT NULL,
     p_notes TEXT DEFAULT NULL
 )
 RETURNS public.bookings
@@ -265,6 +274,8 @@ DECLARE
     v_final_price DECIMAL(10, 2);
     v_option_name TEXT;
     v_booking public.bookings;
+    v_service_option_id UUID;  -- 用於轉換 TEXT 到 UUID
+    v_has_valid_option BOOLEAN := FALSE;  -- 判斷是否有有效的選項 ID
 BEGIN
     -- 查找會員
     SELECT id INTO v_member_id
@@ -284,19 +295,36 @@ BEGIN
         RAISE EXCEPTION '服務不存在或已停用';
     END IF;
     
-    -- 如果服務需要選項但未提供，則錯誤
-    IF v_service.has_options = true AND p_service_option_id IS NULL THEN
-        RAISE EXCEPTION '此服務需要選擇 %', COALESCE(v_service.option_label, '選項');
-    END IF;
-    
     -- 如果提供了服務選項，驗證並取得資訊
     v_final_price := COALESCE(v_service.base_price, 0);
     v_option_name := NULL;
     
-    IF p_service_option_id IS NOT NULL THEN
+    -- 檢查 p_service_option_id 是否有效（不是 NULL、空字串或 "0"）
+    -- 由於參數類型改為 TEXT，需要先檢查再轉換為 UUID
+    v_has_valid_option := (p_service_option_id IS NOT NULL 
+                            AND p_service_option_id != '0' 
+                            AND p_service_option_id != ''
+                            AND p_service_option_id != 'null'
+                            AND p_service_option_id != 'undefined');
+    
+    -- 如果服務需要選項但未提供有效選項，則錯誤
+    IF v_service.has_options = true AND NOT v_has_valid_option THEN
+        RAISE EXCEPTION '此服務需要選擇 %', COALESCE(v_service.option_label, '選項');
+    END IF;
+    
+    -- 如果有有效的服務選項 ID，處理選項
+    IF v_has_valid_option THEN
+        
+        -- 嘗試將 TEXT 轉換為 UUID
+        BEGIN
+            v_service_option_id := p_service_option_id::UUID;
+        EXCEPTION WHEN OTHERS THEN
+            RAISE EXCEPTION '服務選項 ID 格式錯誤: %', p_service_option_id;
+        END;
+        
         SELECT * INTO v_service_option
         FROM public.service_options
-        WHERE id = p_service_option_id 
+        WHERE id = v_service_option_id 
           AND service_id = p_service_id
           AND is_active = true;
         
@@ -352,9 +380,17 @@ BEGIN
         v_service.name,
         v_service.duration,
         v_final_price,
-        p_service_option_id,
+        CASE 
+            WHEN p_service_option_id IS NOT NULL 
+                 AND p_service_option_id != '0' 
+                 AND p_service_option_id != '' 
+                 AND p_service_option_id != 'null'
+                 AND p_service_option_id != 'undefined'
+            THEN p_service_option_id::UUID 
+            ELSE NULL 
+        END,
         v_option_name,
-        p_notes
+        NULLIF(p_notes, '')
     )
     RETURNING * INTO v_booking;
     

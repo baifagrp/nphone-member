@@ -338,7 +338,8 @@ const BookingAPI = {
         }
         
         // 檢查 UUID 欄位（必須是有效的 UUID 格式）
-        if (key === 'p_service_id' || key === 'p_service_option_id') {
+        // p_service_id 必須是有效的 UUID
+        if (key === 'p_service_id') {
           if (!value || value === null || value === undefined) {
             CONFIG.error(`❌ UUID 參數為空 "${key}"`, {
               key: key,
@@ -359,6 +360,21 @@ const BookingAPI = {
             throw new Error(`參數 ${key} 的 UUID 格式錯誤: ${value}`);
           }
         }
+        // p_service_option_id 應該是 TEXT 類型，但我們也驗證它的格式
+        if (key === 'p_service_option_id') {
+          // 如果存在，應該是有效的 UUID 格式（因為函數會將其轉換為 UUID）
+          if (value && !uuidPattern.test(valueStr)) {
+            CONFIG.error(`❌ 服務選項 ID 格式錯誤 "${key}": ${value}`, {
+              key: key,
+              value: value,
+              valueString: valueStr,
+              type: typeof value,
+              isValid: uuidPattern.test(valueStr),
+              allParams: JSON.stringify(params, null, 2)
+            });
+            throw new Error(`參數 ${key} 的 UUID 格式錯誤: ${value}`);
+          }
+        }
       }
       
       // 記錄最終傳遞的參數（用於除錯）- 在檢查通過後記錄
@@ -369,8 +385,15 @@ const BookingAPI = {
       });
       
       // 再次確保 params 中沒有任何 "0" 值（最後一道防線）
+      // 同時確保 null/undefined 參數不被傳遞
       const finalParams = {};
       for (const [key, value] of Object.entries(params)) {
+        // 跳過 null 和 undefined（讓函數使用預設值）
+        if (value === null || value === undefined) {
+          CONFIG.log(`跳過參數 ${key}（因為是 null/undefined，將使用函數預設值）`);
+          continue;
+        }
+        
         const valueStr = String(value).trim();
         if (value === '0' || value === 0 || valueStr === '0') {
           CONFIG.error(`❌❌❌ 最後檢查發現 "0" 值在 "${key}": ${value}`, {
@@ -378,18 +401,32 @@ const BookingAPI = {
             value: value,
             allParams: JSON.stringify(params, null, 2)
           });
-          // 對於 service_option_id，如果是 "0" 則完全不傳遞
+          // 對於 service_option_id，如果是 "0" 則完全不傳遞（使用預設值 NULL）
           if (key === 'p_service_option_id') {
-            CONFIG.log('跳過 p_service_option_id（因為是 "0"）');
+            CONFIG.log('跳過 p_service_option_id（因為是 "0"，將使用函數預設值 NULL）');
             continue; // 跳過這個參數
           } else {
             throw new Error(`參數 ${key} 的值無效: ${value}`);
           }
         }
+        
+        // 對於 p_service_option_id，如果是空字串也不傳遞
+        if (key === 'p_service_option_id' && (valueStr === '' || valueStr === 'null' || valueStr === 'undefined')) {
+          CONFIG.log(`跳過參數 ${key}（因為是空值: "${valueStr}"，將使用函數預設值 NULL）`);
+          continue;
+        }
+        
         finalParams[key] = value;
       }
       
       CONFIG.log('📤 最終傳遞給 RPC 的參數', JSON.stringify(finalParams, null, 2));
+      CONFIG.log('📤 參數檢查清單', {
+        hasServiceOptionId: 'p_service_option_id' in finalParams,
+        serviceOptionIdValue: finalParams.p_service_option_id,
+        serviceOptionIdType: typeof finalParams.p_service_option_id,
+        allKeys: Object.keys(finalParams),
+        paramCount: Object.keys(finalParams).length
+      });
       
       const { data, error } = await client.rpc('create_booking', finalParams);
       
@@ -400,8 +437,19 @@ const BookingAPI = {
           errorMessage: error.message,
           errorDetails: error.details,
           errorHint: error.hint,
-          paramsSent: JSON.stringify(finalParams, null, 2)
+          paramsSent: JSON.stringify(finalParams, null, 2),
+          paramsKeys: Object.keys(finalParams),
+          hasServiceOptionId: 'p_service_option_id' in finalParams,
+          serviceOptionIdValue: finalParams.p_service_option_id
         });
+        
+        // 如果是 UUID 類型錯誤，可能是函數定義問題
+        if (error.code === '22P02' && error.message.includes('uuid')) {
+          CONFIG.error('⚠️ UUID 類型錯誤，可能是資料庫中的函數定義未更新', {
+            suggestion: '請確認已執行更新後的 booking-rls-policies.sql，並且函數簽名是 TEXT 類型'
+          });
+        }
+        
         // 提供更友好的錯誤訊息
         const errorMessage = error.message || error.details || error.hint || '建立預約失敗';
         throw new Error(errorMessage);
