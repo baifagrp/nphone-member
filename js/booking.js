@@ -238,13 +238,27 @@ const BookingAPI = {
         p_booking_time: String(bookingTime),
       };
       
-      // 只有在有值時才加入選項 ID（避免傳遞 undefined）
-      if (serviceOptionId) {
-        params.p_service_option_id = serviceOptionId;
+      // 檢查並處理服務選項 ID
+      // 只有當 serviceOptionId 是有效的 UUID 字串時才加入
+      // 排除 null, undefined, "", "0", "null" 等無效值
+      if (serviceOptionId && 
+          serviceOptionId !== 'null' && 
+          serviceOptionId !== '0' && 
+          serviceOptionId !== '' &&
+          serviceOptionId !== 'undefined') {
+        // 簡單驗證 UUID 格式（至少看起來像 UUID）
+        const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+        if (uuidPattern.test(serviceOptionId)) {
+          params.p_service_option_id = serviceOptionId;
+        } else {
+          CONFIG.error('無效的服務選項 ID 格式', serviceOptionId);
+          // 不加入無效的 ID，讓 RPC 使用預設值 NULL
+        }
       }
+      // 如果 serviceOptionId 是 null/undefined/無效值，不加入參數（RPC 會使用預設值 NULL）
       
       // 只有在有值時才加入備註
-      if (notes) {
+      if (notes && notes !== 'null' && notes !== 'undefined') {
         params.p_notes = String(notes);
       }
       

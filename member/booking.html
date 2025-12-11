@@ -244,23 +244,32 @@
         function selectService(serviceId) {
             selectedService = availableServices.find(s => s.id === serviceId);
             
+            if (!selectedService) {
+                showMessage('找不到服務項目', 'error');
+                return;
+            }
+            
             // 更新 UI
             document.querySelectorAll('.service-card').forEach(card => {
                 card.classList.remove('selected');
             });
-            document.querySelector(`[data-service-id="${serviceId}"]`).classList.add('selected');
+            const serviceCard = document.querySelector(`[data-service-id="${serviceId}"]`);
+            if (serviceCard) {
+                serviceCard.classList.add('selected');
+            }
+            
+            // 重置選項（確保是 null，不是 undefined）
+            selectedServiceOption = null;
             
             // 檢查服務是否需要選擇選項
-            if (selectedService && selectedService.has_options && selectedService.service_options && selectedService.service_options.length > 0) {
+            if (selectedService.has_options && selectedService.service_options && selectedService.service_options.length > 0) {
                 // 需要選擇選項，進入步驟 1.5
-                selectedServiceOption = null; // 重置選項
                 setTimeout(() => {
                     loadServiceOptions();
                     goToStep(1.5);
                 }, 500);
             } else {
                 // 不需要選項，直接進入選擇日期
-                selectedServiceOption = null;
                 setTimeout(() => {
                     goToStep(2);
                 }, 500);
@@ -315,19 +324,32 @@
         // 選擇服務選項
         function selectServiceOption(optionId) {
             if (!selectedService || !selectedService.service_options) {
+                showMessage('無法選擇選項', 'error');
                 return;
             }
             
-            selectedServiceOption = selectedService.service_options.find(opt => opt.id === optionId);
+            const option = selectedService.service_options.find(opt => opt.id === optionId);
+            if (!option) {
+                showMessage('找不到選項', 'error');
+                return;
+            }
+            
+            selectedServiceOption = option;
             
             // 更新 UI
             document.querySelectorAll('[data-option-id]').forEach(card => {
                 card.classList.remove('selected');
             });
-            document.querySelector(`[data-option-id="${optionId}"]`).classList.add('selected');
+            const optionCard = document.querySelector(`[data-option-id="${optionId}"]`);
+            if (optionCard) {
+                optionCard.classList.add('selected');
+            }
             
             // 啟用下一步按鈕
-            document.getElementById('btn-next-step-1.5').disabled = false;
+            const nextBtn = document.getElementById('btn-next-step-1.5');
+            if (nextBtn) {
+                nextBtn.disabled = false;
+            }
         }
         
         // 進入下一步
@@ -515,12 +537,26 @@
                     bookingTime = bookingTime + ':00';
                 }
                 
+                // 確保 serviceOptionId 是有效的 UUID 或 null
+                let serviceOptionId = null;
+                if (selectedServiceOption && selectedServiceOption.id) {
+                    // 驗證 UUID 格式
+                    const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+                    if (uuidPattern.test(selectedServiceOption.id)) {
+                        serviceOptionId = selectedServiceOption.id;
+                    } else {
+                        CONFIG.error('無效的服務選項 ID', selectedServiceOption.id);
+                        showMessage('服務選項資料錯誤，請重新選擇', 'error');
+                        return;
+                    }
+                }
+                
                 CONFIG.log('建立預約參數', {
                     lineUserId: session.lineUserId,
                     serviceId: selectedService.id,
                     bookingDate: bookingDate,
                     bookingTime: bookingTime,
-                    serviceOptionId: selectedServiceOption ? selectedServiceOption.id : null,
+                    serviceOptionId: serviceOptionId,
                     notes: notes
                 });
                 
@@ -529,7 +565,7 @@
                     selectedService.id,
                     bookingDate,
                     bookingTime,
-                    selectedServiceOption ? selectedServiceOption.id : null,
+                    serviceOptionId,
                     notes
                 );
                 
