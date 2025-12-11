@@ -112,8 +112,14 @@ const Member = {
         throw new Error(CONFIG.VALIDATION.emailMessage);
       }
       
-      // 更新資料庫
-      const updated = await MemberAPI.update(this.currentMember.id, {
+      // 取得 line_user_id
+      const session = Auth.getMemberSession();
+      if (!session || !session.lineUserId) {
+        throw new Error('無法取得 LINE 使用者 ID');
+      }
+      
+      // 使用 RPC 函數更新資料庫（會自動驗證 line_user_id）
+      const updated = await MemberAPI.updateByLineId(session.lineUserId, {
         name: formData.name.trim(),
         phone: formData.phone || null,
         email: formData.email || null,
@@ -125,7 +131,6 @@ const Member = {
       this.currentMember = updated;
       
       // 更新 Session
-      const session = Auth.getMemberSession();
       Auth.saveMemberSession(updated, session.lineUserId, session.accessToken);
       
       hideLoading();
@@ -137,7 +142,16 @@ const Member = {
     } catch (error) {
       hideLoading();
       CONFIG.error('儲存會員資料失敗', error);
-      showMessage(error.message || '儲存失敗，請稍後再試', 'error');
+      
+      // 解析錯誤訊息
+      let errorMessage = '儲存失敗，請稍後再試';
+      if (error.message) {
+        errorMessage = error.message;
+      } else if (error.error && error.error.message) {
+        errorMessage = error.error.message;
+      }
+      
+      showMessage(errorMessage, 'error');
       throw error;
     }
   },

@@ -145,7 +145,31 @@ const MemberAPI = {
     }
   },
   
-  // 更新會員資料
+  // 更新會員資料（使用 RPC 函數）
+  async updateByLineId(lineUserId, updates) {
+    try {
+      const client = getSupabase();
+      const { data, error } = await client
+        .rpc('update_member_profile', {
+          p_line_user_id: lineUserId,
+          p_name: updates.name,
+          p_phone: updates.phone || null,
+          p_email: updates.email || null,
+          p_birthday: updates.birthday || null,
+          p_gender: updates.gender || null,
+        });
+      
+      if (error) throw error;
+      
+      CONFIG.log('會員資料更新成功', data);
+      return data;
+    } catch (error) {
+      CONFIG.error('更新會員資料失敗', error);
+      throw error;
+    }
+  },
+  
+  // 更新會員資料（直接更新，管理員使用）
   async update(id, updates) {
     try {
       const client = getSupabase();
