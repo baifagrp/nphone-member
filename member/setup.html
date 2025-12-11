@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>完成會員資料設定</title>
+    <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+    <!-- 導航列 -->
+    <nav class="navbar">
+        <div class="container navbar-container">
+            <a href="../index.html" class="navbar-brand">會員系統</a>
+        </div>
+    </nav>
+
+    <!-- 主要內容 -->
+    <div class="container-sm" style="margin-top: 40px;">
+        <div class="card">
+            <div class="card-header">歡迎加入！請完成基本資料設定</div>
+            
+            <div class="card-body">
+                <p style="color: #86868B; margin-bottom: 24px;">
+                    為了提供更好的服務，請填寫以下基本資料
+                </p>
+                
+                <form id="form-setup">
+                    <!-- 姓名 -->
+                    <div class="form-group">
+                        <label for="setup-name" class="form-label required">姓名</label>
+                        <input 
+                            type="text" 
+                            id="setup-name" 
+                            class="form-input" 
+                            required
+                            minlength="2"
+                            maxlength="50"
+                            placeholder="請輸入姓名"
+                        >
+                    </div>
+                    
+                    <!-- 電話 -->
+                    <div class="form-group">
+                        <label for="setup-phone" class="form-label required">電話</label>
+                        <input 
+                            type="tel" 
+                            id="setup-phone" 
+                            class="form-input" 
+                            required
+                            pattern="09\d{8}"
+                            placeholder="例如：0912345678"
+                        >
+                        <div class="form-help">台灣手機號碼格式：09 開頭 + 8 位數字</div>
+                    </div>
+                    
+                    <!-- Email -->
+                    <div class="form-group">
+                        <label for="setup-email" class="form-label">Email</label>
+                        <input 
+                            type="email" 
+                            id="setup-email" 
+                            class="form-input" 
+                            placeholder="example@email.com"
+                        >
+                        <div class="form-help">選填，用於接收重要通知</div>
+                    </div>
+                    
+                    <!-- 生日 -->
+                    <div class="form-group">
+                        <label for="setup-birthday" class="form-label">生日</label>
+                        <input 
+                            type="date" 
+                            id="setup-birthday" 
+                            class="form-input"
+                        >
+                        <div class="form-help">選填，用於生日優惠活動</div>
+                    </div>
+                    
+                    <!-- 性別 -->
+                    <div class="form-group">
+                        <label for="setup-gender" class="form-label">性別</label>
+                        <select id="setup-gender" class="form-select">
+                            <option value="">請選擇</option>
+                            <option value="male">男性</option>
+                            <option value="female">女性</option>
+                            <option value="other">其他</option>
+                            <option value="prefer_not_to_say">不願透露</option>
+                        </select>
+                        <div class="form-help">選填</div>
+                    </div>
+                    
+                    <!-- 按鈕 -->
+                    <div style="margin-top: 32px;">
+                        <button type="submit" class="btn btn-primary btn-block">完成設定</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../js/config.js"></script>
+    <script src="../js/supabase-client.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/member.js"></script>
+    
+    <script>
+        // 頁面載入時初始化
+        window.addEventListener('DOMContentLoaded', async () => {
+            try {
+                // 檢查是否已登入
+                if (!Auth.isMemberLoggedIn()) {
+                    alert('請先登入');
+                    window.location.href = '../index.html';
+                    return;
+                }
+                
+                // 載入當前會員資料
+                await Member.init();
+                
+                // 如果會員已經有完整資料，直接導向會員中心
+                if (Member.currentMember && Member.currentMember.name && Member.currentMember.phone) {
+                    // 檢查是否只是姓名是 LINE 的預設名稱
+                    const session = Auth.getMemberSession();
+                    const hasOnlyLineName = Member.currentMember.name && !Member.currentMember.phone;
+                    
+                    if (!hasOnlyLineName) {
+                        // 已有完整資料，直接導向會員中心
+                        window.location.href = 'profile.html';
+                        return;
+                    }
+                }
+                
+                // 如果有 LINE 名稱，預填姓名
+                if (Member.currentMember && Member.currentMember.name) {
+                    document.getElementById('setup-name').value = Member.currentMember.name;
+                }
+                
+                // 如果有 Email，預填
+                if (Member.currentMember && Member.currentMember.email) {
+                    document.getElementById('setup-email').value = Member.currentMember.email;
+                }
+                
+            } catch (error) {
+                CONFIG.error('初始化失敗', error);
+                alert('載入失敗，請重新登入');
+                Auth.memberLogout();
+            }
+        });
+        
+        // 表單提交
+        document.getElementById('form-setup').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            if (!Member.currentMember) {
+                alert('會員資料載入失敗，請重新登入');
+                return;
+            }
+            
+            const formData = {
+                name: document.getElementById('setup-name').value.trim(),
+                phone: document.getElementById('setup-phone').value.trim(),
+                email: document.getElementById('setup-email').value.trim() || null,
+                birthday: document.getElementById('setup-birthday').value || null,
+                gender: document.getElementById('setup-gender').value || null,
+            };
+            
+            // 驗證必填欄位
+            if (!formData.name || formData.name.length < CONFIG.VALIDATION.nameMinLength) {
+                alert(`姓名至少需要 ${CONFIG.VALIDATION.nameMinLength} 個字元`);
+                return;
+            }
+            
+            if (!formData.phone) {
+                alert('請輸入電話號碼');
+                return;
+            }
+            
+            if (!validatePhone(formData.phone)) {
+                alert(CONFIG.VALIDATION.phoneMessage);
+                return;
+            }
+            
+            if (formData.email && !validateEmail(formData.email)) {
+                alert(CONFIG.VALIDATION.emailMessage);
+                return;
+            }
+            
+            try {
+                showLoading('儲存中...');
+                
+                // 更新會員資料
+                await Member.saveProfile(formData);
+                
+                hideLoading();
+                showMessage('資料設定完成！', 'success');
+                
+                // 導向會員中心
+                setTimeout(() => {
+                    window.location.href = 'profile.html';
+                }, 1000);
+                
+            } catch (error) {
+                hideLoading();
+                CONFIG.error('儲存失敗', error);
+                alert(error.message || '儲存失敗，請稍後再試');
+            }
+        });
+    </script>
+</body>
+</html>
+

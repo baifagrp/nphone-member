@@ -75,11 +75,23 @@ const Auth = {
       // 儲存會員資訊到 Session
       this.saveMemberSession(result.member, result.line_user_id, result.access_token);
       
-      // 導回原本的頁面或會員中心
-      const returnUrl = sessionStorage.getItem('line_login_return_url') || '/member/profile.html';
-      sessionStorage.removeItem('line_login_return_url');
+      // 檢查是否為新會員（沒有電話號碼視為新會員）
+      const isNewMember = !result.member || !result.member.phone;
       
-      window.location.href = returnUrl;
+      // 導向頁面判斷
+      let redirectUrl;
+      if (isNewMember) {
+        // 新會員導向資料填寫頁面
+        redirectUrl = '/member/setup.html';
+      } else {
+        // 已有資料的會員導向會員中心
+        const returnUrl = sessionStorage.getItem('line_login_return_url') || '/member/profile.html';
+        sessionStorage.removeItem('line_login_return_url');
+        redirectUrl = returnUrl;
+      }
+      
+      CONFIG.log('導向頁面', redirectUrl);
+      window.location.href = redirectUrl;
       
     } catch (error) {
       CONFIG.error('處理 LINE 回調失敗', error);

@@ -88,6 +88,14 @@
         window.addEventListener('DOMContentLoaded', async () => {
             try {
                 await Member.init();
+                
+                // 檢查是否為新會員（沒有電話號碼）
+                if (!Member.currentMember || !Member.currentMember.phone) {
+                    // 導向資料填寫頁面
+                    window.location.href = 'setup.html';
+                    return;
+                }
+                
                 Member.displayProfile();
             } catch (error) {
                 CONFIG.error('初始化失敗', error);
