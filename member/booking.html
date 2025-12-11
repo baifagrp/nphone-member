@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>線上預約</title>
+    <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+    <!-- 導航列 -->
+    <nav class="navbar">
+        <div class="container navbar-container">
+            <a href="../index.html" class="navbar-brand">會員系統</a>
+            <div class="navbar-menu">
+                <a href="profile.html" class="navbar-link">個人資料</a>
+                <a href="booking.html" class="navbar-link">線上預約</a>
+                <button id="btn-logout" class="btn btn-sm btn-secondary">登出</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主要內容 -->
+    <div class="container-sm" style="margin-top: 40px;">
+        <h1 style="font-size: 32px; font-weight: 700; margin-bottom: 32px;">線上預約</h1>
+        
+        <!-- 步驟指示器 -->
+        <div style="display: flex; justify-content: space-between; margin-bottom: 32px; max-width: 500px;">
+            <div class="booking-step active" data-step="1">
+                <div class="step-number">1</div>
+                <div class="step-label">選擇服務</div>
+            </div>
+            <div class="booking-step" data-step="2">
+                <div class="step-number">2</div>
+                <div class="step-label">選擇日期</div>
+            </div>
+            <div class="booking-step" data-step="3">
+                <div class="step-number">3</div>
+                <div class="step-label">選擇時間</div>
+            </div>
+            <div class="booking-step" data-step="4">
+                <div class="step-number">4</div>
+                <div class="step-label">確認預約</div>
+            </div>
+        </div>
+        
+        <!-- 步驟 1: 選擇服務 -->
+        <div id="step-1" class="booking-step-content active">
+            <div class="card">
+                <div class="card-header">選擇服務項目</div>
+                <div class="card-body" id="services-list">
+                    <div class="loading-spinner"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 步驟 2: 選擇日期 -->
+        <div id="step-2" class="booking-step-content" style="display: none;">
+            <div class="card">
+                <div class="card-header">選擇預約日期</div>
+                <div class="card-body">
+                    <input 
+                        type="date" 
+                        id="booking-date" 
+                        class="form-input" 
+                        required
+                        min=""
+                    >
+                    <div class="form-help">請選擇預約日期</div>
+                </div>
+                <div style="padding: 16px; border-top: 1px solid #E5E7EB;">
+                    <button id="btn-next-step-2" class="btn btn-primary">下一步</button>
+                    <button id="btn-back-step-2" class="btn btn-secondary" style="margin-left: 8px;">上一步</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 步驟 3: 選擇時間 -->
+        <div id="step-3" class="booking-step-content" style="display: none;">
+            <div class="card">
+                <div class="card-header">選擇預約時間</div>
+                <div class="card-body" id="time-slots-list">
+                    <div class="loading-spinner"></div>
+                </div>
+                <div style="padding: 16px; border-top: 1px solid #E5E7EB;">
+                    <button id="btn-next-step-3" class="btn btn-primary" disabled>下一步</button>
+                    <button id="btn-back-step-3" class="btn btn-secondary" style="margin-left: 8px;">上一步</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 步驟 4: 確認預約 -->
+        <div id="step-4" class="booking-step-content" style="display: none;">
+            <div class="card">
+                <div class="card-header">確認預約資訊</div>
+                <div class="card-body">
+                    <div class="profile-info-row">
+                        <span class="profile-label">服務項目</span>
+                        <span class="profile-value" id="confirm-service-name">-</span>
+                    </div>
+                    <div class="profile-info-row">
+                        <span class="profile-label">服務時長</span>
+                        <span class="profile-value" id="confirm-service-duration">-</span>
+                    </div>
+                    <div class="profile-info-row">
+                        <span class="profile-label">服務價格</span>
+                        <span class="profile-value" id="confirm-service-price">-</span>
+                    </div>
+                    <div class="profile-info-row">
+                        <span class="profile-label">預約日期</span>
+                        <span class="profile-value" id="confirm-booking-date">-</span>
+                    </div>
+                    <div class="profile-info-row">
+                        <span class="profile-label">預約時間</span>
+                        <span class="profile-value" id="confirm-booking-time">-</span>
+                    </div>
+                    
+                    <div class="form-group" style="margin-top: 24px;">
+                        <label for="booking-notes" class="form-label">備註（選填）</label>
+                        <textarea 
+                            id="booking-notes" 
+                            class="form-textarea" 
+                            placeholder="如有特殊需求請在此註明"
+                            rows="3"
+                        ></textarea>
+                    </div>
+                </div>
+                <div style="padding: 16px; border-top: 1px solid #E5E7EB;">
+                    <button id="btn-submit-booking" class="btn btn-success btn-block">確認預約</button>
+                    <button id="btn-back-step-4" class="btn btn-secondary btn-block" style="margin-top: 8px;">上一步</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../js/config.js"></script>
+    <script src="../js/supabase-client.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/member.js"></script>
+    <script src="../js/booking.js"></script>
+    
+    <script>
+        let currentStep = 1;
+        let selectedService = null;
+        let selectedDate = null;
+        let selectedTime = null;
+        let availableServices = [];
+        
+        // 頁面載入時初始化
+        window.addEventListener('DOMContentLoaded', async () => {
+            try {
+                // 檢查登入狀態
+                if (!Auth.requireMemberLogin()) {
+                    return;
+                }
+                
+                // 設定日期選擇器的最小日期為今天
+                const today = new Date().toISOString().split('T')[0];
+                document.getElementById('booking-date').setAttribute('min', today);
+                
+                // 載入服務列表
+                await loadServices();
+                
+            } catch (error) {
+                CONFIG.error('初始化失敗', error);
+            }
+        });
+        
+        // 載入服務列表
+        async function loadServices() {
+            try {
+                showLoading('載入服務項目...');
+                availableServices = await BookingAPI.getActiveServices();
+                hideLoading();
+                
+                if (availableServices.length === 0) {
+                    document.getElementById('services-list').innerHTML = '<p style="text-align: center; color: #999; padding: 40px;">暫無可預約的服務項目</p>';
+                    return;
+                }
+                
+                // 顯示服務列表
+                document.getElementById('services-list').innerHTML = availableServices.map(service => `
+                    <div class="service-card" data-service-id="${service.id}" onclick="selectService('${service.id}')">
+                        <div class="service-info">
+                            <h3>${service.name}</h3>
+                            ${service.description ? `<p style="color: #86868B; margin-top: 8px;">${service.description}</p>` : ''}
+                            <div style="margin-top: 16px; display: flex; gap: 16px;">
+                                <span style="color: #007AFF;">⏱ ${service.duration} 分鐘</span>
+                                <span style="color: #34C759; font-weight: 600;">NT$ ${service.price.toLocaleString()}</span>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+                
+            } catch (error) {
+                hideLoading();
+                CONFIG.error('載入服務失敗', error);
+                showMessage('載入服務失敗', 'error');
+            }
+        }
+        
+        // 選擇服務
+        function selectService(serviceId) {
+            selectedService = availableServices.find(s => s.id === serviceId);
+            
+            // 更新 UI
+            document.querySelectorAll('.service-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            document.querySelector(`[data-service-id="${serviceId}"]`).classList.add('selected');
+            
+            // 1 秒後進入下一步
+            setTimeout(() => {
+                goToStep(2);
+            }, 500);
+        }
+        
+        // 進入下一步
+        function goToStep(step) {
+            // 隱藏所有步驟
+            document.querySelectorAll('.booking-step-content').forEach(content => {
+                content.classList.remove('active');
+                content.style.display = 'none';
+            });
+            
+            // 顯示當前步驟
+            document.getElementById(`step-${step}`).classList.add('active');
+            document.getElementById(`step-${step}`).style.display = 'block';
+            
+            // 更新步驟指示器
+            document.querySelectorAll('.booking-step').forEach((stepEl, index) => {
+                stepEl.classList.remove('active');
+                if (index + 1 <= step) {
+                    stepEl.classList.add('active');
+                }
+            });
+            
+            currentStep = step;
+            
+            // 特殊處理
+            if (step === 3 && selectedDate) {
+                loadTimeSlots();
+            } else if (step === 4) {
+                displayConfirmation();
+            }
+        }
+        
+        // 日期選擇事件
+        document.getElementById('booking-date').addEventListener('change', (e) => {
+            selectedDate = e.target.value;
+        });
+        
+        // 步驟 2 下一步
+        document.getElementById('btn-next-step-2').addEventListener('click', () => {
+            const date = document.getElementById('booking-date').value;
+            if (!date) {
+                alert('請選擇預約日期');
+                return;
+            }
+            selectedDate = date;
+            goToStep(3);
+        });
+        
+        // 步驟 3 載入時間段
+        async function loadTimeSlots() {
+            try {
+                document.getElementById('time-slots-list').innerHTML = '<div class="loading-spinner"></div>';
+                
+                const slots = await BookingAPI.getAvailableTimeSlots(selectedDate, selectedService.duration);
+                
+                if (slots.length === 0) {
+                    document.getElementById('time-slots-list').innerHTML = '<p style="text-align: center; color: #999; padding: 40px;">當天無可用時間段，請選擇其他日期</p>';
+                    return;
+                }
+                
+                document.getElementById('time-slots-list').innerHTML = `
+                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 12px;">
+                        ${slots.map(slot => `
+                            <button class="time-slot-btn" data-time="${slot}" onclick="selectTime('${slot}')">
+                                ${slot}
+                            </button>
+                        `).join('')}
+                    </div>
+                `;
+                
+            } catch (error) {
+                CONFIG.error('載入時間段失敗', error);
+                showMessage('載入時間段失敗', 'error');
+            }
+        }
+        
+        // 選擇時間
+        function selectTime(time) {
+            selectedTime = time;
+            
+            // 更新 UI
+            document.querySelectorAll('.time-slot-btn').forEach(btn => {
+                btn.classList.remove('selected');
+            });
+            document.querySelector(`[data-time="${time}"]`).classList.add('selected');
+            
+            // 啟用下一步按鈕
+            document.getElementById('btn-next-step-3').disabled = false;
+        }
+        
+        // 步驟 3 下一步
+        document.getElementById('btn-next-step-3').addEventListener('click', () => {
+            if (!selectedTime) {
+                alert('請選擇預約時間');
+                return;
+            }
+            goToStep(4);
+        });
+        
+        // 顯示確認資訊
+        function displayConfirmation() {
+            document.getElementById('confirm-service-name').textContent = selectedService.name;
+            document.getElementById('confirm-service-duration').textContent = `${selectedService.duration} 分鐘`;
+            document.getElementById('confirm-service-price').textContent = `NT$ ${selectedService.price.toLocaleString()}`;
+            document.getElementById('confirm-booking-date').textContent = formatDateDisplay(selectedDate);
+            document.getElementById('confirm-booking-time').textContent = selectedTime;
+        }
+        
+        // 提交預約
+        document.getElementById('btn-submit-booking').addEventListener('click', async () => {
+            try {
+                if (!Auth.isMemberLoggedIn()) {
+                    alert('請先登入');
+                    return;
+                }
+                
+                const session = Auth.getMemberSession();
+                const notes = document.getElementById('booking-notes').value.trim() || null;
+                
+                showLoading('建立預約中...');
+                
+                const booking = await BookingAPI.createBooking(
+                    session.lineUserId,
+                    selectedService.id,
+                    selectedDate,
+                    selectedTime,
+                    notes
+                );
+                
+                hideLoading();
+                showMessage('預約成功！', 'success');
+                
+                // 2 秒後導向預約記錄頁面
+                setTimeout(() => {
+                    window.location.href = 'bookings.html';
+                }, 2000);
+                
+            } catch (error) {
+                hideLoading();
+                CONFIG.error('預約失敗', error);
+                showMessage(error.message || '預約失敗，請稍後再試', 'error');
+            }
+        });
+        
+        // 上一步按鈕
+        document.getElementById('btn-back-step-2').addEventListener('click', () => goToStep(1));
+        document.getElementById('btn-back-step-3').addEventListener('click', () => goToStep(2));
+        document.getElementById('btn-back-step-4').addEventListener('click', () => goToStep(3));
+        
+        // 格式化日期顯示
+        function formatDateDisplay(dateString) {
+            const date = new Date(dateString);
+            const weekdays = ['週日', '週一', '週二', '週三', '週四', '週五', '週六'];
+            const month = date.getMonth() + 1;
+            const day = date.getDate();
+            const weekday = weekdays[date.getDay()];
+            return `${date.getFullYear()}年${month}月${day}日 (${weekday})`;
+        }
+    </script>
+    
+    <style>
+        .booking-step {
+            text-align: center;
+            flex: 1;
+            position: relative;
+        }
+        
+        .booking-step::after {
+            content: '';
+            position: absolute;
+            top: 20px;
+            left: 60%;
+            width: 80%;
+            height: 2px;
+            background: #E5E7EB;
+            z-index: 0;
+        }
+        
+        .booking-step:last-child::after {
+            display: none;
+        }
+        
+        .booking-step.active::after {
+            background: #007AFF;
+        }
+        
+        .step-number {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #E5E7EB;
+            color: #999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 8px;
+            font-weight: 600;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .booking-step.active .step-number {
+            background: #007AFF;
+            color: white;
+        }
+        
+        .step-label {
+            font-size: 12px;
+            color: #999;
+        }
+        
+        .booking-step.active .step-label {
+            color: #007AFF;
+            font-weight: 600;
+        }
+        
+        .service-card {
+            padding: 20px;
+            border: 2px solid #E5E7EB;
+            border-radius: var(--radius);
+            margin-bottom: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .service-card:hover {
+            border-color: #007AFF;
+            box-shadow: var(--shadow-md);
+        }
+        
+        .service-card.selected {
+            border-color: #007AFF;
+            background: rgba(0, 122, 255, 0.05);
+        }
+        
+        .time-slot-btn {
+            padding: 12px;
+            border: 2px solid #E5E7EB;
+            border-radius: var(--radius-sm);
+            background: white;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 15px;
+        }
+        
+        .time-slot-btn:hover {
+            border-color: #007AFF;
+        }
+        
+        .time-slot-btn.selected {
+            background: #007AFF;
+            color: white;
+            border-color: #007AFF;
+        }
+    </style>
+</body>
+</html>
+

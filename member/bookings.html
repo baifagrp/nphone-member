@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的預約</title>
+    <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+    <!-- 導航列 -->
+    <nav class="navbar">
+        <div class="container navbar-container">
+            <a href="../index.html" class="navbar-brand">會員系統</a>
+            <div class="navbar-menu">
+                <a href="profile.html" class="navbar-link">個人資料</a>
+                <a href="booking.html" class="navbar-link">線上預約</a>
+                <a href="bookings.html" class="navbar-link">我的預約</a>
+                <button id="btn-logout" class="btn btn-sm btn-secondary">登出</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主要內容 -->
+    <div class="container-sm" style="margin-top: 40px;">
+        <div class="flex-between" style="margin-bottom: 24px;">
+            <h1 style="font-size: 32px; font-weight: 700;">我的預約</h1>
+            <a href="booking.html" class="btn btn-success">+ 新增預約</a>
+        </div>
+        
+        <!-- 預約列表 -->
+        <div id="bookings-list">
+            <div class="card">
+                <div style="text-align: center; padding: 40px;">
+                    <div class="loading-spinner"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../js/config.js"></script>
+    <script src="../js/supabase-client.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/member.js"></script>
+    <script src="../js/booking.js"></script>
+    
+    <script>
+        // 頁面載入時初始化
+        window.addEventListener('DOMContentLoaded', async () => {
+            try {
+                if (!Auth.requireMemberLogin()) {
+                    return;
+                }
+                
+                await loadMyBookings();
+            } catch (error) {
+                CONFIG.error('初始化失敗', error);
+            }
+        });
+        
+        // 載入我的預約
+        async function loadMyBookings() {
+            try {
+                const session = Auth.getMemberSession();
+                if (!session) {
+                    return;
+                }
+                
+                const bookings = await BookingAPI.getMyBookings(session.lineUserId);
+                
+                if (bookings.length === 0) {
+                    document.getElementById('bookings-list').innerHTML = `
+                        <div class="card">
+                            <div style="text-align: center; padding: 40px; color: #999;">
+                                <p>尚無預約記錄</p>
+                                <a href="booking.html" class="btn btn-primary" style="margin-top: 16px;">立即預約</a>
+                            </div>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // 顯示預約列表
+                document.getElementById('bookings-list').innerHTML = bookings.map(booking => {
+                    const statusMap = {
+                        'pending': { text: '待確認', class: 'status-warning' },
+                        'confirmed': { text: '已確認', class: 'status-success' },
+                        'cancelled': { text: '已取消', class: 'status-gray' },
+                        'completed': { text: '已完成', class: 'status-success' },
+                        'no_show': { text: '未到', class: 'status-error' },
+                    };
+                    
+                    const status = statusMap[booking.status] || { text: booking.status, class: 'status-gray' };
+                    const canCancel = booking.status === 'pending' || booking.status === 'confirmed';
+                    const bookingDateTime = new Date(`${booking.booking_date}T${booking.booking_time}`);
+                    const isPast = bookingDateTime < new Date();
+                    
+                    return `
+                        <div class="card" style="margin-bottom: 16px;">
+                            <div class="flex-between">
+                                <div>
+                                    <h3 style="margin-bottom: 8px;">${booking.service_name}</h3>
+                                    <div style="color: #86868B; font-size: 14px;">
+                                        <div>📅 ${formatDateDisplay(booking.booking_date)}</div>
+                                        <div>⏰ ${booking.booking_time}</div>
+                                        <div>⏱ ${booking.service_duration} 分鐘</div>
+                                        <div>💰 NT$ ${booking.service_price.toLocaleString()}</div>
+                                    </div>
+                                    ${booking.notes ? `<div style="margin-top: 12px; padding: 12px; background: #F5F5F7; border-radius: 8px; color: #666;">📝 ${booking.notes}</div>` : ''}
+                                </div>
+                                <div style="text-align: right;">
+                                    <div class="status-badge ${status.class}" style="margin-bottom: 12px;">${status.text}</div>
+                                    ${canCancel && !isPast ? `
+                                        <button class="btn btn-sm btn-danger" onclick="cancelBooking('${booking.id}', '${booking.service_name}')">
+                                            取消預約
+                                        </button>
+                                    ` : ''}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                
+            } catch (error) {
+                CONFIG.error('載入預約失敗', error);
+                document.getElementById('bookings-list').innerHTML = `
+                    <div class="card">
+                        <div style="text-align: center; padding: 40px; color: #FF3B30;">
+                            <p>載入失敗，請重新整理</p>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+        
+        // 取消預約
+        async function cancelBooking(bookingId, serviceName) {
+            if (!confirm(`確定要取消預約「${serviceName}」嗎？`)) {
+                return;
+            }
+            
+            try {
+                const session = Auth.getMemberSession();
+                if (!session) {
+                    alert('請先登入');
+                    return;
+                }
+                
+                showLoading('取消中...');
+                
+                await BookingAPI.cancelBookingByMember(session.lineUserId, bookingId);
+                
+                hideLoading();
+                showMessage('預約已取消', 'success');
+                
+                // 重新載入列表
+                await loadMyBookings();
+                
+            } catch (error) {
+                hideLoading();
+                CONFIG.error('取消預約失敗', error);
+                showMessage(error.message || '取消失敗', 'error');
+            }
+        }
+        
+        // 格式化日期顯示
+        function formatDateDisplay(dateString) {
+            const date = new Date(dateString);
+            const weekdays = ['週日', '週一', '週二', '週三', '週四', '週五', '週六'];
+            const month = date.getMonth() + 1;
+            const day = date.getDate();
+            const weekday = weekdays[date.getDay()];
+            return `${date.getFullYear()}年${month}月${day}日 (${weekday})`;
+        }
+    </script>
+</body>
+</html>
+

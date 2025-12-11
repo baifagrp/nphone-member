@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>服務項目管理</title>
+    <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+    <!-- 導航列 -->
+    <nav class="navbar">
+        <div class="container navbar-container">
+            <a href="dashboard.html" class="navbar-brand">管理後台</a>
+            <div class="navbar-menu">
+                <a href="dashboard.html" class="navbar-link">首頁</a>
+                <a href="members.html" class="navbar-link">會員管理</a>
+                <a href="bookings.html" class="navbar-link">預約管理</a>
+                <a href="services.html" class="navbar-link">服務項目</a>
+                <button id="btn-admin-logout" class="btn btn-sm btn-secondary">登出</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主要內容 -->
+    <div class="container" style="margin-top: 40px;">
+        <div class="flex-between" style="margin-bottom: 24px;">
+            <h1 style="font-size: 32px; font-weight: 700;">服務項目管理</h1>
+            <button id="btn-new-service" class="btn btn-success">+ 新增服務</button>
+        </div>
+        
+        <!-- 服務列表 -->
+        <div id="services-list">
+            <div class="card">
+                <div style="text-align: center; padding: 40px;">
+                    <div class="loading-spinner"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 新增/編輯服務 Modal -->
+    <div id="service-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+        <div class="card" style="max-width: 600px; width: 90%; max-height: 90vh; overflow-y: auto;">
+            <div class="card-header" id="modal-title">新增服務</div>
+            <div class="card-body">
+                <form id="form-service">
+                    <div class="form-group">
+                        <label for="service-name" class="form-label required">服務名稱</label>
+                        <input type="text" id="service-name" class="form-input" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="service-description" class="form-label">服務描述</label>
+                        <textarea id="service-description" class="form-textarea" rows="3"></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="service-duration" class="form-label required">服務時長（分鐘）</label>
+                        <input type="number" id="service-duration" class="form-input" required min="1" value="60">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="service-price" class="form-label required">價格</label>
+                        <input type="number" id="service-price" class="form-input" required min="0" step="0.01" value="0">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="service-sort-order" class="form-label">排序順序</label>
+                        <input type="number" id="service-sort-order" class="form-input" value="0">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="service-is-active" checked> 啟用此服務
+                        </label>
+                    </div>
+                    
+                    <div class="flex flex-gap" style="margin-top: 24px;">
+                        <button type="submit" class="btn btn-primary" style="flex: 1;">儲存</button>
+                        <button type="button" id="btn-cancel-modal" class="btn btn-secondary" style="flex: 1;">取消</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../js/config.js"></script>
+    <script src="../js/supabase-client.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/admin.js"></script>
+    <script src="../js/booking.js"></script>
+    
+    <script>
+        let editingServiceId = null;
+        
+        // 頁面載入時初始化
+        window.addEventListener('DOMContentLoaded', async () => {
+            try {
+                await Admin.init();
+                await loadServices();
+            } catch (error) {
+                CONFIG.error('初始化失敗', error);
+            }
+        });
+        
+        // 載入服務列表
+        async function loadServices() {
+            try {
+                const services = await BookingAPI.getAllServices();
+                
+                if (services.length === 0) {
+                    document.getElementById('services-list').innerHTML = `
+                        <div class="card">
+                            <div style="text-align: center; padding: 40px; color: #999;">
+                                尚無服務項目
+                            </div>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                document.getElementById('services-list').innerHTML = services.map(service => `
+                    <div class="card" style="margin-bottom: 16px;">
+                        <div class="flex-between">
+                            <div style="flex: 1;">
+                                <h3 style="margin-bottom: 8px;">
+                                    ${service.name}
+                                    ${!service.is_active ? '<span class="status-badge status-gray">已停用</span>' : ''}
+                                </h3>
+                                ${service.description ? `<p style="color: #86868B; margin-bottom: 12px;">${service.description}</p>` : ''}
+                                <div style="display: flex; gap: 16px; color: #666; font-size: 14px;">
+                                    <span>⏱ ${service.duration} 分鐘</span>
+                                    <span>💰 NT$ ${service.price.toLocaleString()}</span>
+                                    <span>📊 排序: ${service.sort_order}</span>
+                                </div>
+                            </div>
+                            <div>
+                                <button class="btn btn-sm btn-primary" onclick="editService('${service.id}')">編輯</button>
+                                <button class="btn btn-sm btn-danger" onclick="deleteService('${service.id}', '${service.name}')" style="margin-left: 8px;">刪除</button>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+                
+            } catch (error) {
+                CONFIG.error('載入服務失敗', error);
+            }
+        }
+        
+        // 新增服務
+        document.getElementById('btn-new-service').addEventListener('click', () => {
+            editingServiceId = null;
+            document.getElementById('modal-title').textContent = '新增服務';
+            document.getElementById('form-service').reset();
+            document.getElementById('service-is-active').checked = true;
+            document.getElementById('service-modal').style.display = 'flex';
+        });
+        
+        // 編輯服務
+        async function editService(serviceId) {
+            try {
+                const service = await BookingAPI.getServiceById(serviceId);
+                editingServiceId = serviceId;
+                
+                document.getElementById('modal-title').textContent = '編輯服務';
+                document.getElementById('service-name').value = service.name;
+                document.getElementById('service-description').value = service.description || '';
+                document.getElementById('service-duration').value = service.duration;
+                document.getElementById('service-price').value = service.price;
+                document.getElementById('service-sort-order').value = service.sort_order;
+                document.getElementById('service-is-active').checked = service.is_active;
+                
+                document.getElementById('service-modal').style.display = 'flex';
+            } catch (error) {
+                CONFIG.error('載入服務失敗', error);
+                showMessage('載入服務失敗', 'error');
+            }
+        }
+        
+        // 刪除服務
+        async function deleteService(serviceId, serviceName) {
+            if (!confirm(`確定要刪除服務「${serviceName}」嗎？\n刪除後將無法復原！`)) {
+                return;
+            }
+            
+            try {
+                await BookingAPI.deleteService(serviceId);
+                showMessage('服務已刪除', 'success');
+                await loadServices();
+            } catch (error) {
+                CONFIG.error('刪除服務失敗', error);
+                showMessage('刪除失敗', 'error');
+            }
+        }
+        
+        // 儲存服務
+        document.getElementById('form-service').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const serviceData = {
+                name: document.getElementById('service-name').value.trim(),
+                description: document.getElementById('service-description').value.trim() || null,
+                duration: parseInt(document.getElementById('service-duration').value),
+                price: parseFloat(document.getElementById('service-price').value),
+                sort_order: parseInt(document.getElementById('service-sort-order').value) || 0,
+                is_active: document.getElementById('service-is-active').checked,
+            };
+            
+            try {
+                if (editingServiceId) {
+                    await BookingAPI.updateService(editingServiceId, serviceData);
+                    showMessage('服務更新成功', 'success');
+                } else {
+                    await BookingAPI.createService(serviceData);
+                    showMessage('服務新增成功', 'success');
+                }
+                
+                document.getElementById('service-modal').style.display = 'none';
+                await loadServices();
+            } catch (error) {
+                CONFIG.error('儲存服務失敗', error);
+                showMessage('儲存失敗', 'error');
+            }
+        });
+        
+        // 關閉 Modal
+        document.getElementById('btn-cancel-modal').addEventListener('click', () => {
+            document.getElementById('service-modal').style.display = 'none';
+        });
+    </script>
+</body>
+</html>
+
