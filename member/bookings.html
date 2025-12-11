@@ -105,7 +105,6 @@
                         'refunded': { text: '已退款', class: 'status-gray' },
                     };
                     const paymentStatus = paymentStatusMap[booking.payment_status || 'unpaid'] || { text: booking.payment_status || '未付款', class: 'status-warning' };
-                    const canCheckout = (booking.status === 'confirmed' || booking.status === 'completed') && booking.payment_status !== 'paid' && booking.payment_status !== 'refunded';
                     
                     return `
                         <div class="card" style="margin-bottom: 16px;">
@@ -127,12 +126,6 @@
                                 </div>
                                 <div style="text-align: right; margin-left: 16px;">
                                     <div class="status-badge ${status.class}" style="margin-bottom: 12px;">${status.text}</div>
-                                    ${canCheckout ? `
-                                        <a href="checkout.html?booking_id=${booking.id}" class="btn btn-sm btn-success" style="margin-bottom: 8px; display: inline-block;">
-                                            前往結帳
-                                        </a>
-                                        <br>
-                                    ` : ''}
                                     ${canCancel && !isPast ? `
                                         <button class="btn btn-sm btn-danger" onclick="cancelBooking('${booking.id}', '${booking.service_name}')">
                                             取消預約

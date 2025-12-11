@@ -146,6 +146,7 @@
                                         ${status.actions.includes('complete') ? `<button class="btn btn-sm btn-primary" onclick="updateBookingStatus('${booking.id}', 'completed')">標記完成</button>` : ''}
                                         ${status.actions.includes('cancel') ? `<button class="btn btn-sm btn-danger" onclick="updateBookingStatus('${booking.id}', 'cancelled')">取消預約</button>` : ''}
                                         ${status.actions.includes('no_show') ? `<button class="btn btn-sm btn-warning" onclick="updateBookingStatus('${booking.id}', 'no_show')">標記未到</button>` : ''}
+                                        <button class="btn btn-sm btn-secondary" onclick="deleteBooking('${booking.id}', '${booking.service_name}')" style="margin-top: 8px;">刪除</button>
                                     </div>
                                 </div>
                             </div>
@@ -156,6 +157,25 @@
             } catch (error) {
                 CONFIG.error('載入預約失敗', error);
                 showMessage('載入預約失敗', 'error');
+            }
+        }
+        
+        // 刪除預約
+        async function deleteBooking(bookingId, serviceName) {
+            if (!confirm(`確定要刪除預約「${serviceName}」嗎？\n\n此操作無法復原！`)) {
+                return;
+            }
+            
+            try {
+                showLoading('刪除中...');
+                await BookingAPI.deleteBooking(bookingId);
+                hideLoading();
+                showMessage('預約已刪除', 'success');
+                await loadBookings();
+            } catch (error) {
+                hideLoading();
+                CONFIG.error('刪除預約失敗', error);
+                showMessage(error.message || '刪除失敗', 'error');
             }
         }
         
@@ -184,6 +204,13 @@
                 showMessage('更新失敗', 'error');
             }
         }
+        
+        // 新增預約按鈕
+        document.getElementById('btn-new-booking').addEventListener('click', () => {
+            // 導向到會員預約頁面，或創建一個管理員新增預約的頁面
+            // 暫時先導向到會員預約頁面（管理員可以透過選擇會員來為其新增預約）
+            window.location.href = 'member-booking-new.html';
+        });
         
         // 篩選功能
         document.getElementById('btn-apply-filter').addEventListener('click', () => {

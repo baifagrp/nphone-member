@@ -730,6 +730,26 @@ const BookingAPI = {
     }
   },
   
+  // 管理員刪除預約
+  async deleteBooking(id) {
+    try {
+      const client = getSupabase();
+      
+      const { error } = await client
+        .from('bookings')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+      
+      CONFIG.log('預約刪除成功', id);
+      return true;
+    } catch (error) {
+      CONFIG.error('刪除預約失敗', error);
+      throw error;
+    }
+  },
+  
   // 管理員更新預約狀態
   async updateBookingStatus(id, status, adminNotes = null) {
     try {
