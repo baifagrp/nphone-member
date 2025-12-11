@@ -215,17 +215,49 @@ const BookingAPI = {
   async createBooking(lineUserId, serviceId, bookingDate, bookingTime, serviceOptionId = null, notes = null) {
     try {
       const client = getSupabase();
-      const { data, error } = await client
-        .rpc('create_booking', {
-          p_line_user_id: lineUserId,
-          p_service_id: serviceId,
-          p_booking_date: bookingDate,
-          p_booking_time: bookingTime,
-          p_service_option_id: serviceOptionId,
-          p_notes: notes,
-        });
       
-      if (error) throw error;
+      // 驗證參數
+      if (!lineUserId) {
+        throw new Error('缺少會員資訊');
+      }
+      if (!serviceId) {
+        throw new Error('請選擇服務項目');
+      }
+      if (!bookingDate) {
+        throw new Error('請選擇預約日期');
+      }
+      if (!bookingTime) {
+        throw new Error('請選擇預約時間');
+      }
+      
+      // 準備參數（只包含有值的參數，避免傳遞 undefined）
+      const params = {
+        p_line_user_id: String(lineUserId),
+        p_service_id: serviceId,
+        p_booking_date: String(bookingDate),
+        p_booking_time: String(bookingTime),
+      };
+      
+      // 只有在有值時才加入選項 ID（避免傳遞 undefined）
+      if (serviceOptionId) {
+        params.p_service_option_id = serviceOptionId;
+      }
+      
+      // 只有在有值時才加入備註
+      if (notes) {
+        params.p_notes = String(notes);
+      }
+      
+      CONFIG.log('調用 create_booking RPC', params);
+      
+      const { data, error } = await client.rpc('create_booking', params);
+      
+      if (error) {
+        CONFIG.error('RPC 錯誤詳情', error);
+        // 提供更友好的錯誤訊息
+        const errorMessage = error.message || error.details || error.hint || '建立預約失敗';
+        throw new Error(errorMessage);
+      }
       
       CONFIG.log('預約建立成功', data);
       return data;

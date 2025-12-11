@@ -10,7 +10,7 @@
     <!-- 導航列 -->
     <nav class="navbar">
         <div class="container navbar-container">
-            <a href="../index.html" class="navbar-brand">會員系統</a>
+            <a href="../index.html" class="navbar-brand">NPHONE</a>
             <div class="navbar-menu">
                 <a href="profile.html" class="navbar-link">個人資料</a>
                 <a href="booking.html" class="navbar-link">線上預約</a>
@@ -475,16 +475,60 @@
                     return;
                 }
                 
+                // 驗證必要資料
+                if (!selectedService || !selectedService.id) {
+                    showMessage('請選擇服務項目', 'error');
+                    return;
+                }
+                
+                if (!selectedDate) {
+                    showMessage('請選擇預約日期', 'error');
+                    return;
+                }
+                
+                if (!selectedTime) {
+                    showMessage('請選擇預約時間', 'error');
+                    return;
+                }
+                
+                // 如果服務需要選項但未選擇
+                if (selectedService.has_options && !selectedServiceOption) {
+                    showMessage(`請選擇${selectedService.option_label || '選項'}`, 'error');
+                    return;
+                }
+                
                 const session = Auth.getMemberSession();
                 const notes = document.getElementById('booking-notes').value.trim() || null;
                 
                 showLoading('建立預約中...');
                 
+                // 確保日期格式正確（YYYY-MM-DD）
+                const bookingDate = selectedDate instanceof Date 
+                    ? selectedDate.toISOString().split('T')[0]
+                    : selectedDate;
+                
+                // 確保時間格式正確（HH:MM:SS 或 HH:MM）
+                let bookingTime = selectedTime;
+                if (!bookingTime.includes(':')) {
+                    bookingTime = '00:00:00';
+                } else if (bookingTime.split(':').length === 2) {
+                    bookingTime = bookingTime + ':00';
+                }
+                
+                CONFIG.log('建立預約參數', {
+                    lineUserId: session.lineUserId,
+                    serviceId: selectedService.id,
+                    bookingDate: bookingDate,
+                    bookingTime: bookingTime,
+                    serviceOptionId: selectedServiceOption ? selectedServiceOption.id : null,
+                    notes: notes
+                });
+                
                 const booking = await BookingAPI.createBooking(
                     session.lineUserId,
                     selectedService.id,
-                    selectedDate,
-                    selectedTime,
+                    bookingDate,
+                    bookingTime,
                     selectedServiceOption ? selectedServiceOption.id : null,
                     notes
                 );
@@ -500,7 +544,18 @@
             } catch (error) {
                 hideLoading();
                 CONFIG.error('預約失敗', error);
-                showMessage(error.message || '預約失敗，請稍後再試', 'error');
+                
+                // 顯示詳細錯誤訊息
+                let errorMessage = '預約失敗，請稍後再試';
+                if (error.message) {
+                    errorMessage = error.message;
+                } else if (error.error_description) {
+                    errorMessage = error.error_description;
+                } else if (typeof error === 'string') {
+                    errorMessage = error;
+                }
+                
+                showMessage(errorMessage, 'error');
             }
         });
         
