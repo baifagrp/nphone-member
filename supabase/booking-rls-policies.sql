@@ -6,6 +6,7 @@
 -- 啟用 RLS
 -- =============================================
 ALTER TABLE public.services ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.service_options ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.bookings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.business_hours ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.time_slots ENABLE ROW LEVEL SECURITY;
@@ -15,12 +16,14 @@ ALTER TABLE public.time_slots ENABLE ROW LEVEL SECURITY;
 -- =============================================
 
 -- 政策 1: 任何人都可以查看啟用的服務（會員端顯示）
+DROP POLICY IF EXISTS "Anyone can view active services" ON public.services;
 CREATE POLICY "Anyone can view active services"
     ON public.services
     FOR SELECT
     USING (is_active = true);
 
 -- 政策 2: 管理員可以查看所有服務
+DROP POLICY IF EXISTS "Admins can view all services" ON public.services;
 CREATE POLICY "Admins can view all services"
     ON public.services
     FOR SELECT
@@ -33,6 +36,7 @@ CREATE POLICY "Admins can view all services"
     );
 
 -- 政策 3: 管理員可以新增服務
+DROP POLICY IF EXISTS "Admins can insert services" ON public.services;
 CREATE POLICY "Admins can insert services"
     ON public.services
     FOR INSERT
@@ -45,6 +49,7 @@ CREATE POLICY "Admins can insert services"
     );
 
 -- 政策 4: 管理員可以更新服務
+DROP POLICY IF EXISTS "Admins can update services" ON public.services;
 CREATE POLICY "Admins can update services"
     ON public.services
     FOR UPDATE
@@ -57,9 +62,47 @@ CREATE POLICY "Admins can update services"
     );
 
 -- 政策 5: 管理員可以刪除服務
+DROP POLICY IF EXISTS "Admins can delete services" ON public.services;
 CREATE POLICY "Admins can delete services"
     ON public.services
     FOR DELETE
+    TO authenticated
+    USING (
+        EXISTS (
+            SELECT 1 FROM public.admins
+            WHERE admins.id = auth.uid()
+        )
+    );
+
+-- =============================================
+-- Service Options 表的 RLS 政策
+-- =============================================
+
+-- 政策 1: 任何人都可以查看啟用的服務選項（會員端顯示）
+DROP POLICY IF EXISTS "Anyone can view active service options" ON public.service_options;
+CREATE POLICY "Anyone can view active service options"
+    ON public.service_options
+    FOR SELECT
+    USING (is_active = true);
+
+-- 政策 2: 管理員可以查看所有服務選項
+DROP POLICY IF EXISTS "Admins can view all service options" ON public.service_options;
+CREATE POLICY "Admins can view all service options"
+    ON public.service_options
+    FOR SELECT
+    TO authenticated
+    USING (
+        EXISTS (
+            SELECT 1 FROM public.admins
+            WHERE admins.id = auth.uid()
+        )
+    );
+
+-- 政策 3: 管理員可以管理服務選項
+DROP POLICY IF EXISTS "Admins can manage service options" ON public.service_options;
+CREATE POLICY "Admins can manage service options"
+    ON public.service_options
+    FOR ALL
     TO authenticated
     USING (
         EXISTS (
@@ -73,6 +116,7 @@ CREATE POLICY "Admins can delete services"
 -- =============================================
 
 -- 政策 1: 會員可以查看自己的預約
+DROP POLICY IF EXISTS "Members can view own bookings" ON public.bookings;
 CREATE POLICY "Members can view own bookings"
     ON public.bookings
     FOR SELECT
@@ -84,6 +128,7 @@ CREATE POLICY "Members can view own bookings"
     );
 
 -- 政策 2: 管理員可以查看所有預約
+DROP POLICY IF EXISTS "Admins can view all bookings" ON public.bookings;
 CREATE POLICY "Admins can view all bookings"
     ON public.bookings
     FOR SELECT
@@ -97,12 +142,14 @@ CREATE POLICY "Admins can view all bookings"
 
 -- 政策 3: 會員可以新增自己的預約（通過 RPC 函數）
 -- 注意：直接 INSERT 會被 RPC 函數控制，這裡先開放但實際上由函數驗證
+DROP POLICY IF EXISTS "Members can insert own bookings via RPC" ON public.bookings;
 CREATE POLICY "Members can insert own bookings via RPC"
     ON public.bookings
     FOR INSERT
     WITH CHECK (true);
 
 -- 政策 4: 管理員可以新增預約
+DROP POLICY IF EXISTS "Admins can insert bookings" ON public.bookings;
 CREATE POLICY "Admins can insert bookings"
     ON public.bookings
     FOR INSERT
@@ -115,6 +162,7 @@ CREATE POLICY "Admins can insert bookings"
     );
 
 -- 政策 5: 會員可以取消自己的預約（透過 RPC 函數）
+DROP POLICY IF EXISTS "Members can update own bookings via RPC" ON public.bookings;
 CREATE POLICY "Members can update own bookings via RPC"
     ON public.bookings
     FOR UPDATE
@@ -122,6 +170,7 @@ CREATE POLICY "Members can update own bookings via RPC"
     WITH CHECK (true);
 
 -- 政策 6: 管理員可以更新所有預約
+DROP POLICY IF EXISTS "Admins can update all bookings" ON public.bookings;
 CREATE POLICY "Admins can update all bookings"
     ON public.bookings
     FOR UPDATE
@@ -134,6 +183,7 @@ CREATE POLICY "Admins can update all bookings"
     );
 
 -- 政策 7: 管理員可以刪除預約
+DROP POLICY IF EXISTS "Admins can delete bookings" ON public.bookings;
 CREATE POLICY "Admins can delete bookings"
     ON public.bookings
     FOR DELETE
@@ -150,12 +200,14 @@ CREATE POLICY "Admins can delete bookings"
 -- =============================================
 
 -- 政策 1: 任何人都可以查看營業時間（會員端顯示可用時間）
+DROP POLICY IF EXISTS "Anyone can view business hours" ON public.business_hours;
 CREATE POLICY "Anyone can view business hours"
     ON public.business_hours
     FOR SELECT
     USING (true);
 
 -- 政策 2: 管理員可以管理營業時間
+DROP POLICY IF EXISTS "Admins can manage business hours" ON public.business_hours;
 CREATE POLICY "Admins can manage business hours"
     ON public.business_hours
     FOR ALL
@@ -172,12 +224,14 @@ CREATE POLICY "Admins can manage business hours"
 -- =============================================
 
 -- 政策 1: 任何人都可以查看啟用的時間段
+DROP POLICY IF EXISTS "Anyone can view active time slots" ON public.time_slots;
 CREATE POLICY "Anyone can view active time slots"
     ON public.time_slots
     FOR SELECT
     USING (is_active = true);
 
 -- 政策 2: 管理員可以管理時間段
+DROP POLICY IF EXISTS "Admins can manage time slots" ON public.time_slots;
 CREATE POLICY "Admins can manage time slots"
     ON public.time_slots
     FOR ALL
@@ -197,6 +251,7 @@ CREATE OR REPLACE FUNCTION public.create_booking(
     p_service_id UUID,
     p_booking_date DATE,
     p_booking_time TIME,
+    p_service_option_id UUID DEFAULT NULL,
     p_notes TEXT DEFAULT NULL
 )
 RETURNS public.bookings
@@ -206,6 +261,9 @@ AS $$
 DECLARE
     v_member_id UUID;
     v_service public.services;
+    v_service_option public.service_options;
+    v_final_price DECIMAL(10, 2);
+    v_option_name TEXT;
     v_booking public.bookings;
 BEGIN
     -- 查找會員
@@ -224,6 +282,31 @@ BEGIN
     
     IF NOT FOUND THEN
         RAISE EXCEPTION '服務不存在或已停用';
+    END IF;
+    
+    -- 如果服務需要選項但未提供，則錯誤
+    IF v_service.has_options = true AND p_service_option_id IS NULL THEN
+        RAISE EXCEPTION '此服務需要選擇 %', COALESCE(v_service.option_label, '選項');
+    END IF;
+    
+    -- 如果提供了服務選項，驗證並取得資訊
+    v_final_price := COALESCE(v_service.base_price, 0);
+    v_option_name := NULL;
+    
+    IF p_service_option_id IS NOT NULL THEN
+        SELECT * INTO v_service_option
+        FROM public.service_options
+        WHERE id = p_service_option_id 
+          AND service_id = p_service_id
+          AND is_active = true;
+        
+        IF NOT FOUND THEN
+            RAISE EXCEPTION '服務選項不存在或已停用';
+        END IF;
+        
+        -- 計算最終價格（基礎價格 + 選項價格調整）
+        v_final_price := v_final_price + COALESCE(v_service_option.price_modifier, 0);
+        v_option_name := v_service_option.name;
     END IF;
     
     -- 檢查時間段是否可用
@@ -256,6 +339,8 @@ BEGIN
         service_name,
         service_duration,
         service_price,
+        service_option_id,
+        service_option_name,
         notes
     )
     VALUES (
@@ -266,7 +351,9 @@ BEGIN
         'pending',
         v_service.name,
         v_service.duration,
-        v_service.price,
+        v_final_price,
+        p_service_option_id,
+        v_option_name,
         p_notes
     )
     RETURNING * INTO v_booking;
@@ -331,12 +418,13 @@ BEGIN
     RAISE NOTICE '🔒 已啟用 Row Level Security';
     RAISE NOTICE '📋 已建立政策：';
     RAISE NOTICE '   - Services: 5 條政策';
+    RAISE NOTICE '   - Service Options: 3 條政策';
     RAISE NOTICE '   - Bookings: 7 條政策';
     RAISE NOTICE '   - Business Hours: 2 條政策';
     RAISE NOTICE '   - Time Slots: 2 條政策';
     RAISE NOTICE '';
     RAISE NOTICE '🔧 已建立 RPC 函數：';
-    RAISE NOTICE '   - create_booking() (會員建立預約)';
+    RAISE NOTICE '   - create_booking() (會員建立預約，支援服務選項)';
     RAISE NOTICE '   - cancel_booking_by_member() (會員取消預約)';
 END $$;
 

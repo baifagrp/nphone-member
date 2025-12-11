@@ -7,13 +7,13 @@ const BookingAPI = {
   // 服務項目相關
   // =============================================
   
-  // 取得所有啟用的服務
+  // 取得所有啟用的服務（包含選項）
   async getActiveServices() {
     try {
       const client = getSupabase();
       const { data, error } = await client
         .from('services')
-        .select('*')
+        .select('*, service_options(*)')
         .eq('is_active', true)
         .order('sort_order', { ascending: true });
       
@@ -26,13 +26,13 @@ const BookingAPI = {
     }
   },
   
-  // 取得所有服務（管理員使用）
+  // 取得所有服務（管理員使用，包含選項）
   async getAllServices() {
     try {
       const client = getSupabase();
       const { data, error } = await client
         .from('services')
-        .select('*')
+        .select('*, service_options(*)')
         .order('sort_order', { ascending: true });
       
       if (error) throw error;
@@ -44,13 +44,13 @@ const BookingAPI = {
     }
   },
   
-  // 取得單一服務
+  // 取得單一服務（包含選項）
   async getServiceById(id) {
     try {
       const client = getSupabase();
       const { data, error } = await client
         .from('services')
-        .select('*')
+        .select('*, service_options(*)')
         .eq('id', id)
         .single();
       
@@ -59,6 +59,26 @@ const BookingAPI = {
       return data;
     } catch (error) {
       CONFIG.error('取得服務資料失敗', error);
+      throw error;
+    }
+  },
+  
+  // 取得服務選項
+  async getServiceOptions(serviceId) {
+    try {
+      const client = getSupabase();
+      const { data, error } = await client
+        .from('service_options')
+        .select('*')
+        .eq('service_id', serviceId)
+        .eq('is_active', true)
+        .order('sort_order', { ascending: true });
+      
+      if (error) throw error;
+      
+      return data || [];
+    } catch (error) {
+      CONFIG.error('取得服務選項失敗', error);
       throw error;
     }
   },
@@ -124,11 +144,75 @@ const BookingAPI = {
   },
   
   // =============================================
+  // 服務選項相關（管理員）
+  // =============================================
+  
+  // 新增服務選項
+  async createServiceOption(serviceId, optionData) {
+    try {
+      const client = getSupabase();
+      const { data, error } = await client
+        .from('service_options')
+        .insert([{ ...optionData, service_id: serviceId }])
+        .select()
+        .single();
+      
+      if (error) throw error;
+      
+      CONFIG.log('服務選項新增成功', data);
+      return data;
+    } catch (error) {
+      CONFIG.error('新增服務選項失敗', error);
+      throw error;
+    }
+  },
+  
+  // 更新服務選項
+  async updateServiceOption(id, updates) {
+    try {
+      const client = getSupabase();
+      const { data, error } = await client
+        .from('service_options')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      
+      CONFIG.log('服務選項更新成功', data);
+      return data;
+    } catch (error) {
+      CONFIG.error('更新服務選項失敗', error);
+      throw error;
+    }
+  },
+  
+  // 刪除服務選項
+  async deleteServiceOption(id) {
+    try {
+      const client = getSupabase();
+      const { error } = await client
+        .from('service_options')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+      
+      CONFIG.log('服務選項刪除成功', id);
+      return true;
+    } catch (error) {
+      CONFIG.error('刪除服務選項失敗', error);
+      throw error;
+    }
+  },
+  
+  // =============================================
   // 預約相關
   // =============================================
   
   // 會員建立預約
-  async createBooking(lineUserId, serviceId, bookingDate, bookingTime, notes = null) {
+  async createBooking(lineUserId, serviceId, bookingDate, bookingTime, serviceOptionId = null, notes = null) {
     try {
       const client = getSupabase();
       const { data, error } = await client
@@ -137,6 +221,7 @@ const BookingAPI = {
           p_service_id: serviceId,
           p_booking_date: bookingDate,
           p_booking_time: bookingTime,
+          p_service_option_id: serviceOptionId,
           p_notes: notes,
         });
       

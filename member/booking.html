@@ -24,21 +24,25 @@
         <h1 style="font-size: 32px; font-weight: 700; margin-bottom: 32px;">線上預約</h1>
         
         <!-- 步驟指示器 -->
-        <div style="display: flex; justify-content: space-between; margin-bottom: 32px; max-width: 500px;">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 32px; max-width: 600px; flex-wrap: wrap; gap: 8px;">
             <div class="booking-step active" data-step="1">
                 <div class="step-number">1</div>
                 <div class="step-label">選擇服務</div>
             </div>
-            <div class="booking-step" data-step="2">
+            <div class="booking-step" data-step="1.5">
                 <div class="step-number">2</div>
+                <div class="step-label">選擇型號</div>
+            </div>
+            <div class="booking-step" data-step="2">
+                <div class="step-number">3</div>
                 <div class="step-label">選擇日期</div>
             </div>
             <div class="booking-step" data-step="3">
-                <div class="step-number">3</div>
+                <div class="step-number">4</div>
                 <div class="step-label">選擇時間</div>
             </div>
             <div class="booking-step" data-step="4">
-                <div class="step-number">4</div>
+                <div class="step-number">5</div>
                 <div class="step-label">確認預約</div>
             </div>
         </div>
@@ -49,6 +53,20 @@
                 <div class="card-header">選擇服務項目</div>
                 <div class="card-body" id="services-list">
                     <div class="loading-spinner"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 步驟 1.5: 選擇服務選項（如果服務有選項） -->
+        <div id="step-1.5" class="booking-step-content" style="display: none;">
+            <div class="card">
+                <div class="card-header" id="option-header">選擇手機型號</div>
+                <div class="card-body" id="service-options-list">
+                    <div class="loading-spinner"></div>
+                </div>
+                <div style="padding: 16px; border-top: 1px solid #E5E7EB;">
+                    <button id="btn-next-step-1.5" class="btn btn-primary" disabled>下一步</button>
+                    <button id="btn-back-step-1.5" class="btn btn-secondary" style="margin-left: 8px;">上一步</button>
                 </div>
             </div>
         </div>
@@ -97,6 +115,10 @@
                         <span class="profile-label">服務項目</span>
                         <span class="profile-value" id="confirm-service-name">-</span>
                     </div>
+                    <div id="confirm-option-row" class="profile-info-row" style="display: none;">
+                        <span class="profile-label" id="confirm-option-label">型號</span>
+                        <span class="profile-value" id="confirm-service-option">-</span>
+                    </div>
                     <div class="profile-info-row">
                         <span class="profile-label">服務時長</span>
                         <span class="profile-value" id="confirm-service-duration">-</span>
@@ -143,6 +165,7 @@
     <script>
         let currentStep = 1;
         let selectedService = null;
+        let selectedServiceOption = null;
         let selectedDate = null;
         let selectedTime = null;
         let availableServices = [];
@@ -210,10 +233,84 @@
             });
             document.querySelector(`[data-service-id="${serviceId}"]`).classList.add('selected');
             
-            // 1 秒後進入下一步
-            setTimeout(() => {
-                goToStep(2);
-            }, 500);
+            // 檢查服務是否需要選擇選項
+            if (selectedService && selectedService.has_options && selectedService.service_options && selectedService.service_options.length > 0) {
+                // 需要選擇選項，進入步驟 1.5
+                selectedServiceOption = null; // 重置選項
+                setTimeout(() => {
+                    loadServiceOptions();
+                    goToStep(1.5);
+                }, 500);
+            } else {
+                // 不需要選項，直接進入選擇日期
+                selectedServiceOption = null;
+                setTimeout(() => {
+                    goToStep(2);
+                }, 500);
+            }
+        }
+        
+        // 載入服務選項
+        async function loadServiceOptions() {
+            try {
+                if (!selectedService || !selectedService.has_options) {
+                    return;
+                }
+                
+                const options = selectedService.service_options || [];
+                
+                // 更新標題
+                document.getElementById('option-header').textContent = `選擇${selectedService.option_label || '選項'}`;
+                
+                if (options.length === 0) {
+                    document.getElementById('service-options-list').innerHTML = '<p style="text-align: center; color: #999; padding: 40px;">暫無可選選項</p>';
+                    return;
+                }
+                
+                // 顯示選項列表
+                document.getElementById('service-options-list').innerHTML = options
+                    .filter(opt => opt.is_active !== false)
+                    .map(option => {
+                        const finalPrice = (selectedService.base_price || 0) + (option.price_modifier || 0);
+                        const priceText = option.price_modifier 
+                            ? (option.price_modifier > 0 ? `+NT$ ${option.price_modifier}` : `NT$ ${option.price_modifier}`)
+                            : '';
+                        
+                        return `
+                            <div class="service-card" data-option-id="${option.id}" onclick="selectServiceOption('${option.id}')">
+                                <div class="service-info">
+                                    <h3>${option.name}</h3>
+                                    ${priceText ? `<p style="color: #007AFF; margin-top: 8px;">${priceText}</p>` : ''}
+                                    <p style="color: #86868B; margin-top: 8px; font-size: 14px;">
+                                        總價：NT$ ${finalPrice.toLocaleString()}
+                                    </p>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                
+            } catch (error) {
+                CONFIG.error('載入服務選項失敗', error);
+                showMessage('載入選項失敗', 'error');
+            }
+        }
+        
+        // 選擇服務選項
+        function selectServiceOption(optionId) {
+            if (!selectedService || !selectedService.service_options) {
+                return;
+            }
+            
+            selectedServiceOption = selectedService.service_options.find(opt => opt.id === optionId);
+            
+            // 更新 UI
+            document.querySelectorAll('[data-option-id]').forEach(card => {
+                card.classList.remove('selected');
+            });
+            document.querySelector(`[data-option-id="${optionId}"]`).classList.add('selected');
+            
+            // 啟用下一步按鈕
+            document.getElementById('btn-next-step-1.5').disabled = false;
         }
         
         // 進入下一步
@@ -225,13 +322,17 @@
             });
             
             // 顯示當前步驟
-            document.getElementById(`step-${step}`).classList.add('active');
-            document.getElementById(`step-${step}`).style.display = 'block';
+            const stepElement = document.getElementById(`step-${step}`);
+            if (stepElement) {
+                stepElement.classList.add('active');
+                stepElement.style.display = 'block';
+            }
             
             // 更新步驟指示器
-            document.querySelectorAll('.booking-step').forEach((stepEl, index) => {
+            document.querySelectorAll('.booking-step').forEach((stepEl) => {
                 stepEl.classList.remove('active');
-                if (index + 1 <= step) {
+                const stepNum = parseFloat(stepEl.getAttribute('data-step'));
+                if (stepNum <= parseFloat(step)) {
                     stepEl.classList.add('active');
                 }
             });
@@ -249,6 +350,20 @@
         // 日期選擇事件
         document.getElementById('booking-date').addEventListener('change', (e) => {
             selectedDate = e.target.value;
+        });
+        
+        // 步驟 1.5 下一步
+        document.getElementById('btn-next-step-1.5').addEventListener('click', () => {
+            if (!selectedServiceOption) {
+                alert('請選擇選項');
+                return;
+            }
+            goToStep(2);
+        });
+        
+        // 步驟 1.5 上一步
+        document.getElementById('btn-back-step-1.5').addEventListener('click', () => {
+            goToStep(1);
         });
         
         // 步驟 2 下一步
@@ -315,9 +430,22 @@
         
         // 顯示確認資訊
         function displayConfirmation() {
-            document.getElementById('confirm-service-name').textContent = selectedService.name;
+            let finalPrice = selectedService.base_price || selectedService.price || 0;
+            let serviceName = selectedService.name;
+            
+            // 顯示服務選項（如果有）
+            if (selectedServiceOption) {
+                finalPrice = finalPrice + (selectedServiceOption.price_modifier || 0);
+                document.getElementById('confirm-option-row').style.display = 'flex';
+                document.getElementById('confirm-option-label').textContent = selectedService.option_label || '選項';
+                document.getElementById('confirm-service-option').textContent = selectedServiceOption.name;
+            } else {
+                document.getElementById('confirm-option-row').style.display = 'none';
+            }
+            
+            document.getElementById('confirm-service-name').textContent = serviceName;
             document.getElementById('confirm-service-duration').textContent = `${selectedService.duration} 分鐘`;
-            document.getElementById('confirm-service-price').textContent = `NT$ ${selectedService.price.toLocaleString()}`;
+            document.getElementById('confirm-service-price').textContent = `NT$ ${finalPrice.toLocaleString()}`;
             document.getElementById('confirm-booking-date').textContent = formatDateDisplay(selectedDate);
             document.getElementById('confirm-booking-time').textContent = selectedTime;
         }
@@ -340,6 +468,7 @@
                     selectedService.id,
                     selectedDate,
                     selectedTime,
+                    selectedServiceOption ? selectedServiceOption.id : null,
                     notes
                 );
                 

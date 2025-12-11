@@ -132,6 +132,7 @@
                                         <div>📅 ${formatDateDisplay(booking.booking_date)}</div>
                                         <div>⏰ ${booking.booking_time}</div>
                                         <div>⏱ ${booking.service_duration} 分鐘</div>
+                                        ${booking.service_option_name ? `<div>📱 <strong>型號：</strong>${booking.service_option_name}</div>` : ''}
                                         <div>💰 NT$ ${booking.service_price.toLocaleString()}</div>
                                     </div>
                                     ${booking.notes ? `<div style="padding: 8px; background: #F5F5F7; border-radius: 8px; color: #666; font-size: 13px; margin-top: 8px;">📝 ${booking.notes}</div>` : ''}

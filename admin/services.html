@@ -60,8 +60,29 @@
                     </div>
                     
                     <div class="form-group">
-                        <label for="service-price" class="form-label required">價格</label>
+                        <label for="service-price" class="form-label required">基礎價格</label>
                         <input type="number" id="service-price" class="form-input" required min="0" step="0.01" value="0">
+                        <div class="form-help">基礎價格（如果服務有選項，選項價格會加在此基礎上）</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="service-has-options" onchange="toggleServiceOptions()"> 此服務需要選擇子項（例如：手機型號）
+                        </label>
+                    </div>
+                    
+                    <div id="service-options-section" style="display: none; margin-top: 24px; padding: 16px; background: #F5F5F7; border-radius: 8px;">
+                        <div class="form-group">
+                            <label for="service-option-label" class="form-label">選項標籤</label>
+                            <input type="text" id="service-option-label" class="form-input" placeholder="例如：手機型號">
+                            <div class="form-help">顯示在選項選擇頁面的標籤</div>
+                        </div>
+                        
+                        <div style="margin-top: 16px;">
+                            <label class="form-label">服務選項列表</label>
+                            <div id="service-options-list" style="margin-top: 8px;"></div>
+                            <button type="button" id="btn-add-option" class="btn btn-sm btn-primary" style="margin-top: 12px;">+ 新增選項</button>
+                        </div>
                     </div>
                     
                     <div class="form-group">
@@ -132,9 +153,16 @@
                                 ${service.description ? `<p style="color: #86868B; margin-bottom: 12px;">${service.description}</p>` : ''}
                                 <div style="display: flex; gap: 16px; color: #666; font-size: 14px;">
                                     <span>⏱ ${service.duration} 分鐘</span>
-                                    <span>💰 NT$ ${service.price.toLocaleString()}</span>
+                                    <span>💰 NT$ ${(service.base_price || service.price || 0).toLocaleString()}</span>
+                                    ${service.has_options ? `<span>📱 有選項 (${service.option_label || '選項'})</span>` : ''}
                                     <span>📊 排序: ${service.sort_order}</span>
                                 </div>
+                                ${service.service_options && service.service_options.length > 0 ? `
+                                    <div style="margin-top: 8px; padding: 8px; background: #F5F5F7; border-radius: 8px; font-size: 13px;">
+                                        <strong>選項：</strong>
+                                        ${service.service_options.filter(opt => opt.is_active !== false).map(opt => opt.name).join('、')}
+                                    </div>
+                                ` : ''}
                             </div>
                             <div>
                                 <button class="btn btn-sm btn-primary" onclick="editService('${service.id}')">編輯</button>
@@ -155,6 +183,10 @@
             document.getElementById('modal-title').textContent = '新增服務';
             document.getElementById('form-service').reset();
             document.getElementById('service-is-active').checked = true;
+            document.getElementById('service-has-options').checked = false;
+            serviceOptions = [];
+            toggleServiceOptions();
+            renderServiceOptionsList();
             document.getElementById('service-modal').style.display = 'flex';
         });
         
@@ -168,9 +200,19 @@
                 document.getElementById('service-name').value = service.name;
                 document.getElementById('service-description').value = service.description || '';
                 document.getElementById('service-duration').value = service.duration;
-                document.getElementById('service-price').value = service.price;
+                document.getElementById('service-price').value = service.base_price || service.price || 0;
                 document.getElementById('service-sort-order').value = service.sort_order;
                 document.getElementById('service-is-active').checked = service.is_active;
+                document.getElementById('service-has-options').checked = service.has_options || false;
+                document.getElementById('service-option-label').value = service.option_label || '';
+                
+                // 顯示/隱藏選項區域
+                toggleServiceOptions();
+                
+                // 載入服務選項
+                if (service.has_options && service.service_options) {
+                    loadServiceOptionsInModal(service.service_options);
+                }
                 
                 document.getElementById('service-modal').style.display = 'flex';
             } catch (error) {
@@ -203,31 +245,137 @@
                 name: document.getElementById('service-name').value.trim(),
                 description: document.getElementById('service-description').value.trim() || null,
                 duration: parseInt(document.getElementById('service-duration').value),
-                price: parseFloat(document.getElementById('service-price').value),
+                base_price: parseFloat(document.getElementById('service-price').value),
+                has_options: document.getElementById('service-has-options').checked,
+                option_label: document.getElementById('service-option-label').value.trim() || null,
                 sort_order: parseInt(document.getElementById('service-sort-order').value) || 0,
                 is_active: document.getElementById('service-is-active').checked,
             };
             
             try {
+                showLoading('儲存中...');
+                
+                let savedService;
                 if (editingServiceId) {
-                    await BookingAPI.updateService(editingServiceId, serviceData);
+                    savedService = await BookingAPI.updateService(editingServiceId, serviceData);
                     showMessage('服務更新成功', 'success');
                 } else {
-                    await BookingAPI.createService(serviceData);
+                    savedService = await BookingAPI.createService(serviceData);
                     showMessage('服務新增成功', 'success');
                 }
                 
+                // 如果服務有選項，儲存選項
+                if (serviceData.has_options && serviceOptions.length > 0) {
+                    const serviceId = savedService.id;
+                    
+                    // 刪除舊的選項（如果是編輯模式）
+                    if (editingServiceId) {
+                        // 這裡可以選擇刪除所有舊選項後重新建立，或進行差異更新
+                        // 為了簡化，我們先不處理刪除，只新增新選項
+                    }
+                    
+                    // 新增所有選項
+                    for (const option of serviceOptions) {
+                        if (option.id) {
+                            // 更新現有選項
+                            await BookingAPI.updateServiceOption(option.id, {
+                                name: option.name,
+                                price_modifier: option.price_modifier,
+                                is_active: option.is_active,
+                                sort_order: option.sort_order,
+                            });
+                        } else {
+                            // 新增新選項
+                            await BookingAPI.createServiceOption(serviceId, {
+                                name: option.name,
+                                price_modifier: option.price_modifier,
+                                is_active: option.is_active,
+                                sort_order: option.sort_order,
+                            });
+                        }
+                    }
+                }
+                
+                hideLoading();
                 document.getElementById('service-modal').style.display = 'none';
+                serviceOptions = [];
                 await loadServices();
             } catch (error) {
+                hideLoading();
                 CONFIG.error('儲存服務失敗', error);
                 showMessage('儲存失敗', 'error');
             }
         });
         
+        // 切換服務選項區域顯示
+        function toggleServiceOptions() {
+            const hasOptions = document.getElementById('service-has-options').checked;
+            document.getElementById('service-options-section').style.display = hasOptions ? 'block' : 'none';
+        }
+        
+        // 服務選項列表
+        let serviceOptions = [];
+        
+        // 載入服務選項到 Modal
+        function loadServiceOptionsInModal(options) {
+            serviceOptions = options || [];
+            renderServiceOptionsList();
+        }
+        
+        // 顯示服務選項列表
+        function renderServiceOptionsList() {
+            const container = document.getElementById('service-options-list');
+            if (serviceOptions.length === 0) {
+                container.innerHTML = '<p style="color: #999; font-size: 14px;">尚無選項，請點擊「新增選項」</p>';
+                return;
+            }
+            
+            container.innerHTML = serviceOptions.map((opt, index) => `
+                <div style="padding: 12px; background: white; border-radius: 8px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <strong>${opt.name}</strong>
+                        ${opt.price_modifier ? `<span style="color: #007AFF; margin-left: 8px;">${opt.price_modifier > 0 ? '+' : ''}NT$ ${opt.price_modifier}</span>` : ''}
+                    </div>
+                    <button type="button" class="btn btn-sm btn-danger" onclick="removeServiceOption(${index})">刪除</button>
+                </div>
+            `).join('');
+        }
+        
+        // 新增服務選項
+        document.getElementById('btn-add-option').addEventListener('click', () => {
+            const name = prompt('請輸入選項名稱（例如：iPhone 15 Pro）：');
+            if (!name) return;
+            
+            const priceText = prompt('價格調整（可選，例如：+200 或 -100，直接按確定則為 0）：', '0');
+            const priceModifier = parseFloat(priceText) || 0;
+            
+            serviceOptions.push({
+                id: null, // 新選項沒有 ID
+                name: name.trim(),
+                price_modifier: priceModifier,
+                is_active: true,
+                sort_order: serviceOptions.length,
+            });
+            
+            renderServiceOptionsList();
+        });
+        
+        // 移除服務選項
+        function removeServiceOption(index) {
+            serviceOptions.splice(index, 1);
+            renderServiceOptionsList();
+        }
+        
         // 關閉 Modal
         document.getElementById('btn-cancel-modal').addEventListener('click', () => {
             document.getElementById('service-modal').style.display = 'none';
+            serviceOptions = [];
+        });
+        
+        // 初始化選項區域
+        document.getElementById('btn-new-service').addEventListener('click', () => {
+            serviceOptions = [];
+            renderServiceOptionsList();
         });
     </script>
 </body>

@@ -10,23 +10,106 @@ CREATE TABLE IF NOT EXISTS public.services (
     name TEXT NOT NULL,                    -- 服務名稱
     description TEXT,                      -- 服務描述
     duration INTEGER NOT NULL DEFAULT 60,  -- 服務時長（分鐘）
-    price DECIMAL(10, 2) NOT NULL DEFAULT 0, -- 價格
+    base_price DECIMAL(10, 2) NOT NULL DEFAULT 0, -- 基礎價格
     image_url TEXT,                        -- 服務圖片 URL
+    has_options BOOLEAN DEFAULT FALSE,     -- 是否有子項選項
+    option_label TEXT,                     -- 選項標籤（例如：「手機型號」）
     is_active BOOLEAN DEFAULT TRUE,        -- 是否啟用
     sort_order INTEGER DEFAULT 0,          -- 排序順序
     created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
 );
 
+
+-- =============================================
+-- 服務選項表（服務的子項，例如：手機型號）
+-- =============================================
+CREATE TABLE IF NOT EXISTS public.service_options (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    service_id UUID NOT NULL REFERENCES public.services(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,                    -- 選項名稱（例如：「iPhone 15 Pro」）
+    price_modifier DECIMAL(10, 2) DEFAULT 0, -- 價格調整（可選，可增加或減少價格）
+    is_active BOOLEAN DEFAULT TRUE,        -- 是否啟用
+    sort_order INTEGER DEFAULT 0,          -- 排序順序
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+-- 服務選項表索引
+CREATE INDEX IF NOT EXISTS service_options_service_id_idx ON public.service_options(service_id);
+CREATE INDEX IF NOT EXISTS service_options_is_active_idx ON public.service_options(is_active);
+CREATE INDEX IF NOT EXISTS service_options_sort_order_idx ON public.service_options(sort_order);
+
+-- 服務選項表註解
+COMMENT ON TABLE public.service_options IS '服務選項表（服務的子項，例如手機型號）';
+COMMENT ON COLUMN public.service_options.service_id IS '關聯的服務 ID';
+COMMENT ON COLUMN public.service_options.name IS '選項名稱';
+COMMENT ON COLUMN public.service_options.price_modifier IS '價格調整（例如：+200 表示增加 200 元）';
+
 -- 服務項目表索引
 CREATE INDEX IF NOT EXISTS services_is_active_idx ON public.services(is_active);
 CREATE INDEX IF NOT EXISTS services_sort_order_idx ON public.services(sort_order);
+
+-- 處理舊表的欄位更新（向後兼容）
+DO $$ 
+BEGIN
+    -- 檢查並重新命名 price 欄位為 base_price（如果存在且 base_price 不存在）
+    IF EXISTS (SELECT 1 FROM information_schema.columns 
+               WHERE table_schema = 'public' 
+               AND table_name = 'services' 
+               AND column_name = 'price')
+       AND NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                       WHERE table_schema = 'public' 
+                       AND table_name = 'services' 
+                       AND column_name = 'base_price') THEN
+        ALTER TABLE public.services RENAME COLUMN price TO base_price;
+    END IF;
+    
+    -- 如果 base_price 不存在，新增它
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_schema = 'public' 
+                   AND table_name = 'services' 
+                   AND column_name = 'base_price') THEN
+        ALTER TABLE public.services ADD COLUMN base_price DECIMAL(10, 2);
+        
+        -- 如果還有 price 欄位，複製值到 base_price
+        IF EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_schema = 'public' 
+                   AND table_name = 'services' 
+                   AND column_name = 'price') THEN
+            UPDATE public.services SET base_price = COALESCE(price, 0) WHERE base_price IS NULL;
+        END IF;
+        
+        -- 設定預設值和 NOT NULL
+        UPDATE public.services SET base_price = 0 WHERE base_price IS NULL;
+        ALTER TABLE public.services ALTER COLUMN base_price SET DEFAULT 0;
+        ALTER TABLE public.services ALTER COLUMN base_price SET NOT NULL;
+    END IF;
+    
+    -- 新增 has_options 欄位（如果不存在）
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_schema = 'public' 
+                   AND table_name = 'services' 
+                   AND column_name = 'has_options') THEN
+        ALTER TABLE public.services ADD COLUMN has_options BOOLEAN DEFAULT FALSE;
+    END IF;
+    
+    -- 新增 option_label 欄位（如果不存在）
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_schema = 'public' 
+                   AND table_name = 'services' 
+                   AND column_name = 'option_label') THEN
+        ALTER TABLE public.services ADD COLUMN option_label TEXT;
+    END IF;
+END $$;
 
 -- 服務項目表註解
 COMMENT ON TABLE public.services IS '服務項目表';
 COMMENT ON COLUMN public.services.name IS '服務名稱';
 COMMENT ON COLUMN public.services.duration IS '服務時長（分鐘）';
-COMMENT ON COLUMN public.services.price IS '服務價格';
+COMMENT ON COLUMN public.services.base_price IS '基礎價格';
+COMMENT ON COLUMN public.services.has_options IS '是否有子項選項（例如：手機型號）';
+COMMENT ON COLUMN public.services.option_label IS '選項標籤（例如：「手機型號」、「顏色」等）';
 
 -- =============================================
 -- 預約記錄表
@@ -46,7 +129,7 @@ CREATE TABLE IF NOT EXISTS public.bookings (
     -- 預約詳情
     service_name TEXT NOT NULL,            -- 服務名稱（快照，避免服務被刪除後遺失）
     service_duration INTEGER NOT NULL,     -- 服務時長（快照）
-    service_price DECIMAL(10, 2) NOT NULL, -- 服務價格（快照）
+    service_price DECIMAL(10, 2) NOT NULL, -- 服務價格（快照，最終價格）
     
     -- 備註
     notes TEXT,                            -- 客戶備註
@@ -59,6 +142,26 @@ CREATE TABLE IF NOT EXISTS public.bookings (
     cancelled_at TIMESTAMP WITH TIME ZONE, -- 取消時間
     completed_at TIMESTAMP WITH TIME ZONE  -- 完成時間
 );
+
+-- 新增服務選項相關欄位（向後兼容）
+DO $$ 
+BEGIN
+    -- 新增 service_option_id 欄位
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_schema = 'public' 
+                   AND table_name = 'bookings' 
+                   AND column_name = 'service_option_id') THEN
+        ALTER TABLE public.bookings ADD COLUMN service_option_id UUID REFERENCES public.service_options(id) ON DELETE SET NULL;
+    END IF;
+    
+    -- 新增 service_option_name 欄位
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_schema = 'public' 
+                   AND table_name = 'bookings' 
+                   AND column_name = 'service_option_name') THEN
+        ALTER TABLE public.bookings ADD COLUMN service_option_name TEXT;
+    END IF;
+END $$;
 
 -- 預約記錄表索引
 CREATE INDEX IF NOT EXISTS bookings_member_id_idx ON public.bookings(member_id);
@@ -122,6 +225,13 @@ CREATE TRIGGER set_updated_at_services
     FOR EACH ROW
     EXECUTE FUNCTION public.handle_updated_at();
 
+-- 為 service_options 表建立觸發器
+DROP TRIGGER IF EXISTS set_updated_at_service_options ON public.service_options;
+CREATE TRIGGER set_updated_at_service_options
+    BEFORE UPDATE ON public.service_options
+    FOR EACH ROW
+    EXECUTE FUNCTION public.handle_updated_at();
+
 -- 為 bookings 表建立觸發器
 DROP TRIGGER IF EXISTS set_updated_at_bookings ON public.bookings;
 CREATE TRIGGER set_updated_at_bookings
@@ -174,13 +284,45 @@ VALUES
 ON CONFLICT (time_slot) DO NOTHING;
 
 -- 預設服務項目範例（可選，可刪除或修改）
-INSERT INTO public.services (name, description, duration, price, sort_order)
-VALUES
-    ('基礎貼膜', 'iPhone、Android 基礎螢幕保護貼', 30, 500, 1),
-    ('全機包膜', '完整機身保護膜，包含邊框', 60, 1500, 2),
-    ('抗藍光貼膜', '抗藍光螢幕保護貼', 30, 800, 3),
-    ('防窺貼膜', '防窺螢幕保護貼', 30, 900, 4)
-ON CONFLICT DO NOTHING;
+-- 注意：這裡的 CONFLICT 判斷改用 id 或 name 的 UNIQUE 約束
+-- 如果沒有 UNIQUE 約束，可能會重複插入，但影響不大
+INSERT INTO public.services (name, description, duration, base_price, has_options, option_label, sort_order)
+SELECT name, description, duration, base_price, has_options, option_label, sort_order
+FROM (VALUES
+    ('基礎貼膜', 'iPhone、Android 基礎螢幕保護貼', 30, 500, true, '手機型號', 1),
+    ('全機包膜', '完整機身保護膜，包含邊框', 60, 1500, true, '手機型號', 2),
+    ('抗藍光貼膜', '抗藍光螢幕保護貼', 30, 800, true, '手機型號', 3),
+    ('防窺貼膜', '防窺螢幕保護貼', 30, 900, true, '手機型號', 4)
+) AS v(name, description, duration, base_price, has_options, option_label, sort_order)
+WHERE NOT EXISTS (SELECT 1 FROM public.services WHERE services.name = v.name);
+
+-- 預設服務選項範例（手機型號）
+-- 為所有有選項的服務建立相同的選項列表
+INSERT INTO public.service_options (service_id, name, price_modifier, sort_order)
+SELECT 
+    s.id,
+    option_name,
+    option_price,
+    option_sort
+FROM public.services s
+CROSS JOIN (VALUES
+    ('iPhone 15 Pro Max', 0, 1),
+    ('iPhone 15 Pro', 0, 2),
+    ('iPhone 15', 0, 3),
+    ('iPhone 14 Pro Max', 0, 4),
+    ('iPhone 14 Pro', 0, 5),
+    ('iPhone 14', 0, 6),
+    ('Samsung S24 Ultra', 0, 7),
+    ('Samsung S24', 0, 8),
+    ('Google Pixel 8 Pro', 0, 9),
+    ('其他型號', 0, 10)
+) AS opts(option_name, option_price, option_sort)
+WHERE s.has_options = true
+  AND NOT EXISTS (
+      SELECT 1 FROM public.service_options 
+      WHERE service_options.service_id = s.id 
+        AND service_options.name = option_name
+  );
 
 -- =============================================
 -- 輔助函數：檢查時間段是否可用
@@ -261,6 +403,7 @@ BEGIN
     RAISE NOTICE '✅ 預約系統資料庫結構建立完成！';
     RAISE NOTICE '📋 已建立表格：';
     RAISE NOTICE '   - services (服務項目)';
+    RAISE NOTICE '   - service_options (服務選項，例如手機型號)';
     RAISE NOTICE '   - bookings (預約記錄)';
     RAISE NOTICE '   - business_hours (營業時間)';
     RAISE NOTICE '   - time_slots (時間段設定)';
