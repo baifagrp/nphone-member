@@ -510,10 +510,23 @@
         
         // 重置表單
         function resetForm() {
-            document.getElementById('checkout-form').reset();
-            document.getElementById('booking-preview').style.display = 'none';
+            // 手動重置所有表單欄位（因為 checkout-form 是 div 而不是 form）
+            document.getElementById('member-select').value = '';
             document.getElementById('booking-select').innerHTML = '<option value="">不關聯預約</option>';
+            document.getElementById('booking-preview').style.display = 'none';
+            document.getElementById('transaction-type').value = 'payment';
+            document.getElementById('form-title').textContent = '新增交易';
+            document.getElementById('amount').value = '';
             document.getElementById('discount-amount').value = '0';
+            document.getElementById('payment-method').value = '';
+            document.getElementById('description').value = '';
+            document.getElementById('receipt-number').value = '';
+            document.getElementById('reference-number').value = '';
+            document.getElementById('notes').value = '';
+            document.getElementById('admin-notes').value = '';
+            
+            // 清空預約資料
+            memberBookings = [];
         }
         
         // 提交交易
