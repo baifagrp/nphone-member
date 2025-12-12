@@ -240,7 +240,10 @@
                 } else {
                     document.getElementById('booking-select').innerHTML = '<option value="">不關聯預約</option>';
                     document.getElementById('booking-preview').style.display = 'none';
-                    document.getElementById('member-wallet-info').style.display = 'none';
+                    const walletHint = document.getElementById('wallet-balance-hint');
+                    if (walletHint) {
+                        walletHint.style.display = 'none';
+                    }
                 }
             });
             
@@ -672,8 +675,15 @@
             memberBookings = [];
             
             // 重置儲值金相關
-            document.getElementById('wallet-balance-hint').style.display = 'none';
-            document.getElementById('wallet-balance-display').textContent = 'NT$ 0';
+            const walletHint = document.getElementById('wallet-balance-hint');
+            if (walletHint) {
+                walletHint.style.display = 'none';
+            }
+            const balanceDisplay = document.getElementById('wallet-balance-display');
+            if (balanceDisplay) {
+                balanceDisplay.textContent = 'NT$ 0';
+            }
+            window.currentMemberWallet = null;
         }
         
         // 載入會員儲值金資訊
@@ -748,24 +758,22 @@
                     return;
                 }
                 
+                // 計算總金額
+                const totalAmount = amount + discountAmount;
+                
                 // 檢查儲值金付款（如果付款方式為儲值金）
-                const useWalletPayment = paymentMethod === 'wallet';
-                if (useWalletPayment) {
+                if (paymentMethod === 'wallet') {
                     const wallet = window.currentMemberWallet || await WalletPointsAPI.getMemberWallet(memberSelect.value);
                     if (!wallet || wallet.balance <= 0) {
                         UI.error('會員儲值金餘額不足，無法使用儲值金付款');
                         return;
                     }
                     
-                    // 檢查儲值金是否足夠支付總金額
+                    // 如果儲值金不足，提示但不阻止（系統會在後端處理部分支付）
                     if (wallet.balance < totalAmount) {
-                        UI.warning(`儲值金餘額（NT$ ${WalletPointsAPI.formatAmount(wallet.balance)}）不足以支付全額（NT$ ${totalAmount.toLocaleString('zh-TW', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}），請選擇其他付款方式或部分使用儲值金`);
-                        // 注意：這裡我們允許部分支付，系統會在後端處理
+                        UI.warning(`儲值金餘額（NT$ ${WalletPointsAPI.formatAmount(wallet.balance)}）不足以支付全額（NT$ ${totalAmount.toLocaleString('zh-TW', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}），將使用儲值金支付部分金額`);
                     }
                 }
-                
-                // 計算總金額
-                const totalAmount = amount + discountAmount;
                 
                 const form = document.getElementById('checkout-form');
                 const editId = form.getAttribute('data-edit-id');
