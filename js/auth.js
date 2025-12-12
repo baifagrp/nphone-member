@@ -79,19 +79,33 @@ const Auth = {
       // 儲存會員資訊到 Session
       this.saveMemberSession(result.member, result.line_user_id, result.access_token);
       
-      // 檢查是否為新會員（沒有電話號碼視為新會員）
-      const isNewMember = !result.member || !result.member.phone;
-      
       // 導向頁面判斷
       let redirectUrl;
-      if (isNewMember) {
-        // 新會員導向資料填寫頁面
-        redirectUrl = '/member/setup.html';
+      
+      // 1. 優先檢查 Email 是否已驗證
+      const needsEmailVerification = !result.member.email_verified || 
+                                     result.member.email?.includes('@nphone.temp') ||
+                                     result.member.registration_status === 'pending';
+      
+      if (needsEmailVerification) {
+        // 需要 Email 驗證 -> 導向驗證頁面
+        redirectUrl = '/member/email-verification.html';
+        CONFIG.log('需要 Email 驗證，導向驗證頁面');
       } else {
-        // 已有資料的會員導向會員中心
-        const returnUrl = sessionStorage.getItem('line_login_return_url') || '/member/profile.html';
-        sessionStorage.removeItem('line_login_return_url');
-        redirectUrl = returnUrl;
+        // Email 已驗證 -> 檢查是否有完整資料
+        const hasCompleteProfile = result.member.phone && result.member.name;
+        
+        if (!hasCompleteProfile) {
+          // 需要補充資料 -> 導向資料填寫頁面
+          redirectUrl = '/member/setup.html';
+          CONFIG.log('需要補充個人資料');
+        } else {
+          // 資料完整 -> 導向原本要去的頁面或會員中心
+          const returnUrl = sessionStorage.getItem('line_login_return_url') || '/member/profile.html';
+          sessionStorage.removeItem('line_login_return_url');
+          redirectUrl = returnUrl;
+          CONFIG.log('資料完整，導向目標頁面');
+        }
       }
       
       CONFIG.log('導向頁面', redirectUrl);
