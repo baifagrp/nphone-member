@@ -412,6 +412,20 @@
                 alert('請選擇預約日期');
                 return;
             }
+            
+            // 檢查是否選擇了今天的日期，如果是且當前時間已晚，給出提示
+            const today = new Date().toISOString().split('T')[0];
+            if (date === today) {
+                const now = new Date();
+                const currentHour = now.getHours();
+                // 如果已經很晚了（例如晚上 8 點之後），提示建議選擇明天
+                if (currentHour >= 20) {
+                    if (!confirm('今天已經很晚了，建議選擇明天之後的日期。\n\n是否要繼續選擇今天？')) {
+                        return;
+                    }
+                }
+            }
+            
             selectedDate = date;
             goToStep(3);
         });
@@ -428,13 +442,42 @@
                     return;
                 }
                 
+                // 過濾已過時間：如果選擇的是今天，則過濾掉當前時間之前的時間段
+                const now = new Date();
+                const today = now.toISOString().split('T')[0];
+                const currentTime = now.toTimeString().slice(0, 5); // HH:MM
+                
+                let availableSlots = slots;
+                
+                // 如果選擇的是今天，過濾掉已過時間
+                if (selectedDate === today) {
+                    availableSlots = slots.filter(slot => {
+                        // slot 可能是字串或對象，提取時間
+                        const slotTime = typeof slot === 'string' ? slot : (slot.time_slot || slot);
+                        return slotTime > currentTime;
+                    });
+                }
+                
+                if (availableSlots.length === 0) {
+                    document.getElementById('time-slots-list').innerHTML = `
+                        <p style="text-align: center; color: #999; padding: 40px;">
+                            ${selectedDate === today ? '今天的可用時間已過，請選擇其他日期或明天之後' : '當天無可用時間段，請選擇其他日期'}
+                        </p>
+                    `;
+                    return;
+                }
+                
                 document.getElementById('time-slots-list').innerHTML = `
                     <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 12px;">
-                        ${slots.map(slot => `
-                            <button class="time-slot-btn" data-time="${slot}" onclick="selectTime('${slot}')">
-                                ${slot}
-                            </button>
-                        `).join('')}
+                        ${availableSlots.map(slot => {
+                            // 提取時間字串
+                            const slotTime = typeof slot === 'string' ? slot : (slot.time_slot || slot);
+                            return `
+                                <button class="time-slot-btn" data-time="${slotTime}" onclick="selectTime('${slotTime}')">
+                                    ${slotTime}
+                                </button>
+                            `;
+                        }).join('')}
                     </div>
                 `;
                 
@@ -464,6 +507,18 @@
                 alert('請選擇預約時間');
                 return;
             }
+            
+            // 驗證時間是否已過（如果是今天）
+            const today = new Date().toISOString().split('T')[0];
+            if (selectedDate === today) {
+                const now = new Date();
+                const currentTime = now.toTimeString().slice(0, 5); // HH:MM
+                if (selectedTime <= currentTime) {
+                    alert('無法預約已過的時間，請選擇其他時間');
+                    return;
+                }
+            }
+            
             goToStep(4);
         });
         
@@ -519,6 +574,17 @@
                 if (!selectedTime) {
                     showMessage('請選擇預約時間', 'error');
                     return;
+                }
+                
+                // 驗證時間是否已過（如果是今天）
+                const today = new Date().toISOString().split('T')[0];
+                if (selectedDate === today) {
+                    const now = new Date();
+                    const currentTime = now.toTimeString().slice(0, 5); // HH:MM
+                    if (selectedTime <= currentTime) {
+                        showMessage('無法預約已過的時間，請選擇其他時間', 'error');
+                        return;
+                    }
                 }
                 
                 // 如果服務需要選項但未選擇

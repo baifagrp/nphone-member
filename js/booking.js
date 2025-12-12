@@ -893,5 +893,112 @@ const BookingAPI = {
       throw error;
     }
   },
+  
+  // =============================================
+  // 營業時間管理（管理員）
+  // =============================================
+  
+  // 更新營業時間
+  async updateBusinessHours(dayOfWeek, updates) {
+    try {
+      const client = getSupabase();
+      const { data, error } = await client
+        .from('business_hours')
+        .update(updates)
+        .eq('day_of_week', dayOfWeek)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      
+      CONFIG.log('營業時間更新成功', data);
+      return data;
+    } catch (error) {
+      CONFIG.error('更新營業時間失敗', error);
+      throw error;
+    }
+  },
+  
+  // 取得所有時間段
+  async getAllTimeSlots() {
+    try {
+      const client = getSupabase();
+      const { data, error } = await client
+        .from('time_slots')
+        .select('*')
+        .order('time_slot', { ascending: true });
+      
+      if (error) throw error;
+      
+      return data || [];
+    } catch (error) {
+      CONFIG.error('取得時間段列表失敗', error);
+      throw error;
+    }
+  },
+  
+  // 新增時間段
+  async createTimeSlot(timeSlot, maxBookings = 1) {
+    try {
+      const client = getSupabase();
+      const { data, error } = await client
+        .from('time_slots')
+        .insert([{
+          time_slot: timeSlot,
+          max_bookings: maxBookings,
+          is_active: true
+        }])
+        .select()
+        .single();
+      
+      if (error) throw error;
+      
+      CONFIG.log('時間段新增成功', data);
+      return data;
+    } catch (error) {
+      CONFIG.error('新增時間段失敗', error);
+      throw error;
+    }
+  },
+  
+  // 更新時間段
+  async updateTimeSlot(id, updates) {
+    try {
+      const client = getSupabase();
+      const { data, error } = await client
+        .from('time_slots')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      
+      CONFIG.log('時間段更新成功', data);
+      return data;
+    } catch (error) {
+      CONFIG.error('更新時間段失敗', error);
+      throw error;
+    }
+  },
+  
+  // 刪除時間段
+  async deleteTimeSlot(id) {
+    try {
+      const client = getSupabase();
+      const { error } = await client
+        .from('time_slots')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+      
+      CONFIG.log('時間段刪除成功', id);
+      return true;
+    } catch (error) {
+      CONFIG.error('刪除時間段失敗', error);
+      throw error;
+    }
+  },
 };
 
