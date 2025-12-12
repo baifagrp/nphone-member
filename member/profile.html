@@ -25,32 +25,24 @@
 
     <!-- 主要內容 -->
     <div class="container-sm" style="margin-top: 40px;">
-        <!-- 會員編號條碼卡片 -->
-        <div id="member-code-card" class="card" style="margin-bottom: 24px; display: none;">
-            <div class="card-header" style="text-align: center;">會員編號</div>
-            <div class="card-body" style="text-align: center; padding: 32px;">
-                <div id="member-code" style="font-size: 24px; font-weight: 600; margin-bottom: 16px; color: var(--color-text-primary);"></div>
-                <svg id="barcode" style="max-width: 100%; height: auto;"></svg>
-            </div>
-        </div>
 
         <!-- 儲值金與積分卡片 -->
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-bottom: 24px;">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 24px;">
             <!-- 儲值金卡片 -->
-            <div class="card" style="background: linear-gradient(135deg, #007AFF 0%, #0051D5 100%); color: white;">
-                <div style="padding: 24px;">
-                    <div style="font-size: 14px; opacity: 0.9; margin-bottom: 8px;">儲值金餘額</div>
-                    <div id="wallet-balance" style="font-size: 36px; font-weight: 600; margin-bottom: 12px;">NT$ 0</div>
-                    <a href="wallet.html" style="color: white; text-decoration: underline; font-size: 14px;">查看詳情 →</a>
+            <div class="card" style="background: var(--color-bg); border: 1px solid var(--color-gray-200);">
+                <div style="padding: 20px;">
+                    <div style="font-size: 13px; color: var(--color-text-secondary); margin-bottom: 8px;">儲值金</div>
+                    <div id="wallet-balance" style="font-size: 24px; font-weight: 600; color: var(--color-primary); margin-bottom: 12px;">NT$ 0</div>
+                    <a href="wallet.html" style="color: var(--color-primary); text-decoration: none; font-size: 13px; font-weight: 500;">查看詳情 →</a>
                 </div>
             </div>
 
             <!-- 積分卡片 -->
-            <div class="card" style="background: linear-gradient(135deg, #FF9500 0%, #FF6B00 100%); color: white;">
-                <div style="padding: 24px;">
-                    <div style="font-size: 14px; opacity: 0.9; margin-bottom: 8px;">積分餘額</div>
-                    <div id="points-balance" style="font-size: 36px; font-weight: 600; margin-bottom: 12px;">0 點</div>
-                    <a href="points.html" style="color: white; text-decoration: underline; font-size: 14px;">查看詳情 →</a>
+            <div class="card" style="background: var(--color-bg); border: 1px solid var(--color-gray-200);">
+                <div style="padding: 20px;">
+                    <div style="font-size: 13px; color: var(--color-text-secondary); margin-bottom: 8px;">積分</div>
+                    <div id="points-balance" style="font-size: 24px; font-weight: 600; color: var(--color-warning); margin-bottom: 12px;">0 點</div>
+                    <a href="points.html" style="color: var(--color-warning); text-decoration: none; font-size: 13px; font-weight: 500;">查看詳情 →</a>
                 </div>
             </div>
         </div>
@@ -97,6 +89,14 @@
             </div>
         </div>
         
+        <!-- 會員編號條碼卡片 -->
+        <div id="member-code-card" class="card" style="margin-bottom: 24px; display: none;">
+            <div class="card-header" style="text-align: center;">會員條碼</div>
+            <div class="card-body" style="text-align: center; padding: 32px;">
+                <svg id="barcode" style="max-width: 100%; height: auto;"></svg>
+            </div>
+        </div>
+
         <!-- 快速操作 -->
         <div class="card" style="margin-top: 24px;">
             <div class="card-header">快速操作</div>
