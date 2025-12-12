@@ -3,207 +3,108 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>我的積分 - NPHONE</title>
+    <title>紅利點數 - NPHONE</title>
     <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/design-system.css">
 </head>
-<body>
-    <!-- 導航列 -->
-    <nav class="navbar">
-        <div class="container">
-            <div class="navbar-menu">
-                <a href="profile.html" class="navbar-brand">NPHONE</a>
-                <div class="navbar-links">
-                    <a href="profile.html">個人資料</a>
-                    <a href="bookings.html">我的預約</a>
-                    <a href="wallet.html">儲值金</a>
-                    <a href="points.html" class="active">積分</a>
-                    <a href="#" onclick="Auth.memberLogout(); return false;">登出</a>
-                </div>
-            </div>
-        </div>
-    </nav>
-
-    <!-- 主要內容 -->
-    <div class="container" style="max-width: 800px; margin: 40px auto; padding: 0 20px;">
-        <h1 style="margin-bottom: 32px;">我的積分</h1>
-
-        <!-- 積分卡片 -->
-        <div class="card" style="margin-bottom: 24px; background: linear-gradient(135deg, #FF9500 0%, #FF6B00 100%); color: white;">
-            <div style="padding: 32px;">
-                <div style="font-size: 14px; opacity: 0.9; margin-bottom: 8px;">積分餘額</div>
-                <div id="points-balance" style="font-size: 48px; font-weight: 600; margin-bottom: 16px;">0 點</div>
-                <div style="display: flex; gap: 24px; font-size: 14px; opacity: 0.9;">
-                    <div>
-                        <div>總獲得</div>
-                        <div id="total-earned" style="font-size: 18px; font-weight: 600; margin-top: 4px;">0 點</div>
-                    </div>
-                    <div>
-                        <div>總使用</div>
-                        <div id="total-spent" style="font-size: 18px; font-weight: 600; margin-top: 4px;">0 點</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- 積分規則說明 -->
-        <div class="card" style="margin-bottom: 24px; background: var(--color-gray-50);">
-            <div class="card-header" style="font-size: 16px;">積分規則</div>
-            <div class="card-body" id="point-rules" style="padding: 16px;">
-                <div style="text-align: center; color: #999;">載入中...</div>
-            </div>
-        </div>
-
-        <!-- 交易記錄 -->
-        <div class="card">
-            <div class="card-header">交易記錄</div>
-            <div class="card-body">
-                <div id="transactions-list">
-                    <div style="text-align: center; padding: 40px; color: #999;">
-                        <div class="loading-spinner"></div>
-                        <div style="margin-top: 16px;">載入中...</div>
-                    </div>
-                </div>
-            </div>
+<body class="ds-page">
+    <div class="ds-page-header">
+        <div style="display: flex; align-items: center; justify-content: space-between; max-width: 1200px; margin: 0 auto; padding: 0 var(--spacing-md);">
+            <button onclick="location.href='profile.html'" class="ds-btn ds-btn-text" style="padding: 8px;">← 返回</button>
+            <h1 class="ds-page-title" style="margin: 0;">紅利點數</h1>
+            <div style="width: 60px;"></div>
         </div>
     </div>
 
-    <!-- JavaScript -->
+    <div class="ds-container">
+        <div class="ds-card ds-mb-lg" style="text-align: center; background: linear-gradient(135deg, #FFB74D 0%, #FFA726 100%); color: white;">
+            <div style="font-size: var(--font-size-sm); margin-bottom: var(--spacing-sm); opacity: 0.9;">可用點數</div>
+            <div id="points-balance" style="font-size: var(--font-size-4xl); font-weight: var(--font-weight-bold); margin-bottom: var(--spacing-xs);">0 點</div>
+            <div style="font-size: var(--font-size-sm); opacity: 0.8;">總獲得 <span id="total-earned">0</span> | 已使用 <span id="total-spent">0</span></div>
+        </div>
+
+        <div class="ds-card ds-mb-lg" style="background: rgba(255, 167, 38, 0.05); border: 1px solid rgba(255, 167, 38, 0.2);">
+            <div style="display: flex; align-items: center; gap: var(--spacing-sm);">
+                <span style="font-size: 24px;">🎁</span>
+                <div style="flex: 1;">
+                    <div style="font-size: var(--font-size-base); font-weight: var(--font-weight-medium); color: var(--text-primary);">累積規則</div>
+                    <div style="font-size: var(--font-size-sm); color: var(--text-secondary); margin-top: 4px;">每消費 NT$ 10 獲得 1 點</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="ds-card">
+            <div class="ds-card-header" style="font-size: var(--font-size-lg); font-weight: var(--font-weight-semibold); margin-bottom: var(--spacing-md);">點數明細</div>
+            <div id="transactions-list"></div>
+        </div>
+    </div>
+
+    <div id="toast-container" class="toast-container"></div>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="../js/config.js"></script>
     <script src="../js/supabase-client.js"></script>
     <script src="../js/ui-utils.js"></script>
     <script src="../js/auth.js"></script>
+    <script src="../js/member.js"></script>
     <script src="../js/wallet-points.js"></script>
     
     <script>
-        // 檢查登入狀態
-        if (!Auth.requireMemberLogin()) {
-            // requireMemberLogin 會自動導向，這裡只是確保
-        }
-
-        // 載入積分資訊
-        async function loadPoints() {
+        window.addEventListener('DOMContentLoaded', async () => {
             try {
-                const session = Auth.getMemberSession();
-                if (!session) {
-                    window.location.href = '../index.html';
-                    return;
+                if (!Auth.requireMemberLogin()) return;
+                await Member.init();
+                await loadPointsData();
+            } catch (error) {
+                UI.error('載入失敗');
+            }
+        });
+
+        async function loadPointsData() {
+            try {
+                const member = Member.currentMember;
+                UI.showLoading('載入中...');
+                
+                const points = await WalletPointsAPI.getMemberPoints(member.id);
+                if (points) {
+                    document.getElementById('points-balance').textContent = `${points.balance || 0} 點`;
+                    document.getElementById('total-earned').textContent = `${points.total_earned || 0} 點`;
+                    document.getElementById('total-spent').textContent = `${points.total_spent || 0} 點`;
                 }
 
-                // 顯示骨架屏
-                const transactionsList = document.getElementById('transactions-list');
-                if (transactionsList && typeof UI !== 'undefined') {
-                    UI.showSkeleton(transactionsList, 'list');
-                }
-
-                // 取得積分資訊
-                const points = await WalletPointsAPI.getMemberPoints(session.lineUserId);
-                
-                // 顯示餘額
-                const balance = points ? points.balance : 0;
-                const totalEarned = points ? points.total_earned : 0;
-                const totalSpent = points ? points.total_spent : 0;
-
-                document.getElementById('points-balance').textContent = WalletPointsAPI.formatPoints(balance);
-                document.getElementById('total-earned').textContent = WalletPointsAPI.formatPoints(totalEarned);
-                document.getElementById('total-spent').textContent = WalletPointsAPI.formatPoints(totalSpent);
-
-                // 載入積分規則
-                await loadPointRules();
-
-                // 取得交易記錄
-                const transactions = await WalletPointsAPI.getMemberPointTransactions(session.lineUserId, 50, 0);
-                
-                // 顯示交易記錄
+                const transactions = await WalletPointsAPI.getMemberPointTransactions(member.id, 50);
                 displayTransactions(transactions);
-
+                UI.hideLoading();
             } catch (error) {
-                CONFIG.error('載入積分資訊失敗', error);
-                document.getElementById('transactions-list').innerHTML = 
-                    '<div style="text-align: center; padding: 40px; color: #999;">載入失敗，請重新整理頁面</div>';
-                if (typeof UI !== 'undefined') {
-                    UI.error('載入積分資訊失敗，請重新整理頁面');
-                }
+                UI.hideLoading();
+                CONFIG.error('載入失敗', error);
             }
         }
 
-        // 載入積分規則
-        async function loadPointRules() {
-            try {
-                const rules = await WalletPointsAPI.getPointRules();
-                const container = document.getElementById('point-rules');
-                
-                if (!rules || rules.length === 0) {
-                    container.innerHTML = '<div style="color: #999;">暫無積分規則</div>';
-                    return;
-                }
-
-                container.innerHTML = rules.map(rule => {
-                    let ruleText = '';
-                    if (rule.rule_type === 'spend_rate') {
-                        ruleText = `每消費 ${rule.value} 元獲得 1 點`;
-                    } else if (rule.rule_type === 'signup_bonus') {
-                        ruleText = `註冊會員贈送 ${rule.bonus_points} 點`;
-                    } else if (rule.rule_type === 'birthday_bonus') {
-                        ruleText = `生日當月贈送 ${rule.bonus_points} 點`;
-                    }
-
-                    return `<div style="padding: 8px 0; border-bottom: 1px solid var(--color-gray-200);">${ruleText}</div>`;
-                }).join('');
-            } catch (error) {
-                CONFIG.error('載入積分規則失敗', error);
-            }
-        }
-
-        // 顯示交易記錄
         function displayTransactions(transactions) {
             const container = document.getElementById('transactions-list');
-            
             if (!transactions || transactions.length === 0) {
-                container.innerHTML = '<div style="text-align: center; padding: 40px; color: #999;">尚無交易記錄</div>';
+                container.innerHTML = '<div class="ds-empty-state"><div class="ds-empty-title">尚無點數記錄</div></div>';
                 return;
             }
 
-            container.innerHTML = transactions.map(tx => {
-                const isPositive = tx.points > 0;
-                const typeText = WalletPointsAPI.formatPointTransactionType(tx.transaction_type);
-                const amountClass = isPositive ? 'color: #34C759;' : 'color: #FF3B30;';
-                const amountSign = isPositive ? '+' : '';
-                
-                const date = new Date(tx.created_at);
-                const dateStr = date.toLocaleDateString('zh-TW', { year: 'numeric', month: 'long', day: 'numeric' });
-                const timeStr = date.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' });
-
-                let expiryText = '';
-                if (tx.expiry_date) {
-                    const expiryDate = new Date(tx.expiry_date);
-                    expiryText = `<div style="font-size: 12px; color: var(--color-warning); margin-top: 4px;">到期: ${expiryDate.toLocaleDateString('zh-TW')}</div>`;
-                }
-
-                return `
-                    <div style="padding: 16px; border-bottom: 1px solid var(--color-gray-200); display: flex; justify-content: space-between; align-items: center;">
-                        <div style="flex: 1;">
-                            <div style="font-weight: 600; margin-bottom: 4px;">${typeText}</div>
-                            <div style="font-size: 14px; color: var(--color-text-secondary);">${tx.description || ''}</div>
-                            <div style="font-size: 12px; color: var(--color-text-secondary); margin-top: 4px;">${dateStr} ${timeStr}</div>
-                            ${expiryText}
-                        </div>
-                        <div style="text-align: right;">
-                            <div style="font-size: 18px; font-weight: 600; ${amountClass}">
-                                ${amountSign}${Math.abs(tx.points)} 點
-                            </div>
-                            <div style="font-size: 12px; color: var(--color-text-secondary); margin-top: 4px;">
-                                餘額: ${tx.balance_after.toLocaleString()} 點
-                            </div>
-                        </div>
+            container.innerHTML = transactions.map(t => `
+                <div class="ds-list-item" style="margin-bottom: var(--spacing-sm); cursor: default;">
+                    <div class="ds-list-item-icon" style="background: ${t.points > 0 ? 'rgba(255, 167, 38, 0.1)' : 'rgba(66, 165, 245, 0.1)'}; color: ${t.points > 0 ? 'var(--warning-color)' : 'var(--info-color)'};">
+                        ${t.points > 0 ? '🎁' : '✨'}
                     </div>
-                `;
-            }).join('');
+                    <div class="ds-list-item-content">
+                        <div class="ds-list-item-title">${t.description || '點數異動'}</div>
+                        <div class="ds-list-item-subtitle">${new Date(t.created_at).toLocaleString('zh-TW')}</div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-size: var(--font-size-lg); font-weight: var(--font-weight-semibold); color: ${t.points > 0 ? 'var(--warning-color)' : 'var(--info-color)'};">
+                            ${t.points > 0 ? '+' : ''}${t.points} 點
+                        </div>
+                        <div style="font-size: var(--font-size-sm); color: var(--text-hint);">餘額 ${t.balance_after || 0} 點</div>
+                    </div>
+                </div>
+            `).join('');
         }
-
-        // 頁面載入時初始化
-        window.addEventListener('DOMContentLoaded', loadPoints);
     </script>
 </body>
 </html>
-

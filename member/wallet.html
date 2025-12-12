@@ -3,161 +3,98 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>我的儲值金 - NPHONE</title>
+    <title>儲值金 - NPHONE</title>
     <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/design-system.css">
 </head>
-<body>
-    <!-- 導航列 -->
-    <nav class="navbar">
-        <div class="container">
-            <div class="navbar-menu">
-                <a href="profile.html" class="navbar-brand">NPHONE</a>
-                <div class="navbar-links">
-                    <a href="profile.html">個人資料</a>
-                    <a href="bookings.html">我的預約</a>
-                    <a href="wallet.html" class="active">儲值金</a>
-                    <a href="points.html">積分</a>
-                    <a href="#" onclick="Auth.memberLogout(); return false;">登出</a>
-                </div>
-            </div>
-        </div>
-    </nav>
-
-    <!-- 主要內容 -->
-    <div class="container" style="max-width: 800px; margin: 40px auto; padding: 0 20px;">
-        <h1 style="margin-bottom: 32px;">我的儲值金</h1>
-
-        <!-- 儲值金卡片 -->
-        <div class="card" style="margin-bottom: 24px; background: linear-gradient(135deg, #007AFF 0%, #0051D5 100%); color: white;">
-            <div style="padding: 32px;">
-                <div style="font-size: 14px; opacity: 0.9; margin-bottom: 8px;">儲值金餘額</div>
-                <div id="wallet-balance" style="font-size: 48px; font-weight: 600; margin-bottom: 16px;">NT$ 0</div>
-                <div style="display: flex; gap: 24px; font-size: 14px; opacity: 0.9;">
-                    <div>
-                        <div>總儲值</div>
-                        <div id="total-recharged" style="font-size: 18px; font-weight: 600; margin-top: 4px;">NT$ 0</div>
-                    </div>
-                    <div>
-                        <div>總消費</div>
-                        <div id="total-spent" style="font-size: 18px; font-weight: 600; margin-top: 4px;">NT$ 0</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- 交易記錄 -->
-        <div class="card">
-            <div class="card-header">交易記錄</div>
-            <div class="card-body">
-                <div id="transactions-list">
-                    <div style="text-align: center; padding: 40px; color: #999;">
-                        <div class="loading-spinner"></div>
-                        <div style="margin-top: 16px;">載入中...</div>
-                    </div>
-                </div>
-            </div>
+<body class="ds-page">
+    <div class="ds-page-header">
+        <div style="display: flex; align-items: center; justify-content: space-between; max-width: 1200px; margin: 0 auto; padding: 0 var(--spacing-md);">
+            <button onclick="location.href='profile.html'" class="ds-btn ds-btn-text" style="padding: 8px;">← 返回</button>
+            <h1 class="ds-page-title" style="margin: 0;">儲值金</h1>
+            <div style="width: 60px;"></div>
         </div>
     </div>
 
-    <!-- JavaScript -->
+    <div class="ds-container">
+        <div class="ds-card ds-mb-lg" style="text-align: center; background: var(--primary-gradient); color: white;">
+            <div style="font-size: var(--font-size-sm); margin-bottom: var(--spacing-sm); opacity: 0.9;">目前餘額</div>
+            <div id="wallet-balance" style="font-size: var(--font-size-4xl); font-weight: var(--font-weight-bold); margin-bottom: var(--spacing-xs);">NT$ 0</div>
+            <div style="font-size: var(--font-size-sm); opacity: 0.8;">總儲值 <span id="total-recharged">NT$ 0</span> | 總消費 <span id="total-spent">NT$ 0</span></div>
+        </div>
+
+        <div class="ds-card">
+            <div class="ds-card-header" style="font-size: var(--font-size-lg); font-weight: var(--font-weight-semibold); margin-bottom: var(--spacing-md);">交易明細</div>
+            <div id="transactions-list"></div>
+        </div>
+    </div>
+
+    <div id="toast-container" class="toast-container"></div>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="../js/config.js"></script>
     <script src="../js/supabase-client.js"></script>
     <script src="../js/ui-utils.js"></script>
     <script src="../js/auth.js"></script>
+    <script src="../js/member.js"></script>
     <script src="../js/wallet-points.js"></script>
     
     <script>
-        // 檢查登入狀態
-        if (!Auth.requireMemberLogin()) {
-            // requireMemberLogin 會自動導向，這裡只是確保
-        }
-
-        // 載入儲值金資訊
-        async function loadWallet() {
+        window.addEventListener('DOMContentLoaded', async () => {
             try {
-                const session = Auth.getMemberSession();
-                if (!session) {
-                    window.location.href = '../index.html';
-                    return;
-                }
-
-                // 顯示骨架屏
-                const transactionsList = document.getElementById('transactions-list');
-                if (transactionsList && typeof UI !== 'undefined') {
-                    UI.showSkeleton(transactionsList, 'list');
-                }
-
-                // 取得儲值金資訊
-                const wallet = await WalletPointsAPI.getMemberWallet(session.lineUserId);
-                
-                // 顯示餘額
-                const balance = wallet ? wallet.balance : 0;
-                const totalRecharged = wallet ? wallet.total_recharged : 0;
-                const totalSpent = wallet ? wallet.total_spent : 0;
-
-                document.getElementById('wallet-balance').textContent = WalletPointsAPI.formatAmount(balance);
-                document.getElementById('total-recharged').textContent = WalletPointsAPI.formatAmount(totalRecharged);
-                document.getElementById('total-spent').textContent = WalletPointsAPI.formatAmount(totalSpent);
-
-                // 取得交易記錄
-                const transactions = await WalletPointsAPI.getMemberWalletTransactions(session.lineUserId, 50, 0);
-                
-                // 顯示交易記錄
-                displayTransactions(transactions);
-
+                if (!Auth.requireMemberLogin()) return;
+                await Member.init();
+                await loadWalletData();
             } catch (error) {
-                CONFIG.error('載入儲值金資訊失敗', error);
-                document.getElementById('transactions-list').innerHTML = 
-                    '<div style="text-align: center; padding: 40px; color: #999;">載入失敗，請重新整理頁面</div>';
-                if (typeof UI !== 'undefined') {
-                    UI.error('載入儲值金資訊失敗，請重新整理頁面');
+                UI.error('載入失敗');
+            }
+        });
+
+        async function loadWalletData() {
+            try {
+                const member = Member.currentMember;
+                UI.showLoading('載入中...');
+                
+                const wallet = await WalletPointsAPI.getMemberWallet(member.id);
+                if (wallet) {
+                    document.getElementById('wallet-balance').textContent = `NT$ ${Math.floor(wallet.balance || 0)}`;
+                    document.getElementById('total-recharged').textContent = `NT$ ${Math.floor(wallet.total_recharged || 0)}`;
+                    document.getElementById('total-spent').textContent = `NT$ ${Math.floor(wallet.total_spent || 0)}`;
                 }
+
+                const transactions = await WalletPointsAPI.getMemberWalletTransactions(member.id, 50);
+                displayTransactions(transactions);
+                UI.hideLoading();
+            } catch (error) {
+                UI.hideLoading();
+                CONFIG.error('載入失敗', error);
             }
         }
 
-        // 顯示交易記錄
         function displayTransactions(transactions) {
             const container = document.getElementById('transactions-list');
-            
             if (!transactions || transactions.length === 0) {
-                container.innerHTML = '<div style="text-align: center; padding: 40px; color: #999;">尚無交易記錄</div>';
+                container.innerHTML = '<div class="ds-empty-state"><div class="ds-empty-title">尚無交易記錄</div></div>';
                 return;
             }
 
-            container.innerHTML = transactions.map(tx => {
-                const isPositive = tx.amount > 0;
-                const typeText = WalletPointsAPI.formatWalletTransactionType(tx.transaction_type);
-                const amountClass = isPositive ? 'color: #34C759;' : 'color: #FF3B30;';
-                const amountSign = isPositive ? '+' : '';
-                
-                const date = new Date(tx.created_at);
-                const dateStr = date.toLocaleDateString('zh-TW', { year: 'numeric', month: 'long', day: 'numeric' });
-                const timeStr = date.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' });
-
-                return `
-                    <div style="padding: 16px; border-bottom: 1px solid var(--color-gray-200); display: flex; justify-content: space-between; align-items: center;">
-                        <div style="flex: 1;">
-                            <div style="font-weight: 600; margin-bottom: 4px;">${typeText}</div>
-                            <div style="font-size: 14px; color: var(--color-text-secondary);">${tx.description || ''}</div>
-                            <div style="font-size: 12px; color: var(--color-text-secondary); margin-top: 4px;">${dateStr} ${timeStr}</div>
-                        </div>
-                        <div style="text-align: right;">
-                            <div style="font-size: 18px; font-weight: 600; ${amountClass}">
-                                ${amountSign}${WalletPointsAPI.formatAmount(Math.abs(tx.amount))}
-                            </div>
-                            <div style="font-size: 12px; color: var(--color-text-secondary); margin-top: 4px;">
-                                餘額: ${WalletPointsAPI.formatAmount(tx.balance_after)}
-                            </div>
-                        </div>
+            container.innerHTML = transactions.map(t => `
+                <div class="ds-list-item" style="margin-bottom: var(--spacing-sm); cursor: default;">
+                    <div class="ds-list-item-icon" style="background: ${t.amount > 0 ? 'rgba(102, 187, 106, 0.1)' : 'rgba(239, 83, 80, 0.1)'}; color: ${t.amount > 0 ? 'var(--success-color)' : 'var(--error-color)'};">
+                        ${t.amount > 0 ? '💰' : '💸'}
                     </div>
-                `;
-            }).join('');
+                    <div class="ds-list-item-content">
+                        <div class="ds-list-item-title">${t.description || '交易'}</div>
+                        <div class="ds-list-item-subtitle">${new Date(t.created_at).toLocaleString('zh-TW')}</div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-size: var(--font-size-lg); font-weight: var(--font-weight-semibold); color: ${t.amount > 0 ? 'var(--success-color)' : 'var(--error-color)'};">
+                            ${t.amount > 0 ? '+' : ''}${Math.floor(t.amount)}
+                        </div>
+                        <div style="font-size: var(--font-size-sm); color: var(--text-hint);">餘額 ${Math.floor(t.balance_after || 0)}</div>
+                    </div>
+                </div>
+            `).join('');
         }
-
-        // 頁面載入時初始化
-        window.addEventListener('DOMContentLoaded', loadWallet);
     </script>
 </body>
 </html>
-

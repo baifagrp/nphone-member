@@ -3,156 +3,161 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>線上預約</title>
+    <title>線上預約 - NPHONE</title>
     <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/design-system.css">
+    <link rel="stylesheet" href="../css/calendar.css">
 </head>
-<body>
-    <!-- 導航列 -->
-    <nav class="navbar">
-        <div class="container navbar-container">
-            <a href="../index.html" class="navbar-brand">NPHONE</a>
-            <div class="navbar-menu">
-                <a href="profile.html" class="navbar-link">個人資料</a>
-                <a href="booking.html" class="navbar-link">線上預約</a>
-                <button id="btn-logout" class="btn btn-sm btn-secondary">登出</button>
-            </div>
+<body class="ds-page">
+    <!-- 頁面頭部 -->
+    <div class="ds-page-header">
+        <div style="display: flex; align-items: center; justify-content: space-between; max-width: 1200px; margin: 0 auto; padding: 0 var(--spacing-md);">
+            <button onclick="location.href='profile.html'" class="ds-btn ds-btn-text" style="padding: 8px;">← 返回</button>
+            <h1 class="ds-page-title" style="margin: 0;">線上預約</h1>
+            <div style="width: 60px;"></div>
         </div>
-    </nav>
+    </div>
 
     <!-- 主要內容 -->
-    <div class="container-sm" style="margin-top: 40px;">
-        <h1 style="font-size: 32px; font-weight: 700; margin-bottom: 32px;">線上預約</h1>
-        
+    <div class="ds-container">
         <!-- 步驟指示器 -->
-        <div style="display: flex; justify-content: space-between; margin-bottom: 32px; max-width: 600px; flex-wrap: wrap; gap: 8px;">
+        <div class="booking-steps">
             <div class="booking-step active" data-step="1">
-                <div class="step-number">1</div>
-                <div class="step-label">選擇服務</div>
+                <div class="booking-step-circle">1</div>
+                <div class="booking-step-label">選擇服務</div>
             </div>
             <div class="booking-step" data-step="1.5">
-                <div class="step-number">2</div>
-                <div class="step-label">選擇型號</div>
+                <div class="booking-step-circle">2</div>
+                <div class="booking-step-label">選擇型號</div>
             </div>
             <div class="booking-step" data-step="2">
-                <div class="step-number">3</div>
-                <div class="step-label">選擇日期</div>
+                <div class="booking-step-circle">3</div>
+                <div class="booking-step-label">選擇日期</div>
             </div>
             <div class="booking-step" data-step="3">
-                <div class="step-number">4</div>
-                <div class="step-label">選擇時間</div>
+                <div class="booking-step-circle">4</div>
+                <div class="booking-step-label">選擇時間</div>
             </div>
             <div class="booking-step" data-step="4">
-                <div class="step-number">5</div>
-                <div class="step-label">確認預約</div>
+                <div class="booking-step-circle">5</div>
+                <div class="booking-step-label">確認預約</div>
             </div>
         </div>
         
         <!-- 步驟 1: 選擇服務 -->
         <div id="step-1" class="booking-step-content active">
-            <div class="card">
-                <div class="card-header">選擇服務項目</div>
-                <div class="card-body" id="services-list">
-                    <div class="loading-spinner"></div>
-                </div>
-            </div>
+            <div id="services-list"></div>
         </div>
         
-        <!-- 步驟 1.5: 選擇服務選項（如果服務有選項） -->
+        <!-- 步驟 1.5: 選擇服務選項 -->
         <div id="step-1.5" class="booking-step-content" style="display: none;">
-            <div class="card">
-                <div class="card-header" id="option-header">選擇手機型號</div>
-                <div class="card-body" id="service-options-list">
-                    <div class="loading-spinner"></div>
+            <div class="ds-card">
+                <div class="ds-card-header">
+                    <div class="ds-card-title" id="option-header">選擇手機型號</div>
                 </div>
-                <div style="padding: 16px; border-top: 1px solid #E5E7EB;">
-                    <button id="btn-next-step-1.5" class="btn btn-primary" disabled>下一步</button>
-                    <button id="btn-back-step-1.5" class="btn btn-secondary" style="margin-left: 8px;">上一步</button>
+                <div class="ds-card-body" id="service-options-list"></div>
+                <div class="ds-card-footer ds-flex ds-gap-md">
+                    <button id="btn-back-step-1.5" class="ds-btn ds-btn-secondary" style="flex: 1;">上一步</button>
+                    <button id="btn-next-step-1.5" class="ds-btn ds-btn-primary" style="flex: 1;" disabled>下一步</button>
                 </div>
             </div>
         </div>
         
         <!-- 步驟 2: 選擇日期 -->
         <div id="step-2" class="booking-step-content" style="display: none;">
-            <div class="card">
-                <div class="card-header">選擇預約日期</div>
-                <div class="card-body">
+            <div class="ds-card">
+                <div class="ds-card-header">
+                    <div class="ds-card-title">選擇預約日期</div>
+                </div>
+                <div class="ds-card-body">
                     <input 
                         type="date" 
                         id="booking-date" 
-                        class="form-input" 
+                        class="ds-form-input" 
                         required
                         min=""
                     >
-                    <div class="form-help">請選擇預約日期</div>
                 </div>
-                <div style="padding: 16px; border-top: 1px solid #E5E7EB;">
-                    <button id="btn-next-step-2" class="btn btn-primary">下一步</button>
-                    <button id="btn-back-step-2" class="btn btn-secondary" style="margin-left: 8px;">上一步</button>
+                <div class="ds-card-footer ds-flex ds-gap-md">
+                    <button id="btn-back-step-2" class="ds-btn ds-btn-secondary" style="flex: 1;">上一步</button>
+                    <button id="btn-next-step-2" class="ds-btn ds-btn-primary" style="flex: 1;">下一步</button>
                 </div>
             </div>
         </div>
         
         <!-- 步驟 3: 選擇時間 -->
         <div id="step-3" class="booking-step-content" style="display: none;">
-            <div class="card">
-                <div class="card-header">選擇預約時間</div>
-                <div class="card-body" id="time-slots-list">
-                    <div class="loading-spinner"></div>
+            <div class="time-slots-container">
+                <div class="time-slots-header">
+                    <div class="time-slots-title">選擇預約時間</div>
+                    <div class="time-slots-info" id="selected-date-display"></div>
                 </div>
-                <div style="padding: 16px; border-top: 1px solid #E5E7EB;">
-                    <button id="btn-next-step-3" class="btn btn-primary" disabled>下一步</button>
-                    <button id="btn-back-step-3" class="btn btn-secondary" style="margin-left: 8px;">上一步</button>
+                <div id="time-slots-list"></div>
+            </div>
+            <div class="ds-card ds-mt-md">
+                <div class="ds-flex ds-gap-md">
+                    <button id="btn-back-step-3" class="ds-btn ds-btn-secondary" style="flex: 1;">上一步</button>
+                    <button id="btn-next-step-3" class="ds-btn ds-btn-primary" style="flex: 1;" disabled>下一步</button>
                 </div>
             </div>
         </div>
         
         <!-- 步驟 4: 確認預約 -->
         <div id="step-4" class="booking-step-content" style="display: none;">
-            <div class="card">
-                <div class="card-header">確認預約資訊</div>
-                <div class="card-body">
-                    <div class="profile-info-row">
-                        <span class="profile-label">服務項目</span>
-                        <span class="profile-value" id="confirm-service-name">-</span>
+            <div class="ds-card">
+                <div class="ds-card-header">
+                    <div class="ds-card-title">確認預約資訊</div>
+                </div>
+                <div class="ds-card-body">
+                    <div class="booking-summary-item">
+                        <span class="booking-summary-label">服務項目</span>
+                        <span class="booking-summary-value" id="confirm-service-name">-</span>
                     </div>
-                    <div id="confirm-option-row" class="profile-info-row" style="display: none;">
-                        <span class="profile-label" id="confirm-option-label">型號</span>
-                        <span class="profile-value" id="confirm-service-option">-</span>
+                    <div id="confirm-option-row" class="booking-summary-item" style="display: none;">
+                        <span class="booking-summary-label" id="confirm-option-label">型號</span>
+                        <span class="booking-summary-value" id="confirm-service-option">-</span>
                     </div>
-                    <div class="profile-info-row">
-                        <span class="profile-label">服務時長</span>
-                        <span class="profile-value" id="confirm-service-duration">-</span>
+                    <div class="booking-summary-item">
+                        <span class="booking-summary-label">服務時長</span>
+                        <span class="booking-summary-value" id="confirm-service-duration">-</span>
                     </div>
-                    <div class="profile-info-row">
-                        <span class="profile-label">服務價格</span>
-                        <span class="profile-value" id="confirm-service-price">-</span>
+                    <div class="booking-summary-item">
+                        <span class="booking-summary-label">預約日期</span>
+                        <span class="booking-summary-value" id="confirm-booking-date">-</span>
                     </div>
-                    <div class="profile-info-row">
-                        <span class="profile-label">預約日期</span>
-                        <span class="profile-value" id="confirm-booking-date">-</span>
-                    </div>
-                    <div class="profile-info-row">
-                        <span class="profile-label">預約時間</span>
-                        <span class="profile-value" id="confirm-booking-time">-</span>
+                    <div class="booking-summary-item">
+                        <span class="booking-summary-label">預約時間</span>
+                        <span class="booking-summary-value" id="confirm-booking-time">-</span>
                     </div>
                     
-                    <div class="form-group" style="margin-top: 24px;">
-                        <label for="booking-notes" class="form-label">備註（選填）</label>
+                    <div class="booking-summary-total">
+                        <div class="booking-summary-item">
+                            <span class="booking-summary-label">服務價格</span>
+                            <span class="booking-summary-value" id="confirm-service-price">-</span>
+                        </div>
+                    </div>
+                    
+                    <div class="ds-form-group ds-mt-lg">
+                        <label for="booking-notes" class="ds-form-label">備註（選填）</label>
                         <textarea 
                             id="booking-notes" 
-                            class="form-textarea" 
-                            placeholder="如有特殊需求請在此註明"
+                            class="ds-form-input" 
+                            placeholder="請填寫特殊狀況及需求"
                             rows="3"
+                            style="resize: vertical;"
                         ></textarea>
                     </div>
                 </div>
-                <div style="padding: 16px; border-top: 1px solid #E5E7EB;">
-                    <button id="btn-submit-booking" class="btn btn-success btn-block">確認預約</button>
-                    <button id="btn-back-step-4" class="btn btn-secondary btn-block" style="margin-top: 8px;">上一步</button>
+                <div class="ds-card-footer ds-flex ds-gap-md">
+                    <button id="btn-back-step-4" class="ds-btn ds-btn-secondary" style="flex: 1;">上一步</button>
+                    <button id="btn-submit-booking" class="ds-btn ds-btn-primary" style="flex: 1;">完成預約</button>
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- Toast 容器 -->
+    <div id="toast-container" class="toast-container"></div>
 
     <!-- JavaScript -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -164,7 +169,7 @@
     <script src="../js/booking.js"></script>
     
     <script>
-        // 輔助函數：向後兼容舊的 showMessage 和 showLoading
+        // 輔助函數：向後兼容
         function showMessage(message, type = 'info') {
             if (typeof UI !== 'undefined') {
                 UI.showToast(message, type);
@@ -195,7 +200,6 @@
         // 頁面載入時初始化
         window.addEventListener('DOMContentLoaded', async () => {
             try {
-                // 檢查登入狀態
                 if (!Auth.requireMemberLogin()) {
                     return;
                 }
@@ -210,38 +214,31 @@
                     UI.showSkeleton(servicesList, 'card');
                 }
                 
-                // 載入服務列表
                 await loadServices();
                 
             } catch (error) {
                 CONFIG.error('初始化失敗', error);
-                if (typeof UI !== 'undefined') {
-                    UI.error('初始化失敗，請重新整理頁面');
-                }
+                UI.error('初始化失敗，請重新整理頁面');
             }
         });
         
         // 載入服務列表
         async function loadServices() {
             try {
-                // 骨架屏已在初始化時顯示，不需要額外的載入提示
                 availableServices = await BookingAPI.getActiveServices();
                 if (availableServices.length === 0) {
-                    document.getElementById('services-list').innerHTML = '<p style="text-align: center; color: #999; padding: 40px;">暫無可預約的服務項目</p>';
+                    document.getElementById('services-list').innerHTML = '<div class="ds-empty-state"><div class="ds-empty-title">暫無可預約的服務項目</div></div>';
                     return;
                 }
                 
-                // 標準化服務資料（確保價格欄位存在）
+                // 標準化服務資料
                 availableServices = availableServices.map(service => {
-                    // 確保 base_price 存在（向後兼容）
                     if (service.base_price === null || service.base_price === undefined) {
                         service.base_price = service.price || 0;
                     }
-                    // 為了向後兼容，也保留 price 欄位
                     if (!service.price) {
                         service.price = service.base_price || 0;
                     }
-                    // 確保 service_options 是陣列
                     if (!service.service_options) {
                         service.service_options = [];
                     }
@@ -250,25 +247,28 @@
                 
                 // 顯示服務列表
                 document.getElementById('services-list').innerHTML = availableServices.map(service => `
-                    <div class="service-card" data-service-id="${service.id}" onclick="selectService('${service.id}')">
-                        <div class="service-info">
-                            <h3>${service.name}</h3>
-                            ${service.description ? `<p style="color: #86868B; margin-top: 8px;">${service.description}</p>` : ''}
-                            <div style="margin-top: 16px; display: flex; gap: 16px;">
-                                <span style="color: #007AFF;">⏱ ${service.duration} 分鐘</span>
-                                <span style="color: #34C759; font-weight: 600;">NT$ ${(service.base_price || service.price || 0).toLocaleString()}</span>
+                    <div class="selection-card" data-service-id="${service.id}" onclick="selectService('${service.id}')">
+                        <div class="selection-card-header">
+                            <div>
+                                <div class="selection-card-title">${service.name}</div>
+                                ${service.description ? `<div style="font-size: var(--font-size-sm); color: var(--text-secondary); margin-top: 4px;">${service.description}</div>` : ''}
                             </div>
+                            <div class="selection-card-check">✓</div>
+                        </div>
+                        <div class="selection-card-meta">
+                            <div class="selection-card-duration">
+                                <span>⏱️</span>
+                                <span>${service.duration} 分鐘</span>
+                            </div>
+                            <div class="selection-card-price">NT$ ${(service.base_price || service.price || 0).toLocaleString()}</div>
                         </div>
                     </div>
                 `).join('');
                 
             } catch (error) {
                 CONFIG.error('載入服務失敗', error);
-                const servicesList = document.getElementById('services-list');
-                if (servicesList) {
-                    servicesList.innerHTML = '<p style="text-align: center; color: #999; padding: 40px;">載入服務失敗，請重新整理頁面</p>';
-                }
-                showMessage('載入服務失敗，請重新整理頁面', 'error');
+                document.getElementById('services-list').innerHTML = '<div class="ds-empty-state"><div class="ds-empty-title">載入服務失敗，請重新整理頁面</div></div>';
+                UI.error('載入服務失敗');
             }
         }
         
@@ -277,12 +277,12 @@
             selectedService = availableServices.find(s => s.id === serviceId);
             
             if (!selectedService) {
-                showMessage('找不到服務項目', 'error');
+                UI.error('找不到服務項目');
                 return;
             }
             
             // 更新 UI
-            document.querySelectorAll('.service-card').forEach(card => {
+            document.querySelectorAll('.selection-card').forEach(card => {
                 card.classList.remove('selected');
             });
             const serviceCard = document.querySelector(`[data-service-id="${serviceId}"]`);
@@ -290,21 +290,18 @@
                 serviceCard.classList.add('selected');
             }
             
-            // 重置選項（確保是 null，不是 undefined）
             selectedServiceOption = null;
             
             // 檢查服務是否需要選擇選項
             if (selectedService.has_options && selectedService.service_options && selectedService.service_options.length > 0) {
-                // 需要選擇選項，進入步驟 1.5
                 setTimeout(() => {
                     loadServiceOptions();
                     goToStep(1.5);
-                }, 500);
+                }, 300);
             } else {
-                // 不需要選項，直接進入選擇日期
                 setTimeout(() => {
                     goToStep(2);
-                }, 500);
+                }, 300);
             }
         }
         
@@ -317,31 +314,32 @@
                 
                 const options = selectedService.service_options || [];
                 
-                // 更新標題
                 document.getElementById('option-header').textContent = `選擇${selectedService.option_label || '選項'}`;
                 
                 if (options.length === 0) {
-                    document.getElementById('service-options-list').innerHTML = '<p style="text-align: center; color: #999; padding: 40px;">暫無可選選項</p>';
+                    document.getElementById('service-options-list').innerHTML = '<div class="ds-empty-state"><div class="ds-empty-title">暫無可選選項</div></div>';
                     return;
                 }
                 
-                // 顯示選項列表
                 document.getElementById('service-options-list').innerHTML = options
                     .filter(opt => opt.is_active !== false)
                     .map(option => {
                         const finalPrice = (selectedService.base_price || 0) + (option.price_modifier || 0);
                         const priceText = option.price_modifier 
-                            ? (option.price_modifier > 0 ? `+NT$ ${option.price_modifier}` : `NT$ ${option.price_modifier}`)
+                            ? (option.price_modifier > 0 ? `+NT$ ${option.price_modifier}` : `${option.price_modifier}`)
                             : '';
                         
                         return `
-                            <div class="service-card" data-option-id="${option.id}" onclick="selectServiceOption('${option.id}')">
-                                <div class="service-info">
-                                    <h3>${option.name}</h3>
-                                    ${priceText ? `<p style="color: #007AFF; margin-top: 8px;">${priceText}</p>` : ''}
-                                    <p style="color: #86868B; margin-top: 8px; font-size: 14px;">
-                                        總價：NT$ ${finalPrice.toLocaleString()}
-                                    </p>
+                            <div class="selection-card" data-option-id="${option.id}" onclick="selectServiceOption('${option.id}')">
+                                <div class="selection-card-header">
+                                    <div>
+                                        <div class="selection-card-title">${option.name}</div>
+                                        ${priceText ? `<div style="font-size: var(--font-size-sm); color: var(--primary-color); margin-top: 4px;">${priceText}</div>` : ''}
+                                    </div>
+                                    <div class="selection-card-check">✓</div>
+                                </div>
+                                <div class="selection-card-meta">
+                                    <div class="selection-card-price">總價 NT$ ${finalPrice.toLocaleString()}</div>
                                 </div>
                             </div>
                         `;
@@ -349,20 +347,20 @@
                 
             } catch (error) {
                 CONFIG.error('載入服務選項失敗', error);
-                showMessage('載入選項失敗', 'error');
+                UI.error('載入選項失敗');
             }
         }
         
         // 選擇服務選項
         function selectServiceOption(optionId) {
             if (!selectedService || !selectedService.service_options) {
-                showMessage('無法選擇選項', 'error');
+                UI.error('無法選擇選項');
                 return;
             }
             
             const option = selectedService.service_options.find(opt => opt.id === optionId);
             if (!option) {
-                showMessage('找不到選項', 'error');
+                UI.error('找不到選項');
                 return;
             }
             
@@ -377,22 +375,16 @@
                 optionCard.classList.add('selected');
             }
             
-            // 啟用下一步按鈕
-            const nextBtn = document.getElementById('btn-next-step-1.5');
-            if (nextBtn) {
-                nextBtn.disabled = false;
-            }
+            document.getElementById('btn-next-step-1.5').disabled = false;
         }
         
-        // 進入下一步
+        // 進入指定步驟
         function goToStep(step) {
-            // 隱藏所有步驟
             document.querySelectorAll('.booking-step-content').forEach(content => {
                 content.classList.remove('active');
                 content.style.display = 'none';
             });
             
-            // 顯示當前步驟
             const stepElement = document.getElementById(`step-${step}`);
             if (stepElement) {
                 stepElement.classList.add('active');
@@ -401,16 +393,17 @@
             
             // 更新步驟指示器
             document.querySelectorAll('.booking-step').forEach((stepEl) => {
-                stepEl.classList.remove('active');
+                stepEl.classList.remove('active', 'completed');
                 const stepNum = parseFloat(stepEl.getAttribute('data-step'));
-                if (stepNum <= parseFloat(step)) {
+                if (stepNum < parseFloat(step)) {
+                    stepEl.classList.add('completed');
+                } else if (stepNum === parseFloat(step)) {
                     stepEl.classList.add('active');
                 }
             });
             
             currentStep = step;
             
-            // 特殊處理
             if (step === 3 && selectedDate) {
                 loadTimeSlots();
             } else if (step === 4) {
@@ -423,102 +416,53 @@
             selectedDate = e.target.value;
         });
         
-        // 步驟 1.5 下一步
-        document.getElementById('btn-next-step-1.5').addEventListener('click', () => {
-            if (!selectedServiceOption) {
-                showMessage('請選擇選項', 'warning');
-                return;
-            }
-            goToStep(2);
-        });
-        
-        // 步驟 1.5 上一步
-        document.getElementById('btn-back-step-1.5').addEventListener('click', () => {
-            goToStep(1);
-        });
-        
-        // 步驟 2 下一步
-        document.getElementById('btn-next-step-2').addEventListener('click', () => {
-            const date = document.getElementById('booking-date').value;
-            if (!date) {
-                showMessage('請選擇預約日期', 'warning');
-                return;
-            }
-            
-            // 檢查是否選擇了今天的日期，如果是且當前時間已晚，給出提示
-            const today = new Date().toISOString().split('T')[0];
-            if (date === today) {
-                const now = new Date();
-                const currentHour = now.getHours();
-                // 如果已經很晚了（例如晚上 8 點之後），提示建議選擇明天
-                if (currentHour >= 20) {
-                    if (!confirm('今天已經很晚了，建議選擇明天之後的日期。\n\n是否要繼續選擇今天？')) {
-                        return;
-                    }
-                }
-            }
-            
-            selectedDate = date;
-            goToStep(3);
-        });
-        
-        // 步驟 3 載入時間段
+        // 載入時間段
         async function loadTimeSlots() {
             try {
-                document.getElementById('time-slots-list').innerHTML = '<div class="loading-spinner"></div>';
+                const container = document.getElementById('time-slots-list');
+                container.innerHTML = '<div class="ds-text-center ds-p-xl"><div class="loading-spinner"></div></div>';
+                
+                // 更新日期顯示
+                document.getElementById('selected-date-display').textContent = formatDateDisplay(selectedDate);
                 
                 const slots = await BookingAPI.getAvailableTimeSlots(selectedDate, selectedService.duration);
                 
                 if (slots.length === 0) {
-                    document.getElementById('time-slots-list').innerHTML = '<p style="text-align: center; color: #999; padding: 40px;">當天無可用時間段，請選擇其他日期</p>';
+                    container.innerHTML = '<div class="time-slots-empty"><div class="time-slots-empty-icon">📅</div><div class="time-slots-empty-text">當天無可用時間段，請選擇其他日期</div></div>';
                     return;
                 }
                 
-                // 過濾已過時間：如果選擇的是今天，則過濾掉當前時間之前的時間段
+                // 過濾已過時間
                 const now = new Date();
                 const today = now.toISOString().split('T')[0];
-                const currentTime = now.toTimeString().slice(0, 5); // HH:MM
+                const currentTime = now.toTimeString().slice(0, 5);
                 
                 let availableSlots = slots;
-                
-                // 如果選擇的是今天，過濾掉已過時間
                 if (selectedDate === today) {
                     availableSlots = slots.filter(slot => {
-                        // slot 可能是字串或對象，提取時間
                         const slotTime = typeof slot === 'string' ? slot : (slot.time_slot || slot);
                         return slotTime > currentTime;
                     });
                 }
                 
                 if (availableSlots.length === 0) {
-                    document.getElementById('time-slots-list').innerHTML = `
-                        <p style="text-align: center; color: #999; padding: 40px;">
-                            ${selectedDate === today ? '今天的可用時間已過，請選擇其他日期或明天之後' : '當天無可用時間段，請選擇其他日期'}
-                        </p>
-                    `;
+                    container.innerHTML = `<div class="time-slots-empty"><div class="time-slots-empty-icon">⏰</div><div class="time-slots-empty-text">${selectedDate === today ? '今天的可用時間已過，請選擇其他日期' : '當天無可用時間段'}</div></div>`;
                     return;
                 }
                 
-                document.getElementById('time-slots-list').innerHTML = `
-                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 12px;">
+                container.innerHTML = `
+                    <div class="time-slots-grid">
                         ${availableSlots.map(slot => {
-                            // 提取時間字串
                             const slotTime = typeof slot === 'string' ? slot : (slot.time_slot || slot);
-                            return `
-                                <button class="time-slot-btn" data-time="${slotTime}" onclick="selectTime('${slotTime}')">
-                                    ${slotTime}
-                                </button>
-                            `;
+                            return `<button class="time-slot" data-time="${slotTime}" onclick="selectTime('${slotTime}')">${slotTime}</button>`;
                         }).join('')}
                     </div>
                 `;
                 
             } catch (error) {
                 CONFIG.error('載入時間段失敗', error);
-                document.getElementById('time-slots-list').innerHTML = '<p style="text-align: center; color: #999; padding: 40px;">載入時間段失敗，請稍後再試</p>';
-                if (typeof UI !== 'undefined') {
-                    UI.error('載入時間段失敗，請稍後再試');
-                }
+                document.getElementById('time-slots-list').innerHTML = '<div class="time-slots-empty"><div class="time-slots-empty-text">載入時間段失敗</div></div>';
+                UI.error('載入時間段失敗');
             }
         }
         
@@ -526,43 +470,19 @@
         function selectTime(time) {
             selectedTime = time;
             
-            // 更新 UI
-            document.querySelectorAll('.time-slot-btn').forEach(btn => {
+            document.querySelectorAll('.time-slot').forEach(btn => {
                 btn.classList.remove('selected');
             });
             document.querySelector(`[data-time="${time}"]`).classList.add('selected');
             
-            // 啟用下一步按鈕
             document.getElementById('btn-next-step-3').disabled = false;
         }
-        
-        // 步驟 3 下一步
-        document.getElementById('btn-next-step-3').addEventListener('click', () => {
-            if (!selectedTime) {
-                showMessage('請選擇預約時間', 'warning');
-                return;
-            }
-            
-            // 驗證時間是否已過（如果是今天）
-            const today = new Date().toISOString().split('T')[0];
-            if (selectedDate === today) {
-                const now = new Date();
-                const currentTime = now.toTimeString().slice(0, 5); // HH:MM
-                if (selectedTime <= currentTime) {
-                    showMessage('無法預約已過的時間，請選擇其他時間', 'warning');
-                    return;
-                }
-            }
-            
-            goToStep(4);
-        });
         
         // 顯示確認資訊
         function displayConfirmation() {
             let finalPrice = selectedService.base_price || selectedService.price || 0;
             let serviceName = selectedService.name;
             
-            // 顯示服務選項（如果有）
             if (selectedServiceOption) {
                 finalPrice = finalPrice + (selectedServiceOption.price_modifier || 0);
                 document.getElementById('confirm-option-row').style.display = 'flex';
@@ -579,66 +499,126 @@
             document.getElementById('confirm-booking-time').textContent = selectedTime;
         }
         
+        // 格式化日期顯示
+        function formatDateDisplay(dateString) {
+            const date = new Date(dateString);
+            const weekdays = ['週日', '週一', '週二', '週三', '週四', '週五', '週六'];
+            const month = date.getMonth() + 1;
+            const day = date.getDate();
+            const weekday = weekdays[date.getDay()];
+            return `${date.getFullYear()}/${month}/${day} (${weekday})`;
+        }
+        
+        // 按鈕事件
+        document.getElementById('btn-next-step-1.5').addEventListener('click', () => {
+            if (!selectedServiceOption) {
+                UI.warning('請選擇選項');
+                return;
+            }
+            goToStep(2);
+        });
+        
+        document.getElementById('btn-back-step-1.5').addEventListener('click', () => goToStep(1));
+        
+        document.getElementById('btn-next-step-2').addEventListener('click', () => {
+            const date = document.getElementById('booking-date').value;
+            if (!date) {
+                UI.warning('請選擇預約日期');
+                return;
+            }
+            
+            const today = new Date().toISOString().split('T')[0];
+            if (date === today) {
+                const now = new Date();
+                const currentHour = now.getHours();
+                if (currentHour >= 20) {
+                    if (!confirm('今天已經很晚了，建議選擇明天之後的日期。\n\n是否要繼續選擇今天？')) {
+                        return;
+                    }
+                }
+            }
+            
+            selectedDate = date;
+            goToStep(3);
+        });
+        
+        document.getElementById('btn-back-step-2').addEventListener('click', () => {
+            goToStep(selectedService.has_options ? 1.5 : 1);
+        });
+        
+        document.getElementById('btn-next-step-3').addEventListener('click', () => {
+            if (!selectedTime) {
+                UI.warning('請選擇預約時間');
+                return;
+            }
+            
+            const today = new Date().toISOString().split('T')[0];
+            if (selectedDate === today) {
+                const now = new Date();
+                const currentTime = now.toTimeString().slice(0, 5);
+                if (selectedTime <= currentTime) {
+                    UI.warning('無法預約已過的時間，請選擇其他時間');
+                    return;
+                }
+            }
+            
+            goToStep(4);
+        });
+        
+        document.getElementById('btn-back-step-3').addEventListener('click', () => goToStep(2));
+        document.getElementById('btn-back-step-4').addEventListener('click', () => goToStep(3));
+        
         // 提交預約
         document.getElementById('btn-submit-booking').addEventListener('click', async () => {
             try {
                 if (!Auth.isMemberLoggedIn()) {
-                    alert('請先登入');
+                    UI.error('請先登入');
                     return;
                 }
                 
                 // 驗證必要資料
                 if (!selectedService || !selectedService.id) {
-                    showMessage('請選擇服務項目', 'error');
+                    UI.error('請選擇服務項目');
                     return;
                 }
                 
-                // 驗證服務 ID 格式
                 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
                 if (!uuidPattern.test(selectedService.id)) {
                     CONFIG.error('無效的服務 ID', selectedService.id);
-                    showMessage('服務項目資料錯誤，請重新選擇', 'error');
+                    UI.error('服務項目資料錯誤，請重新選擇');
                     return;
                 }
                 
-                if (!selectedDate) {
-                    showMessage('請選擇預約日期', 'error');
+                if (!selectedDate || !selectedTime) {
+                    UI.error('請完成所有必填欄位');
                     return;
                 }
                 
-                if (!selectedTime) {
-                    showMessage('請選擇預約時間', 'error');
-                    return;
-                }
-                
-                // 驗證時間是否已過（如果是今天）
+                // 驗證時間
                 const today = new Date().toISOString().split('T')[0];
                 if (selectedDate === today) {
                     const now = new Date();
-                    const currentTime = now.toTimeString().slice(0, 5); // HH:MM
+                    const currentTime = now.toTimeString().slice(0, 5);
                     if (selectedTime <= currentTime) {
-                        showMessage('無法預約已過的時間，請選擇其他時間', 'error');
+                        UI.error('無法預約已過的時間');
                         return;
                     }
                 }
                 
-                // 如果服務需要選項但未選擇
                 if (selectedService.has_options && !selectedServiceOption) {
-                    showMessage(`請選擇${selectedService.option_label || '選項'}`, 'error');
+                    UI.error(`請選擇${selectedService.option_label || '選項'}`);
                     return;
                 }
                 
                 const session = Auth.getMemberSession();
                 const notes = document.getElementById('booking-notes').value.trim() || null;
                 
-                showLoading('建立預約中...');
+                UI.showLoading('建立預約中...');
                 
-                // 確保日期格式正確（YYYY-MM-DD）
                 const bookingDate = selectedDate instanceof Date 
                     ? selectedDate.toISOString().split('T')[0]
                     : selectedDate;
                 
-                // 確保時間格式正確（HH:MM:SS 或 HH:MM）
                 let bookingTime = selectedTime;
                 if (!bookingTime.includes(':')) {
                     bookingTime = '00:00:00';
@@ -646,116 +626,72 @@
                     bookingTime = bookingTime + ':00';
                 }
                 
-                // 最終驗證：確保 serviceId 不是 "0" 或無效值
                 if (!selectedService.id || selectedService.id === '0' || selectedService.id === 0 || String(selectedService.id).trim() === '0') {
-                    CONFIG.error('❌ 服務 ID 無效', {
-                        serviceId: selectedService.id,
-                        selectedService: selectedService
-                    });
-                    showMessage('服務項目資料錯誤，請重新選擇', 'error');
+                    CONFIG.error('❌ 服務 ID 無效', selectedService.id);
+                    UI.error('服務項目資料錯誤，請重新選擇');
                     return;
                 }
                 
-                // 驗證 serviceId 是有效的 UUID 格式
                 const serviceIdStr = String(selectedService.id).trim();
                 if (!uuidPattern.test(serviceIdStr)) {
-                    CONFIG.error('❌ 服務 ID 格式錯誤', {
-                        serviceId: selectedService.id,
-                        serviceIdStr: serviceIdStr
-                    });
-                    showMessage('服務項目資料錯誤，請重新選擇', 'error');
+                    CONFIG.error('❌ 服務 ID 格式錯誤', serviceIdStr);
+                    UI.error('服務項目資料錯誤，請重新選擇');
                     return;
                 }
                 
-                // 確保 serviceOptionId 是有效的 UUID 或 null
                 let serviceOptionId = null;
                 if (selectedServiceOption && selectedServiceOption.id) {
                     const optionId = String(selectedServiceOption.id).trim();
                     
-                    // 檢查是否為無效值
                     if (optionId && 
                         optionId !== '0' && 
                         optionId !== '' && 
                         optionId !== 'null' && 
                         optionId !== 'undefined' &&
                         optionId !== 'false') {
-                        // 驗證 UUID 格式
                         if (uuidPattern.test(optionId)) {
                             serviceOptionId = optionId;
-                            CONFIG.log('✅ 服務選項 ID 驗證通過', serviceOptionId);
                         } else {
-                            CONFIG.error('❌ 無效的服務選項 ID 格式', {
-                                original: selectedServiceOption.id,
-                                trimmed: optionId
-                            });
-                            showMessage('服務選項資料錯誤，請重新選擇', 'error');
+                            CONFIG.error('❌ 無效的服務選項 ID 格式', optionId);
+                            UI.error('服務選項資料錯誤，請重新選擇');
                             return;
                         }
-                    } else {
-                        // 如果選項 ID 是無效值，記錄但不傳遞
-                        CONFIG.log('⚠️ 服務選項 ID 為無效值，將不傳遞此參數', {
-                            original: selectedServiceOption.id,
-                            trimmed: optionId
-                        });
-                        serviceOptionId = null;
                     }
                 }
                 
-                // 最終檢查：確保 serviceOptionId 不是 "0"
                 if (serviceOptionId === '0' || serviceOptionId === 0 || String(serviceOptionId).trim() === '0') {
-                    CONFIG.error('❌ 服務選項 ID 為 "0"，將其設為 null', serviceOptionId);
                     serviceOptionId = null;
                 }
                 
-                // 最終驗證所有參數
-                CONFIG.log('📋 建立預約參數（最終檢查）', {
+                CONFIG.log('📋 建立預約參數', {
                     lineUserId: session.lineUserId,
                     serviceId: serviceIdStr,
-                    serviceIdType: typeof serviceIdStr,
-                    serviceIdIsValid: uuidPattern.test(serviceIdStr),
                     bookingDate: bookingDate,
                     bookingTime: bookingTime,
                     serviceOptionId: serviceOptionId,
-                    serviceOptionIdType: typeof serviceOptionId,
-                    serviceOptionIdIsNull: serviceOptionId === null,
-                    serviceOptionIdIsValid: serviceOptionId ? uuidPattern.test(String(serviceOptionId)) : true,
                     notes: notes
                 });
                 
-                // 最後一次檢查：確保 serviceId 絕對不是 "0"
-                if (serviceIdStr === '0') {
-                    CONFIG.error('❌❌❌ 致命錯誤：serviceId 仍然是 "0"', {
-                        selectedService: selectedService,
-                        serviceIdStr: serviceIdStr
-                    });
-                    showMessage('服務項目資料錯誤，請重新選擇', 'error');
-                    return;
-                }
-                
                 const booking = await BookingAPI.createBooking(
                     session.lineUserId,
-                    serviceIdStr,  // 使用已驗證的 serviceIdStr
+                    serviceIdStr,
                     bookingDate,
                     bookingTime,
-                    serviceOptionId,  // 這已經是 null 或有效的 UUID 字串
+                    serviceOptionId,
                     notes
                 );
                 
-                    hideLoading();
-                    showMessage('預約成功！', 'success');
-                    
-                    // 延遲後跳轉到預約列表
+                UI.hideLoading();
+                UI.success('預約成功！');
                 
-                // 2 秒後導向預約記錄頁面
                 setTimeout(() => {
                     window.location.href = 'bookings.html';
-                }, 2000);
+                }, 1500);
                 
             } catch (error) {
-                hideLoading();
+                UI.hideLoading();
                 CONFIG.error('預約失敗', error);
                 
-                // 顯示詳細錯誤訊息
                 let errorMessage = '預約失敗，請稍後再試';
                 if (error.message) {
                     errorMessage = error.message;
@@ -765,121 +701,9 @@
                     errorMessage = error;
                 }
                 
-                showMessage(errorMessage, 'error');
+                UI.error(errorMessage);
             }
         });
-        
-        // 上一步按鈕
-        document.getElementById('btn-back-step-2').addEventListener('click', () => goToStep(1));
-        document.getElementById('btn-back-step-3').addEventListener('click', () => goToStep(2));
-        document.getElementById('btn-back-step-4').addEventListener('click', () => goToStep(3));
-        
-        // 格式化日期顯示
-        function formatDateDisplay(dateString) {
-            const date = new Date(dateString);
-            const weekdays = ['週日', '週一', '週二', '週三', '週四', '週五', '週六'];
-            const month = date.getMonth() + 1;
-            const day = date.getDate();
-            const weekday = weekdays[date.getDay()];
-            return `${date.getFullYear()}年${month}月${day}日 (${weekday})`;
-        }
     </script>
-    
-    <style>
-        .booking-step {
-            text-align: center;
-            flex: 1;
-            position: relative;
-        }
-        
-        .booking-step::after {
-            content: '';
-            position: absolute;
-            top: 20px;
-            left: 60%;
-            width: 80%;
-            height: 2px;
-            background: #E5E7EB;
-            z-index: 0;
-        }
-        
-        .booking-step:last-child::after {
-            display: none;
-        }
-        
-        .booking-step.active::after {
-            background: #007AFF;
-        }
-        
-        .step-number {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: #E5E7EB;
-            color: #999;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 8px;
-            font-weight: 600;
-            position: relative;
-            z-index: 1;
-        }
-        
-        .booking-step.active .step-number {
-            background: #007AFF;
-            color: white;
-        }
-        
-        .step-label {
-            font-size: 12px;
-            color: #999;
-        }
-        
-        .booking-step.active .step-label {
-            color: #007AFF;
-            font-weight: 600;
-        }
-        
-        .service-card {
-            padding: 20px;
-            border: 2px solid #E5E7EB;
-            border-radius: var(--radius);
-            margin-bottom: 16px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        
-        .service-card:hover {
-            border-color: #007AFF;
-            box-shadow: var(--shadow-md);
-        }
-        
-        .service-card.selected {
-            border-color: #007AFF;
-            background: rgba(0, 122, 255, 0.05);
-        }
-        
-        .time-slot-btn {
-            padding: 12px;
-            border: 2px solid #E5E7EB;
-            border-radius: var(--radius-sm);
-            background: white;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-size: 15px;
-        }
-        
-        .time-slot-btn:hover {
-            border-color: #007AFF;
-        }
-        
-        .time-slot-btn.selected {
-            background: #007AFF;
-            color: white;
-            border-color: #007AFF;
-        }
-    </style>
 </body>
 </html>
-
