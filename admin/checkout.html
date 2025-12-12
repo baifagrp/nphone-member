@@ -443,15 +443,43 @@
             try {
                 const client = getSupabase();
                 
-                const { data, error } = await client
+                // 先查詢交易記錄
+                const { data: transactions, error } = await client
                     .from('transactions')
-                    .select('*, members(line_user_id, name, phone)')
+                    .select('*')
                     .order('created_at', { ascending: false })
                     .limit(50);
                 
                 if (error) throw error;
                 
-                displayTransactions(data || []);
+                // 分別查詢會員和預約資料，避免關聯關係衝突
+                const transactionsWithRelations = await Promise.all((transactions || []).map(async (transaction) => {
+                    // 查詢會員資料
+                    if (transaction.member_id) {
+                        const { data: member } = await client
+                            .from('members')
+                            .select('line_user_id, name, phone')
+                            .eq('id', transaction.member_id)
+                            .single();
+                        
+                        transaction.members = member || null;
+                    }
+                    
+                    // 查詢預約資料
+                    if (transaction.booking_id) {
+                        const { data: booking } = await client
+                            .from('bookings')
+                            .select('id, service_name, booking_date, booking_time')
+                            .eq('id', transaction.booking_id)
+                            .single();
+                        
+                        transaction.bookings = booking || null;
+                    }
+                    
+                    return transaction;
+                }));
+                
+                displayTransactions(transactionsWithRelations);
                 
             } catch (error) {
                 CONFIG.error('載入交易記錄失敗', error);

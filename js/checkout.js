@@ -209,16 +209,39 @@ const CheckoutAPI = {
     try {
       const client = getSupabase();
       
-      const { data, error } = await client
+      // 分別查詢交易、會員和預約資料，避免關聯關係衝突
+      const { data: transaction, error: transError } = await client
         .from('transactions')
-        .select('*, members(*), bookings(*)')
+        .select('*')
         .eq('id', id)
         .single();
       
-      if (error) throw error;
+      if (transError) throw transError;
       
-      CONFIG.log('取得交易記錄成功', data);
-      return data;
+      // 查詢會員資料
+      if (transaction.member_id) {
+        const { data: member } = await client
+          .from('members')
+          .select('line_user_id, name, phone')
+          .eq('id', transaction.member_id)
+          .single();
+        
+        transaction.members = member || null;
+      }
+      
+      // 查詢預約資料
+      if (transaction.booking_id) {
+        const { data: booking } = await client
+          .from('bookings')
+          .select('id, service_name, booking_date, booking_time, service_price, payment_status, paid_amount')
+          .eq('id', transaction.booking_id)
+          .single();
+        
+        transaction.bookings = booking || null;
+      }
+      
+      CONFIG.log('取得交易記錄成功', transaction);
+      return transaction;
     } catch (error) {
       CONFIG.error('取得交易記錄失敗', error);
       throw error;
@@ -250,17 +273,39 @@ const CheckoutAPI = {
         updates.payment_method_name = paymentMethod.name;
       }
       
-      const { data, error } = await client
+      const { data: transaction, error } = await client
         .from('transactions')
         .update(updates)
         .eq('id', id)
-        .select('*, members(*), bookings(*)')
+        .select('*')
         .single();
       
       if (error) throw error;
       
-      CONFIG.log('更新交易記錄成功', data);
-      return data;
+      // 查詢會員資料
+      if (transaction.member_id) {
+        const { data: member } = await client
+          .from('members')
+          .select('line_user_id, name, phone')
+          .eq('id', transaction.member_id)
+          .single();
+        
+        transaction.members = member || null;
+      }
+      
+      // 查詢預約資料
+      if (transaction.booking_id) {
+        const { data: booking } = await client
+          .from('bookings')
+          .select('id, service_name, booking_date, booking_time, service_price, payment_status, paid_amount')
+          .eq('id', transaction.booking_id)
+          .single();
+        
+        transaction.bookings = booking || null;
+      }
+      
+      CONFIG.log('更新交易記錄成功', transaction);
+      return transaction;
     } catch (error) {
       CONFIG.error('更新交易記錄失敗', error);
       throw error;
@@ -275,13 +320,26 @@ const CheckoutAPI = {
       const client = getSupabase();
       
       // 先取得交易記錄，以便後續更新預約狀態
+      // 明確指定查詢的欄位，避免關聯關係衝突
       const { data: transaction, error: fetchError } = await client
         .from('transactions')
-        .select('*, bookings(*)')
+        .select('id, booking_id, transaction_type, amount, status')
         .eq('id', id)
         .single();
       
       if (fetchError) throw fetchError;
+      
+      // 如果該交易關聯了預約且是付款類型，需要先取得預約資料
+      let bookingPrice = 0;
+      if (transaction.booking_id && transaction.transaction_type === 'payment') {
+        const { data: booking } = await client
+          .from('bookings')
+          .select('service_price')
+          .eq('id', transaction.booking_id)
+          .single();
+        
+        bookingPrice = booking?.service_price || 0;
+      }
       
       // 刪除交易記錄
       const { error } = await client
@@ -302,7 +360,6 @@ const CheckoutAPI = {
           .eq('status', 'completed');
         
         const totalPaid = (otherPayments || []).reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
-        const bookingPrice = transaction.bookings?.service_price || 0;
         
         let paymentStatus = 'unpaid';
         let paidAmount = 0;
@@ -360,11 +417,38 @@ const CheckoutAPI = {
         query = query.eq('member_id', filters.memberId);
       }
       
-      const { data, error, count } = await query;
+      const { data: transactions, error, count } = await query;
       
       if (error) throw error;
       
-      return { transactions: data || [], total: count || 0 };
+      // 分別查詢會員和預約資料
+      const transactionsWithRelations = await Promise.all((transactions || []).map(async (transaction) => {
+        // 查詢會員資料
+        if (transaction.member_id) {
+          const { data: member } = await client
+            .from('members')
+            .select('line_user_id, name, phone')
+            .eq('id', transaction.member_id)
+            .single();
+          
+          transaction.members = member || null;
+        }
+        
+        // 查詢預約資料
+        if (transaction.booking_id) {
+          const { data: booking } = await client
+            .from('bookings')
+            .select('id, service_name, booking_date, booking_time')
+            .eq('id', transaction.booking_id)
+            .single();
+          
+          transaction.bookings = booking || null;
+        }
+        
+        return transaction;
+      }));
+      
+      return { transactions: transactionsWithRelations, total: count || 0 };
     } catch (error) {
       CONFIG.error('取得交易記錄失敗', error);
       throw error;
