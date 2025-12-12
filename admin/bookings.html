@@ -3,241 +3,297 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>預約管理</title>
+    <title>預約管理 - NPHONE</title>
     <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/design-system.css">
+    <link rel="stylesheet" href="../css/admin-enhancements.css">
+    <link rel="stylesheet" href="../css/animations.css">
 </head>
-<body>
+<body class="ds-page">
     <!-- 導航列 -->
     <nav class="navbar">
         <div class="container navbar-container">
-            <a href="dashboard.html" class="navbar-brand">NPHONE</a>
+            <a href="dashboard.html" class="navbar-brand">NPHONE 管理後台</a>
             <div class="navbar-menu">
-                <a href="dashboard.html" class="navbar-link">首頁</a>
+                <a href="dashboard.html" class="navbar-link">儀表板</a>
                 <a href="members.html" class="navbar-link">會員管理</a>
-                <a href="bookings.html" class="navbar-link">預約管理</a>
-                <a href="services.html" class="navbar-link">服務項目</a>
+                <a href="services.html" class="navbar-link">服務管理</a>
+                <a href="bookings.html" class="navbar-link active">預約管理</a>
                 <a href="checkout.html" class="navbar-link">結帳管理</a>
                 <a href="business-hours.html" class="navbar-link">營業時間</a>
+                <a href="wallet-points.html" class="navbar-link">儲值/積分</a>
                 <button id="btn-admin-logout" class="btn btn-sm btn-secondary">登出</button>
             </div>
         </div>
     </nav>
 
-    <!-- 主要內容 -->
     <div class="container" style="margin-top: 40px;">
-        <div class="flex-between" style="margin-bottom: 24px;">
-            <h1 style="font-size: 32px; font-weight: 700;">預約管理</h1>
+        <div class="page-actions">
+            <h1 class="page-title">預約管理</h1>
+            <a href="member-booking-new.html" class="ds-btn ds-btn-primary">+ 新增預約</a>
         </div>
         
-        <!-- 篩選器 -->
-        <div class="card" style="margin-bottom: 24px;">
-            <div style="display: flex; gap: 16px; align-items: center; flex-wrap: wrap;">
-                <select id="filter-status" class="form-select" style="width: auto; min-width: 150px;">
-                    <option value="">全部狀態</option>
-                    <option value="pending">待確認</option>
-                    <option value="confirmed">已確認</option>
-                    <option value="cancelled">已取消</option>
-                    <option value="completed">已完成</option>
-                    <option value="no_show">未到</option>
-                </select>
-                
-                <input 
-                    type="date" 
-                    id="filter-date" 
-                    class="form-input" 
-                    style="width: auto; min-width: 150px;"
-                >
-                
-                <button id="btn-apply-filter" class="btn btn-primary">篩選</button>
-                <button id="btn-clear-filter" class="btn btn-secondary">清除</button>
+        <!-- 篩選卡片 -->
+        <div class="ds-card ds-mb-lg">
+            <div class="ds-card-body">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--spacing-md);">
+                    <div class="ds-form-group">
+                        <label class="ds-form-label">狀態</label>
+                        <select id="filter-status" class="ds-form-input">
+                            <option value="">全部狀態</option>
+                            <option value="pending">待確認</option>
+                            <option value="confirmed">已確認</option>
+                            <option value="completed">已完成</option>
+                            <option value="cancelled">已取消</option>
+                        </select>
+                    </div>
+                    
+                    <div class="ds-form-group">
+                        <label class="ds-form-label">日期</label>
+                        <input type="date" id="filter-date" class="ds-form-input">
+                    </div>
+                    
+                    <div class="ds-form-group">
+                        <label class="ds-form-label">搜尋</label>
+                        <input 
+                            type="text" 
+                            id="search-bookings" 
+                            class="ds-form-input" 
+                            placeholder="會員姓名或服務名稱"
+                        >
+                    </div>
+                    
+                    <div class="ds-form-group" style="display: flex; align-items: flex-end;">
+                        <button onclick="applyFilters()" class="ds-btn ds-btn-primary" style="width: 100%;">
+                            篩選
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 統計卡片 -->
+        <div class="ds-grid ds-grid-4 ds-mb-lg">
+            <div class="ds-info-card">
+                <div class="ds-info-card-icon" style="background: rgba(255, 193, 7, 0.1); color: #FFC107;">⏳</div>
+                <div class="ds-info-card-value" id="stat-pending">0</div>
+                <div class="ds-info-card-label">待確認</div>
+            </div>
+            
+            <div class="ds-info-card">
+                <div class="ds-info-card-icon" style="background: rgba(76, 175, 80, 0.1); color: #4CAF50;">✓</div>
+                <div class="ds-info-card-value" id="stat-confirmed">0</div>
+                <div class="ds-info-card-label">已確認</div>
+            </div>
+            
+            <div class="ds-info-card">
+                <div class="ds-info-card-icon" style="background: rgba(33, 150, 243, 0.1); color: #2196F3;">📅</div>
+                <div class="ds-info-card-value" id="stat-today">0</div>
+                <div class="ds-info-card-label">今日預約</div>
+            </div>
+            
+            <div class="ds-info-card">
+                <div class="ds-info-card-icon" style="background: rgba(156, 39, 176, 0.1); color: #9C27B0;">📊</div>
+                <div class="ds-info-card-value" id="stat-total">0</div>
+                <div class="ds-info-card-label">總預約數</div>
             </div>
         </div>
         
         <!-- 預約列表 -->
-        <div id="bookings-list">
-            <div class="card">
-                <div style="text-align: center; padding: 40px;">
-                    <div class="loading-spinner"></div>
-                </div>
+        <div class="ds-card">
+            <div class="ds-card-header">
+                <div class="ds-card-title">預約列表</div>
             </div>
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>會員</th>
+                        <th>服務項目</th>
+                        <th>日期時間</th>
+                        <th>付款狀態</th>
+                        <th>狀態</th>
+                        <th style="text-align: center;">操作</th>
+                    </tr>
+                </thead>
+                <tbody id="bookings-tbody">
+                    <tr>
+                        <td colspan="6" style="text-align: center; padding: var(--spacing-2xl);">
+                            <div class="loading-spinner"></div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
     </div>
 
-    <!-- JavaScript -->
+    <div id="toast-container" class="toast-container"></div>
+
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="../js/config.js"></script>
     <script src="../js/supabase-client.js"></script>
     <script src="../js/ui-utils.js"></script>
     <script src="../js/auth.js"></script>
-    <script src="../js/admin.js"></script>
     <script src="../js/booking.js"></script>
+    <script src="../js/animation-utils.js"></script>
     
     <script>
-        let currentFilter = {
-            status: null,
-            date: null,
-        };
-        
-        // 頁面載入時初始化
+        let allBookings = [];
+
         window.addEventListener('DOMContentLoaded', async () => {
             try {
-                await Admin.init();
+                if (!Auth.requireAdminLogin()) return;
                 await loadBookings();
             } catch (error) {
                 CONFIG.error('初始化失敗', error);
+                UI.error('載入失敗');
             }
         });
-        
-        // 載入預約列表
+
         async function loadBookings() {
             try {
-                const result = await BookingAPI.getAllBookings(100, 0, currentFilter.status);
-                const bookings = result.bookings;
-                
-                // 如果有日期篩選，進一步過濾
-                let filteredBookings = bookings;
-                if (currentFilter.date) {
-                    filteredBookings = bookings.filter(b => b.booking_date === currentFilter.date);
-                }
-                
-                if (filteredBookings.length === 0) {
-                    document.getElementById('bookings-list').innerHTML = `
-                        <div class="card">
-                            <div style="text-align: center; padding: 40px; color: #999;">
-                                尚無預約記錄
-                            </div>
-                        </div>
-                    `;
-                    return;
-                }
-                
-                // 顯示預約列表
-                document.getElementById('bookings-list').innerHTML = filteredBookings.map(booking => {
-                    const statusMap = {
-                        'pending': { text: '待確認', class: 'status-warning', actions: ['confirm', 'cancel'] },
-                        'confirmed': { text: '已確認', class: 'status-success', actions: ['complete', 'cancel', 'no_show'] },
-                        'cancelled': { text: '已取消', class: 'status-gray', actions: [] },
-                        'completed': { text: '已完成', class: 'status-success', actions: [] },
-                        'no_show': { text: '未到', class: 'status-error', actions: [] },
-                    };
-                    
-                    const status = statusMap[booking.status] || { text: booking.status, class: 'status-gray', actions: [] };
-                    const member = booking.members || {};
-                    
-                    return `
-                        <div class="card" style="margin-bottom: 16px;">
-                            <div class="flex-between">
-                                <div style="flex: 1;">
-                                    <h3 style="margin-bottom: 8px;">${booking.service_name}</h3>
-                                    <div style="color: #86868B; font-size: 14px; margin-bottom: 12px;">
-                                        <div><strong>會員：</strong>${member.name || '未知'}</div>
-                                        <div><strong>電話：</strong>${member.phone || '-'}</div>
-                                        <div>📅 ${formatDateDisplay(booking.booking_date)}</div>
-                                        <div>⏰ ${booking.booking_time}</div>
-                                        <div>⏱ ${booking.service_duration} 分鐘</div>
-                                        ${booking.service_option_name ? `<div>📱 <strong>型號：</strong>${booking.service_option_name}</div>` : ''}
-                                        <div>💰 NT$ ${booking.service_price.toLocaleString()}</div>
-                                    </div>
-                                    ${booking.notes ? `<div style="padding: 8px; background: #F5F5F7; border-radius: 8px; color: #666; font-size: 13px; margin-top: 8px;">📝 ${booking.notes}</div>` : ''}
-                                    ${booking.admin_notes ? `<div style="padding: 8px; background: #FFF4E6; border-radius: 8px; color: #666; font-size: 13px; margin-top: 8px;">🔒 管理員備註: ${booking.admin_notes}</div>` : ''}
-                                </div>
-                                <div style="text-align: right; min-width: 200px;">
-                                    <div class="status-badge ${status.class}" style="margin-bottom: 12px;">${status.text}</div>
-                                    <div style="display: flex; flex-direction: column; gap: 8px;">
-                                        ${status.actions.includes('confirm') ? `<button class="btn btn-sm btn-success" onclick="updateBookingStatus('${booking.id}', 'confirmed')">確認預約</button>` : ''}
-                                        ${status.actions.includes('complete') ? `<button class="btn btn-sm btn-primary" onclick="updateBookingStatus('${booking.id}', 'completed')">標記完成</button>` : ''}
-                                        ${status.actions.includes('cancel') ? `<button class="btn btn-sm btn-danger" onclick="updateBookingStatus('${booking.id}', 'cancelled')">取消預約</button>` : ''}
-                                        ${status.actions.includes('no_show') ? `<button class="btn btn-sm btn-warning" onclick="updateBookingStatus('${booking.id}', 'no_show')">標記未到</button>` : ''}
-                                        <button class="btn btn-sm btn-secondary" onclick="deleteBooking('${booking.id}', '${booking.service_name}')" style="margin-top: 8px;">刪除</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                }).join('');
-                
+                UI.showLoading('載入中...');
+                const result = await BookingAPI.getAllBookings(1000, 0);
+                allBookings = result.bookings || [];
+                updateStats();
+                displayBookings(allBookings);
+                UI.hideLoading();
             } catch (error) {
+                UI.hideLoading();
                 CONFIG.error('載入預約失敗', error);
-                showMessage('載入預約失敗', 'error');
+                UI.error('載入預約失敗');
             }
         }
-        
-        // 刪除預約
-        async function deleteBooking(bookingId, serviceName) {
-            if (!confirm(`確定要刪除預約「${serviceName}」嗎？\n\n此操作無法復原！`)) {
+
+        function updateStats() {
+            const pending = allBookings.filter(b => b.status === 'pending').length;
+            const confirmed = allBookings.filter(b => b.status === 'confirmed').length;
+            const today = new Date().toISOString().split('T')[0];
+            const todayBookings = allBookings.filter(b => b.booking_date === today).length;
+            
+            document.getElementById('stat-pending').textContent = pending;
+            document.getElementById('stat-confirmed').textContent = confirmed;
+            document.getElementById('stat-today').textContent = todayBookings;
+            document.getElementById('stat-total').textContent = allBookings.length;
+        }
+
+        function displayBookings(bookings) {
+            const tbody = document.getElementById('bookings-tbody');
+            if (!bookings || bookings.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="ds-text-center ds-p-xl"><div class="ds-empty-title">尚無預約</div></td></tr>';
                 return;
             }
-            
-            try {
-                showLoading('刪除中...');
-                await BookingAPI.deleteBooking(bookingId);
-                hideLoading();
-                showMessage('預約已刪除', 'success');
-                await loadBookings();
-            } catch (error) {
-                hideLoading();
-                CONFIG.error('刪除預約失敗', error);
-                showMessage(error.message || '刪除失敗', 'error');
-            }
+
+            tbody.innerHTML = bookings.map(b => `
+                <tr>
+                    <td>
+                        <strong>${b.member_name || '未知會員'}</strong>
+                        ${b.member_phone ? `<br><small style="color: var(--text-secondary);">${b.member_phone}</small>` : ''}
+                    </td>
+                    <td>
+                        <strong>${b.service_name || '未知服務'}</strong>
+                        ${b.service_option_name ? `<br><small style="color: var(--text-secondary);">${b.service_option_name}</small>` : ''}
+                    </td>
+                    <td>
+                        ${formatDate(b.booking_date)}<br>
+                        <small style="color: var(--text-secondary);">${b.booking_time?.substring(0, 5)}</small>
+                    </td>
+                    <td>${getPaymentBadge(b.payment_status)}</td>
+                    <td>${getStatusBadge(b.status)}</td>
+                    <td>
+                        <div class="admin-actions" style="justify-content: center;">
+                            <button onclick="viewBooking('${b.id}')" class="admin-action-btn">查看</button>
+                            <button onclick="deleteBooking('${b.id}')" class="admin-action-btn danger">刪除</button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
         }
-        
-        // 更新預約狀態
-        async function updateBookingStatus(bookingId, status) {
-            const statusMap = {
-                'confirmed': '確認',
-                'cancelled': '取消',
-                'completed': '完成',
-                'no_show': '標記為未到',
-            };
-            
-            if (!confirm(`確定要${statusMap[status]}此預約嗎？`)) {
-                return;
-            }
-            
-            try {
-                showLoading('更新中...');
-                await BookingAPI.updateBookingStatus(bookingId, status);
-                hideLoading();
-                showMessage('預約狀態已更新', 'success');
-                await loadBookings();
-            } catch (error) {
-                hideLoading();
-                CONFIG.error('更新狀態失敗', error);
-                showMessage('更新失敗', 'error');
-            }
-        }
-        
-        // 新增預約按鈕
-        document.getElementById('btn-new-booking').addEventListener('click', () => {
-            // 導向到會員預約頁面，或創建一個管理員新增預約的頁面
-            // 暫時先導向到會員預約頁面（管理員可以透過選擇會員來為其新增預約）
-            window.location.href = 'member-booking-new.html';
-        });
-        
-        // 篩選功能
-        document.getElementById('btn-apply-filter').addEventListener('click', () => {
-            currentFilter.status = document.getElementById('filter-status').value || null;
-            currentFilter.date = document.getElementById('filter-date').value || null;
-            loadBookings();
-        });
-        
-        document.getElementById('btn-clear-filter').addEventListener('click', () => {
-            document.getElementById('filter-status').value = '';
-            document.getElementById('filter-date').value = '';
-            currentFilter = { status: null, date: null };
-            loadBookings();
-        });
-        
-        // 格式化日期顯示
-        function formatDateDisplay(dateString) {
+
+        function formatDate(dateString) {
             const date = new Date(dateString);
-            const weekdays = ['週日', '週一', '週二', '週三', '週四', '週五', '週六'];
-            const month = date.getMonth() + 1;
-            const day = date.getDate();
-            const weekday = weekdays[date.getDay()];
-            return `${date.getFullYear()}年${month}月${day}日 (${weekday})`;
+            return `${date.getMonth() + 1}/${date.getDate()}`;
         }
+
+        function getStatusBadge(status) {
+            const statusMap = {
+                'pending': { text: '待確認', class: 'ds-badge-warning' },
+                'confirmed': { text: '已確認', class: 'ds-badge-success' },
+                'completed': { text: '已完成', class: 'ds-badge-info' },
+                'cancelled': { text: '已取消', class: 'ds-badge-error' }
+            };
+            const s = statusMap[status] || { text: status, class: 'ds-badge-default' };
+            return `<span class="ds-badge ${s.class}">${s.text}</span>`;
+        }
+
+        function getPaymentBadge(status) {
+            const statusMap = {
+                'unpaid': { text: '未付款', class: 'ds-badge-error' },
+                'paid': { text: '已付款', class: 'ds-badge-success' },
+                'partial': { text: '部分付款', class: 'ds-badge-warning' },
+                'refunded': { text: '已退款', class: 'ds-badge-info' }
+            };
+            const s = statusMap[status] || { text: '未付款', class: 'ds-badge-default' };
+            return `<span class="ds-badge ${s.class}">${s.text}</span>`;
+        }
+
+        function applyFilters() {
+            const status = document.getElementById('filter-status').value;
+            const date = document.getElementById('filter-date').value;
+            const search = document.getElementById('search-bookings').value.toLowerCase();
+
+            let filtered = allBookings;
+
+            if (status) {
+                filtered = filtered.filter(b => b.status === status);
+            }
+
+            if (date) {
+                filtered = filtered.filter(b => b.booking_date === date);
+            }
+
+            if (search) {
+                filtered = filtered.filter(b => 
+                    (b.member_name && b.member_name.toLowerCase().includes(search)) ||
+                    (b.service_name && b.service_name.toLowerCase().includes(search))
+                );
+            }
+
+            displayBookings(filtered);
+        }
+
+        function viewBooking(id) {
+            const booking = allBookings.find(b => b.id === id);
+            if (booking) {
+                alert(`預約詳情：\n\n會員：${booking.member_name}\n服務：${booking.service_name}\n日期：${booking.booking_date}\n時間：${booking.booking_time}\n狀態：${booking.status}`);
+            }
+        }
+
+        async function deleteBooking(id) {
+            if (!confirm('確定要刪除此預約嗎？此操作無法復原！')) return;
+            
+            try {
+                UI.showLoading('刪除中...');
+                await BookingAPI.deleteBooking(id);
+                UI.hideLoading();
+                UI.success('刪除成功');
+                await loadBookings();
+            } catch (error) {
+                UI.hideLoading();
+                CONFIG.error('刪除失敗', error);
+                UI.error('刪除失敗');
+            }
+        }
+
+        // 即時搜尋
+        document.getElementById('search-bookings').addEventListener('input', applyFilters);
+        document.getElementById('filter-status').addEventListener('change', applyFilters);
+        document.getElementById('filter-date').addEventListener('change', applyFilters);
+
+        document.getElementById('btn-admin-logout').addEventListener('click', () => {
+            if (confirm('確定要登出嗎？')) {
+                Auth.adminLogout();
+            }
+        });
     </script>
 </body>
 </html>
-

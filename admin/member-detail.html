@@ -244,7 +244,7 @@
             document.getElementById('detail-phone').textContent = member.phone || '-';
             document.getElementById('detail-email').textContent = member.email || '-';
             document.getElementById('detail-gender').textContent = member.gender === 'M' ? '男' : member.gender === 'F' ? '女' : '其他';
-            document.getElementById('detail-birth-date').textContent = member.birth_date || '-';
+            document.getElementById('detail-birth-date').textContent = member.birthday || '-';
             document.getElementById('detail-member-code').textContent = member.member_code || '-';
             
             if (member.line_user_id) {
