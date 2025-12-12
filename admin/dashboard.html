@@ -119,10 +119,12 @@
         async function loadDashboardData() {
             try {
                 // 載入統計數據
-                const [members, bookings] = await Promise.all([
+                const [members, bookingsResult] = await Promise.all([
                     MemberAPI.getAll(1000, 0),
                     BookingAPI.getAllBookings(1000, 0)
                 ]);
+
+                const bookings = bookingsResult.bookings || [];
 
                 // 總會員數
                 document.getElementById('total-members').textContent = members.length;
