@@ -88,7 +88,12 @@ const Auth = {
                                      result.member.registration_status === 'pending';
       
       if (needsEmailVerification) {
-        // 需要 Email 驗證 -> 導向驗證頁面
+        // 需要 Email 驗證 -> 保存 LINE 資訊到 sessionStorage
+        sessionStorage.setItem('temp_line_user_id', result.line_user_id);
+        sessionStorage.setItem('temp_line_display_name', result.member.name || '');
+        sessionStorage.setItem('temp_line_picture_url', result.member.avatar_url || '');
+        
+        // 導向驗證頁面
         redirectUrl = '/member/email-verification.html';
         CONFIG.log('需要 Email 驗證，導向驗證頁面');
       } else {

@@ -177,8 +177,8 @@ BEGIN
         UPDATE public.members
         SET 
             line_user_id = p_line_user_id,
-            line_display_name = COALESCE(p_line_display_name, line_display_name),
-            line_picture_url = COALESCE(p_line_picture_url, line_picture_url),
+            name = COALESCE(p_line_display_name, name),
+            avatar_url = COALESCE(p_line_picture_url, avatar_url),
             email_verified = TRUE,
             registration_status = 'completed',
             updated_at = NOW()
@@ -204,15 +204,13 @@ BEGIN
             name,
             email,
             line_user_id,
-            line_display_name,
-            line_picture_url,
+            avatar_url,
             email_verified,
             registration_status
         ) VALUES (
             COALESCE(p_line_display_name, 'LINE 用戶'),
             p_email,
             p_line_user_id,
-            p_line_display_name,
             p_line_picture_url,
             TRUE,
             'completed'
