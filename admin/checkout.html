@@ -13,66 +13,69 @@
     <!-- 導航列 -->
     <nav class="navbar">
         <div class="container navbar-container">
-            <a href="dashboard.html" class="navbar-brand">NPHONE</a>
+            <a href="dashboard.html" class="navbar-brand">NPHONE 管理後台</a>
             <div class="navbar-menu">
-                <a href="dashboard.html" class="navbar-link">首頁</a>
+                <a href="dashboard.html" class="navbar-link">儀表板</a>
                 <a href="members.html" class="navbar-link">會員管理</a>
+                <a href="services.html" class="navbar-link">服務管理</a>
                 <a href="bookings.html" class="navbar-link">預約管理</a>
-                <a href="services.html" class="navbar-link">服務項目</a>
                 <a href="checkout.html" class="navbar-link active">結帳管理</a>
-                <a href="wallet-points.html" class="navbar-link">儲值金與積分</a>
                 <a href="business-hours.html" class="navbar-link">營業時間</a>
+                <a href="wallet-points.html" class="navbar-link">儲值/積分</a>
                 <button id="btn-admin-logout" class="btn btn-sm btn-secondary">登出</button>
             </div>
         </div>
     </nav>
 
     <!-- 主要內容 -->
-    <div class="container-sm" style="margin-top: 40px;">
-        <div class="flex-between" style="margin-bottom: 24px;">
-            <h1 style="font-size: 32px; font-weight: 700;">結帳管理</h1>
-            <button id="btn-new-transaction" class="btn btn-success">+ 新增交易</button>
+    <div class="container" style="margin-top: 40px;">
+        <div class="page-actions">
+            <h1 class="page-title">結帳管理</h1>
+            <button id="btn-new-transaction" class="ds-btn ds-btn-primary">+ 新增交易</button>
         </div>
         
         <!-- 結帳表單 -->
-        <div id="checkout-form" class="card" style="margin-bottom: 24px; display: none;">
-            <h2 style="font-size: 24px; margin-bottom: 24px;" id="form-title">新增交易</h2>
+        <div id="checkout-form" class="ds-card ds-mb-lg" style="display: none;">
+            <div class="ds-card-header">
+                <div class="ds-card-title" id="form-title">新增交易</div>
+            </div>
+            <div class="ds-card-body">
             
             <!-- 會員選擇 -->
-            <div class="form-group" style="margin-bottom: 24px;">
-                <label for="member-select" class="form-label">選擇會員 <span style="color: #FF3B30;">*</span></label>
-                <select id="member-select" class="form-input" required>
+            <div class="ds-form-group">
+                <label for="member-select" class="ds-form-label">選擇會員 <span class="ds-text-error">*</span></label>
+                <select id="member-select" class="ds-form-input" required>
                     <option value="">請選擇會員</option>
                 </select>
             </div>
             
             <!-- 預約選擇（可選） -->
-            <div class="form-group" style="margin-bottom: 24px;">
-                <label for="booking-select" class="form-label">關聯預約（選填）</label>
-                <select id="booking-select" class="form-input">
+            <div class="ds-form-group">
+                <label for="booking-select" class="ds-form-label">關聯預約（選填）</label>
+                <select id="booking-select" class="ds-form-input">
                     <option value="">不關聯預約</option>
                 </select>
-                <div id="booking-preview" style="margin-top: 12px; padding: 16px; background: #F5F5F7; border-radius: 8px; display: none;">
+                <div id="booking-preview" class="ds-info-box ds-mt-sm" style="display: none;">
                     <!-- 動態載入預約詳情 -->
                 </div>
             </div>
             
             <!-- 交易類型 -->
-            <div class="form-group" style="margin-bottom: 24px;">
-                <label for="transaction-type" class="form-label">交易類型 <span style="color: #FF3B30;">*</span></label>
-                <select id="transaction-type" class="form-input" required>
+            <div class="ds-form-group">
+                <label for="transaction-type" class="ds-form-label">交易類型 <span class="ds-text-error">*</span></label>
+                <select id="transaction-type" class="ds-form-input" required>
                     <option value="payment">付款</option>
                     <option value="refund">退款</option>
                 </select>
             </div>
             
             <!-- 金額 -->
-            <div class="form-group" style="margin-bottom: 24px;">
-                <label for="amount" class="form-label">金額 <span style="color: #FF3B30;">*</span></label>
+            <div class="ds-form-group">
+                <label for="amount" class="ds-form-label">金額 <span class="ds-text-error">*</span></label>
                 <input 
                     type="number" 
                     id="amount" 
-                    class="form-input" 
+                    class="ds-form-input" 
                     step="0.01"
                     min="0.01"
                     required
@@ -81,12 +84,12 @@
             </div>
             
             <!-- 折扣金額（可選） -->
-            <div class="form-group" style="margin-bottom: 24px;">
-                <label for="discount-amount" class="form-label">折扣金額（選填）</label>
+            <div class="ds-form-group">
+                <label for="discount-amount" class="ds-form-label">折扣金額（選填）</label>
                 <input 
                     type="number" 
                     id="discount-amount" 
-                    class="form-input" 
+                    class="ds-form-input" 
                     step="0.01"
                     min="0"
                     value="0"
@@ -95,88 +98,94 @@
             </div>
             
             <!-- 付款方式 -->
-            <div class="form-group" style="margin-bottom: 24px;">
-                <label for="payment-method" class="form-label">付款方式 <span style="color: #FF3B30;">*</span></label>
-                <select id="payment-method" class="form-input" required>
+            <div class="ds-form-group">
+                <label for="payment-method" class="ds-form-label">付款方式 <span class="ds-text-error">*</span></label>
+                <select id="payment-method" class="ds-form-input" required>
                     <option value="">請選擇付款方式</option>
                 </select>
                 <!-- 儲值金餘額提示（當選擇儲值金時顯示） -->
-                <div id="wallet-balance-hint" style="margin-top: 8px; padding: 12px; background: #F0F9FF; border: 1px solid #B3E5FC; border-radius: 8px; display: none;">
+                <div id="wallet-balance-hint" class="ds-info-box ds-info-box-info ds-mt-sm" style="display: none;">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <span style="font-weight: 600; color: #0277BD;">可用儲值金餘額</span>
-                        <span id="wallet-balance-display" style="font-size: 16px; font-weight: 700; color: #0277BD;">NT$ 0</span>
+                        <span style="font-weight: 600;">可用儲值金餘額</span>
+                        <span id="wallet-balance-display" style="font-size: 16px; font-weight: 700;">NT$ 0</span>
                     </div>
-                    <div style="margin-top: 8px; font-size: 13px; color: #666;">
+                    <div class="ds-mt-xs ds-text-secondary">
                         <span id="wallet-payment-info">系統將使用儲值金支付此筆交易</span>
                     </div>
                 </div>
             </div>
             
             <!-- 交易描述 -->
-            <div class="form-group" style="margin-bottom: 24px;">
-                <label for="description" class="form-label">交易描述（選填）</label>
+            <div class="ds-form-group">
+                <label for="description" class="ds-form-label">交易描述（選填）</label>
                 <input 
                     type="text" 
                     id="description" 
-                    class="form-input" 
+                    class="ds-form-input" 
                     placeholder="例如：服務費用、退款說明等"
                 >
             </div>
             
             <!-- 收據編號（可選，系統會自動生成） -->
-            <div class="form-group" style="margin-bottom: 24px;">
-                <label for="receipt-number" class="form-label">收據編號（選填，留空將自動生成）</label>
+            <div class="ds-form-group">
+                <label for="receipt-number" class="ds-form-label">收據編號（選填，留空將自動生成）</label>
                 <input 
                     type="text" 
                     id="receipt-number" 
-                    class="form-input" 
+                    class="ds-form-input" 
                     placeholder="留空將自動生成"
                 >
             </div>
             
             <!-- 參考編號（可選） -->
-            <div class="form-group" style="margin-bottom: 24px;">
-                <label for="reference-number" class="form-label">參考編號（選填）</label>
+            <div class="ds-form-group">
+                <label for="reference-number" class="ds-form-label">參考編號（選填）</label>
                 <input 
                     type="text" 
                     id="reference-number" 
-                    class="form-input" 
+                    class="ds-form-input" 
                     placeholder="例如：信用卡授權碼、轉帳帳號等"
                 >
             </div>
             
             <!-- 備註 -->
-            <div class="form-group" style="margin-bottom: 24px;">
-                <label for="notes" class="form-label">備註（選填）</label>
+            <div class="ds-form-group">
+                <label for="notes" class="ds-form-label">備註（選填）</label>
                 <textarea 
                     id="notes" 
-                    class="form-input" 
+                    class="ds-form-input" 
                     rows="3"
                     placeholder="客戶可見的備註"
                 ></textarea>
             </div>
             
             <!-- 管理員備註 -->
-            <div class="form-group" style="margin-bottom: 24px;">
-                <label for="admin-notes" class="form-label">管理員備註（選填）</label>
+            <div class="ds-form-group">
+                <label for="admin-notes" class="ds-form-label">管理員備註（選填）</label>
                 <textarea 
                     id="admin-notes" 
-                    class="form-input" 
+                    class="ds-form-input" 
                     rows="3"
                     placeholder="僅管理員可見的備註"
                 ></textarea>
             </div>
+            </div>
             
             <!-- 按鈕 -->
-            <div style="display: flex; gap: 12px; margin-top: 32px;">
-                <button id="btn-cancel-form" class="btn btn-secondary" style="flex: 1;">取消</button>
-                <button id="btn-submit-transaction" class="btn btn-success" style="flex: 2;">確認交易</button>
+            <div class="ds-card-footer">
+                <button id="btn-cancel-form" class="ds-btn ds-btn-secondary">取消</button>
+                <button id="btn-submit-transaction" class="ds-btn ds-btn-primary">確認交易</button>
             </div>
         </div>
         
         <!-- 交易記錄列表 -->
-        <div id="transactions-list">
-            <!-- 動態載入 -->
+        <div class="ds-card">
+            <div class="ds-card-header">
+                <div class="ds-card-title">交易記錄</div>
+            </div>
+            <div id="transactions-list" class="ds-p-md">
+                <!-- 動態載入 -->
+            </div>
         </div>
     </div>
 
@@ -547,10 +556,10 @@
             
             if (transactions.length === 0) {
                 transactionsList.innerHTML = `
-                    <div class="card">
-                        <div style="text-align: center; padding: 40px; color: #999;">
-                            <p>尚無交易記錄</p>
-                        </div>
+                    <div class="ds-empty">
+                        <div class="ds-empty-icon">📋</div>
+                        <div class="ds-empty-title">尚無交易記錄</div>
+                        <div class="ds-empty-text">點擊上方按鈕新增第一筆交易</div>
                     </div>
                 `;
                 return;
@@ -558,47 +567,47 @@
             
             transactionsList.innerHTML = transactions.map(transaction => {
                 const typeMap = {
-                    'payment': { text: '付款', class: 'status-success' },
-                    'refund': { text: '退款', class: 'status-error' },
-                    'deposit': { text: '儲值', class: 'status-info' },
-                    'withdrawal': { text: '提領', class: 'status-warning' },
+                    'payment': { text: '付款', class: 'ds-badge-success' },
+                    'refund': { text: '退款', class: 'ds-badge-error' },
+                    'deposit': { text: '儲值', class: 'ds-badge-info' },
+                    'withdrawal': { text: '提領', class: 'ds-badge-warning' },
                 };
                 const statusMap = {
-                    'pending': { text: '待處理', class: 'status-warning' },
-                    'completed': { text: '已完成', class: 'status-success' },
-                    'failed': { text: '失敗', class: 'status-error' },
-                    'cancelled': { text: '已取消', class: 'status-gray' },
-                    'refunded': { text: '已退款', class: 'status-gray' },
+                    'pending': { text: '待處理', class: 'ds-badge-warning' },
+                    'completed': { text: '已完成', class: 'ds-badge-success' },
+                    'failed': { text: '失敗', class: 'ds-badge-error' },
+                    'cancelled': { text: '已取消', class: 'ds-badge-default' },
+                    'refunded': { text: '已退款', class: 'ds-badge-default' },
                 };
                 
-                const type = typeMap[transaction.transaction_type] || { text: transaction.transaction_type, class: 'status-gray' };
-                const status = statusMap[transaction.status] || { text: transaction.status, class: 'status-gray' };
+                const type = typeMap[transaction.transaction_type] || { text: transaction.transaction_type, class: 'ds-badge-default' };
+                const status = statusMap[transaction.status] || { text: transaction.status, class: 'ds-badge-default' };
                 const member = transaction.members || {};
-                const amountColor = transaction.amount >= 0 ? '#1D1D1F' : '#FF3B30';
+                const amountColor = transaction.amount >= 0 ? 'var(--text-primary)' : 'var(--color-error)';
                 
                 return `
-                    <div class="card" style="margin-bottom: 16px;">
-                        <div class="flex-between">
+                    <div class="ds-list-item ds-mb-md">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%;">
                             <div style="flex: 1;">
-                                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
-                                    <span class="status-badge ${type.class}">${type.text}</span>
-                                    <span class="status-badge ${status.class}">${status.text}</span>
-                                    ${transaction.receipt_number ? `<span style="color: #86868B; font-size: 14px;">收據：${transaction.receipt_number}</span>` : ''}
+                                <div style="display: flex; align-items: center; gap: var(--spacing-sm); margin-bottom: var(--spacing-sm);">
+                                    <span class="ds-badge ${type.class}">${type.text}</span>
+                                    <span class="ds-badge ${status.class}">${status.text}</span>
+                                    ${transaction.receipt_number ? `<span class="ds-text-secondary" style="font-size: 14px;">收據：${transaction.receipt_number}</span>` : ''}
                                 </div>
-                                <div style="color: #86868B; font-size: 14px;">
-                                    <div>會員：${member.name || '未知'} (${member.phone || '無電話'})</div>
-                                    ${transaction.bookings ? `<div>預約：${transaction.bookings.service_name || '未知'} - ${transaction.bookings.booking_date || ''} ${transaction.bookings.booking_time || ''}</div>` : ''}
-                                    <div>金額：<span style="color: ${amountColor}; font-weight: 600; font-size: 18px;">NT$ ${Math.abs(transaction.amount).toLocaleString()}</span></div>
-                                    <div>付款方式：${transaction.payment_method_name || '未知'}</div>
-                                    ${transaction.description ? `<div>說明：${transaction.description}</div>` : ''}
-                                    ${transaction.created_at ? `<div>時間：${formatDateTime(transaction.created_at)}</div>` : ''}
+                                <div class="ds-text-secondary" style="font-size: 14px; line-height: 1.6;">
+                                    <div><strong>會員：</strong>${member.name || '未知'} (${member.phone || '無電話'})</div>
+                                    ${transaction.bookings ? `<div><strong>預約：</strong>${transaction.bookings.service_name || '未知'} - ${transaction.bookings.booking_date || ''} ${transaction.bookings.booking_time || ''}</div>` : ''}
+                                    <div><strong>金額：</strong><span style="color: ${amountColor}; font-weight: 600; font-size: 18px;">NT$ ${Math.abs(transaction.amount).toLocaleString()}</span></div>
+                                    <div><strong>付款方式：</strong>${transaction.payment_method_name || '未知'}</div>
+                                    ${transaction.description ? `<div><strong>說明：</strong>${transaction.description}</div>` : ''}
+                                    ${transaction.created_at ? `<div><strong>時間：</strong>${formatDateTime(transaction.created_at)}</div>` : ''}
                                 </div>
                             </div>
-                            <div style="display: flex; gap: 8px; align-items: flex-start;">
-                                <button class="btn btn-sm btn-secondary" onclick="editTransaction('${transaction.id}')" title="編輯">
+                            <div class="admin-actions">
+                                <button class="admin-action-btn" onclick="editTransaction('${transaction.id}')" title="編輯">
                                     編輯
                                 </button>
-                                <button class="btn btn-sm btn-danger" onclick="deleteTransaction('${transaction.id}')" title="刪除">
+                                <button class="admin-action-btn danger" onclick="deleteTransaction('${transaction.id}')" title="刪除">
                                     刪除
                                 </button>
                             </div>

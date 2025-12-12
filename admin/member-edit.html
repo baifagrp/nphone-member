@@ -3,44 +3,50 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>編輯會員</title>
+    <title>編輯會員 - NPHONE</title>
     <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/design-system.css">
+    <link rel="stylesheet" href="../css/admin-enhancements.css">
+    <link rel="stylesheet" href="../css/animations.css">
 </head>
-<body>
+<body class="ds-page">
     <!-- 導航列 -->
     <nav class="navbar">
         <div class="container navbar-container">
-            <a href="dashboard.html" class="navbar-brand">NPHONE</a>
+            <a href="dashboard.html" class="navbar-brand">NPHONE 管理後台</a>
             <div class="navbar-menu">
-                <a href="dashboard.html" class="navbar-link">首頁</a>
-                <a href="members.html" class="navbar-link">會員管理</a>
+                <a href="dashboard.html" class="navbar-link">儀表板</a>
+                <a href="members.html" class="navbar-link active">會員管理</a>
+                <a href="services.html" class="navbar-link">服務管理</a>
                 <a href="bookings.html" class="navbar-link">預約管理</a>
-                <a href="services.html" class="navbar-link">服務項目</a>
                 <a href="checkout.html" class="navbar-link">結帳管理</a>
                 <a href="business-hours.html" class="navbar-link">營業時間</a>
+                <a href="wallet-points.html" class="navbar-link">儲值/積分</a>
                 <button id="btn-admin-logout" class="btn btn-sm btn-secondary">登出</button>
             </div>
         </div>
     </nav>
 
     <!-- 主要內容 -->
-    <div class="container-sm" style="margin-top: 40px;">
-        <div style="margin-bottom: 24px;">
-            <a href="javascript:history.back()" style="color: #007AFF; text-decoration: none;">← 返回</a>
+    <div class="container" style="margin-top: 40px;">
+        <div class="ds-mb-md">
+            <a href="javascript:history.back()" class="ds-link">← 返回</a>
         </div>
         
-        <div class="card">
-            <div class="card-header">編輯會員</div>
+        <div class="ds-card">
+            <div class="ds-card-header">
+                <div class="ds-card-title">編輯會員</div>
+            </div>
             
-            <div class="card-body">
+            <div class="ds-card-body">
                 <form id="form-edit-member">
                     <!-- 姓名 -->
-                    <div class="form-group">
-                        <label for="edit-name" class="form-label required">姓名</label>
+                    <div class="ds-form-group">
+                        <label for="edit-name" class="ds-form-label">姓名 <span class="ds-text-error">*</span></label>
                         <input 
                             type="text" 
                             id="edit-name" 
-                            class="form-input" 
+                            class="ds-form-input" 
                             required
                             minlength="2"
                             maxlength="50"
@@ -49,43 +55,43 @@
                     </div>
                     
                     <!-- 電話 -->
-                    <div class="form-group">
-                        <label for="edit-phone" class="form-label">電話</label>
+                    <div class="ds-form-group">
+                        <label for="edit-phone" class="ds-form-label">電話</label>
                         <input 
                             type="tel" 
                             id="edit-phone" 
-                            class="form-input" 
+                            class="ds-form-input" 
                             pattern="09\d{8}"
                             placeholder="例如：0912345678"
                         >
-                        <div class="form-help">台灣手機號碼格式：09 開頭 + 8 位數字</div>
+                        <div class="ds-form-hint">台灣手機號碼格式：09 開頭 + 8 位數字</div>
                     </div>
                     
                     <!-- Email -->
-                    <div class="form-group">
-                        <label for="edit-email" class="form-label">Email</label>
+                    <div class="ds-form-group">
+                        <label for="edit-email" class="ds-form-label">Email</label>
                         <input 
                             type="email" 
                             id="edit-email" 
-                            class="form-input" 
+                            class="ds-form-input" 
                             placeholder="example@email.com"
                         >
                     </div>
                     
                     <!-- 生日 -->
-                    <div class="form-group">
-                        <label for="edit-birthday" class="form-label">生日</label>
+                    <div class="ds-form-group">
+                        <label for="edit-birthday" class="ds-form-label">生日</label>
                         <input 
                             type="date" 
                             id="edit-birthday" 
-                            class="form-input"
+                            class="ds-form-input"
                         >
                     </div>
                     
                     <!-- 性別 -->
-                    <div class="form-group">
-                        <label for="edit-gender" class="form-label">性別</label>
-                        <select id="edit-gender" class="form-select">
+                    <div class="ds-form-group">
+                        <label for="edit-gender" class="ds-form-label">性別</label>
+                        <select id="edit-gender" class="ds-form-input">
                             <option value="">請選擇</option>
                             <option value="male">男性</option>
                             <option value="female">女性</option>
@@ -95,35 +101,35 @@
                     </div>
                     
                     <!-- 會員編號 -->
-                    <div class="form-group">
-                        <label for="edit-member-code" class="form-label">會員編號</label>
+                    <div class="ds-form-group">
+                        <label for="edit-member-code" class="ds-form-label">會員編號</label>
                         <input 
                             type="text" 
                             id="edit-member-code" 
-                            class="form-input" 
+                            class="ds-form-input" 
                             placeholder="請輸入會員編號（用於顯示條碼）"
                         >
-                        <div class="form-help">會員編號會顯示在會員首頁的條碼中</div>
+                        <div class="ds-form-hint">會員編號會顯示在會員首頁的條碼中</div>
                     </div>
                     
                     <!-- LINE User ID -->
-                    <div class="form-group">
-                        <label for="edit-line-user-id" class="form-label">LINE User ID</label>
+                    <div class="ds-form-group">
+                        <label for="edit-line-user-id" class="ds-form-label">LINE User ID</label>
                         <input 
                             type="text" 
                             id="edit-line-user-id" 
-                            class="form-input" 
+                            class="ds-form-input" 
                             placeholder="LINE 使用者 ID"
                             readonly
-                            style="background: #F5F5F7;"
+                            style="opacity: 0.6; cursor: not-allowed;"
                         >
-                        <div class="form-help">LINE ID 由系統自動綁定，無法手動修改</div>
+                        <div class="ds-form-hint">LINE ID 由系統自動綁定，無法手動修改</div>
                     </div>
                     
                     <!-- 按鈕 -->
-                    <div class="flex flex-gap" style="margin-top: 32px;">
-                        <button type="submit" class="btn btn-primary" style="flex: 1;">儲存變更</button>
-                        <button type="button" onclick="history.back()" class="btn btn-secondary" style="flex: 1;">取消</button>
+                    <div class="ds-form-actions">
+                        <button type="submit" class="ds-btn ds-btn-primary">儲存變更</button>
+                        <button type="button" onclick="history.back()" class="ds-btn ds-btn-secondary">取消</button>
                     </div>
                 </form>
             </div>

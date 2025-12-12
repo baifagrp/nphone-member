@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>儲值金與積分管理 - NPHONE</title>
     <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/design-system.css">
+    <link rel="stylesheet" href="../css/admin-enhancements.css">
+    <link rel="stylesheet" href="../css/animations.css">
     <style>
         .tab-container {
             border-bottom: 2px solid var(--color-gray-200);
@@ -66,15 +69,15 @@
     <!-- 導航列 -->
     <nav class="navbar">
         <div class="container navbar-container">
-            <a href="dashboard.html" class="navbar-brand">NPHONE</a>
+            <a href="dashboard.html" class="navbar-brand">NPHONE 管理後台</a>
             <div class="navbar-menu">
-                <a href="dashboard.html" class="navbar-link">首頁</a>
+                <a href="dashboard.html" class="navbar-link">儀表板</a>
                 <a href="members.html" class="navbar-link">會員管理</a>
+                <a href="services.html" class="navbar-link">服務管理</a>
                 <a href="bookings.html" class="navbar-link">預約管理</a>
-                <a href="services.html" class="navbar-link">服務項目</a>
                 <a href="checkout.html" class="navbar-link">結帳管理</a>
-                <a href="wallet-points.html" class="navbar-link active">儲值金與積分</a>
                 <a href="business-hours.html" class="navbar-link">營業時間</a>
+                <a href="wallet-points.html" class="navbar-link active">儲值/積分</a>
                 <button id="btn-admin-logout" class="btn btn-sm btn-secondary">登出</button>
             </div>
         </div>
@@ -82,7 +85,7 @@
 
     <!-- 主要內容 -->
     <div class="container" style="margin-top: 40px;">
-        <h1 style="font-size: 32px; font-weight: 700; margin-bottom: 32px;">儲值金與積分管理</h1>
+        <h1 class="page-title ds-mb-lg">儲值金與積分管理</h1>
 
         <!-- Tab 切換 -->
         <div class="tab-container">
@@ -112,36 +115,42 @@
 
             <!-- 操作按鈕 -->
             <div style="margin-bottom: 24px;">
-                <button class="btn btn-success" onclick="showRechargeForm()">+ 為會員儲值</button>
+                <button class="ds-btn ds-btn-primary" onclick="showRechargeForm()">+ 為會員儲值</button>
             </div>
 
             <!-- 儲值表單 -->
-            <div id="recharge-form" class="card" style="margin-bottom: 24px; display: none;">
-                <h2 style="font-size: 24px; margin-bottom: 24px;">為會員儲值</h2>
-                <div class="form-group">
-                    <label for="recharge-member" class="form-label required">選擇會員</label>
-                    <select id="recharge-member" class="form-input" required>
-                        <option value="">請選擇會員</option>
-                    </select>
+            <div id="recharge-form" class="ds-card ds-mb-lg" style="display: none;">
+                <div class="ds-card-header">
+                    <div class="ds-card-title">為會員儲值</div>
                 </div>
-                <div class="form-group">
-                    <label for="recharge-amount" class="form-label required">儲值金額</label>
-                    <input type="number" id="recharge-amount" class="form-input" step="0.01" min="0.01" required placeholder="請輸入金額">
+                <div class="ds-card-body">
+                    <div class="ds-form-group">
+                        <label for="recharge-member" class="ds-form-label">選擇會員 <span class="ds-text-error">*</span></label>
+                        <select id="recharge-member" class="ds-form-input" required>
+                            <option value="">請選擇會員</option>
+                        </select>
+                    </div>
+                    <div class="ds-form-group">
+                        <label for="recharge-amount" class="ds-form-label">儲值金額 <span class="ds-text-error">*</span></label>
+                        <input type="number" id="recharge-amount" class="ds-form-input" step="0.01" min="0.01" required placeholder="請輸入金額">
+                    </div>
+                    <div class="ds-form-group">
+                        <label for="recharge-description" class="ds-form-label">備註</label>
+                        <input type="text" id="recharge-description" class="ds-form-input" placeholder="選填">
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label for="recharge-description" class="form-label">備註</label>
-                    <input type="text" id="recharge-description" class="form-input" placeholder="選填">
-                </div>
-                <div style="display: flex; gap: 12px;">
-                    <button class="btn btn-primary" onclick="submitRecharge()">確認儲值</button>
-                    <button class="btn btn-secondary" onclick="hideRechargeForm()">取消</button>
+                <div class="ds-card-footer">
+                    <button class="ds-btn ds-btn-primary" onclick="submitRecharge()">確認儲值</button>
+                    <button class="ds-btn ds-btn-secondary" onclick="hideRechargeForm()">取消</button>
                 </div>
             </div>
 
             <!-- 會員列表 -->
-            <div class="card">
-                <div class="card-header">會員儲值金列表</div>
-                <div class="card-body">
+            <div class="ds-card">
+                <div class="ds-card-header">
+                    <div class="ds-card-title">會員儲值金列表</div>
+                </div>
+                <div class="ds-card-body">
                     <div id="wallet-list">
                         <div style="text-align: center; padding: 40px; color: #999;">
                             <div class="loading-spinner"></div>
@@ -171,60 +180,70 @@
 
             <!-- 操作按鈕 -->
             <div style="margin-bottom: 24px; display: flex; gap: 12px;">
-                <button class="btn btn-success" onclick="showEarnPointsForm()">+ 添加積分</button>
-                <button class="btn btn-warning" onclick="showSpendPointsForm()">- 扣除積分</button>
+                <button class="ds-btn ds-btn-primary" onclick="showEarnPointsForm()">+ 添加積分</button>
+                <button class="ds-btn ds-btn-secondary" onclick="showSpendPointsForm()">- 扣除積分</button>
             </div>
 
             <!-- 添加積分表單 -->
-            <div id="earn-points-form" class="card" style="margin-bottom: 24px; display: none;">
-                <h2 style="font-size: 24px; margin-bottom: 24px;">添加積分</h2>
-                <div class="form-group">
-                    <label for="earn-member" class="form-label required">選擇會員</label>
-                    <select id="earn-member" class="form-input" required>
-                        <option value="">請選擇會員</option>
-                    </select>
+            <div id="earn-points-form" class="ds-card ds-mb-lg" style="display: none;">
+                <div class="ds-card-header">
+                    <div class="ds-card-title">添加積分</div>
                 </div>
-                <div class="form-group">
-                    <label for="earn-points" class="form-label required">積分數</label>
-                    <input type="number" id="earn-points" class="form-input" min="1" required placeholder="請輸入積分">
+                <div class="ds-card-body">
+                    <div class="ds-form-group">
+                        <label for="earn-member" class="ds-form-label">選擇會員 <span class="ds-text-error">*</span></label>
+                        <select id="earn-member" class="ds-form-input" required>
+                            <option value="">請選擇會員</option>
+                        </select>
+                    </div>
+                    <div class="ds-form-group">
+                        <label for="earn-points" class="ds-form-label">積分數 <span class="ds-text-error">*</span></label>
+                        <input type="number" id="earn-points" class="ds-form-input" min="1" required placeholder="請輸入積分">
+                    </div>
+                    <div class="ds-form-group">
+                        <label for="earn-description" class="ds-form-label">備註</label>
+                        <input type="text" id="earn-description" class="ds-form-input" placeholder="選填">
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label for="earn-description" class="form-label">備註</label>
-                    <input type="text" id="earn-description" class="form-input" placeholder="選填">
-                </div>
-                <div style="display: flex; gap: 12px;">
-                    <button class="btn btn-primary" onclick="submitEarnPoints()">確認添加</button>
-                    <button class="btn btn-secondary" onclick="hideEarnPointsForm()">取消</button>
+                <div class="ds-card-footer">
+                    <button class="ds-btn ds-btn-primary" onclick="submitEarnPoints()">確認添加</button>
+                    <button class="ds-btn ds-btn-secondary" onclick="hideEarnPointsForm()">取消</button>
                 </div>
             </div>
 
             <!-- 扣除積分表單 -->
-            <div id="spend-points-form" class="card" style="margin-bottom: 24px; display: none;">
-                <h2 style="font-size: 24px; margin-bottom: 24px;">扣除積分</h2>
-                <div class="form-group">
-                    <label for="spend-member" class="form-label required">選擇會員</label>
-                    <select id="spend-member" class="form-input" required>
-                        <option value="">請選擇會員</option>
-                    </select>
+            <div id="spend-points-form" class="ds-card ds-mb-lg" style="display: none;">
+                <div class="ds-card-header">
+                    <div class="ds-card-title">扣除積分</div>
                 </div>
-                <div class="form-group">
-                    <label for="spend-points" class="form-label required">積分數</label>
-                    <input type="number" id="spend-points" class="form-input" min="1" required placeholder="請輸入積分">
+                <div class="ds-card-body">
+                    <div class="ds-form-group">
+                        <label for="spend-member" class="ds-form-label">選擇會員 <span class="ds-text-error">*</span></label>
+                        <select id="spend-member" class="ds-form-input" required>
+                            <option value="">請選擇會員</option>
+                        </select>
+                    </div>
+                    <div class="ds-form-group">
+                        <label for="spend-points" class="ds-form-label">積分數 <span class="ds-text-error">*</span></label>
+                        <input type="number" id="spend-points" class="ds-form-input" min="1" required placeholder="請輸入積分">
+                    </div>
+                    <div class="ds-form-group">
+                        <label for="spend-description" class="ds-form-label">備註</label>
+                        <input type="text" id="spend-description" class="ds-form-input" placeholder="選填">
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label for="spend-description" class="form-label">備註</label>
-                    <input type="text" id="spend-description" class="form-input" placeholder="選填">
-                </div>
-                <div style="display: flex; gap: 12px;">
-                    <button class="btn btn-primary" onclick="submitSpendPoints()">確認扣除</button>
-                    <button class="btn btn-secondary" onclick="hideSpendPointsForm()">取消</button>
+                <div class="ds-card-footer">
+                    <button class="ds-btn ds-btn-primary" onclick="submitSpendPoints()">確認扣除</button>
+                    <button class="ds-btn ds-btn-secondary" onclick="hideSpendPointsForm()">取消</button>
                 </div>
             </div>
 
             <!-- 會員列表 -->
-            <div class="card">
-                <div class="card-header">會員積分列表</div>
-                <div class="card-body">
+            <div class="ds-card">
+                <div class="ds-card-header">
+                    <div class="ds-card-title">會員積分列表</div>
+                </div>
+                <div class="ds-card-body">
                     <div id="points-list">
                         <div style="text-align: center; padding: 40px; color: #999;">
                             <div class="loading-spinner"></div>
@@ -243,6 +262,7 @@
     <script src="../js/auth.js"></script>
     <script src="../js/admin.js"></script>
     <script src="../js/wallet-points.js"></script>
+    <script src="../js/animation-utils.js"></script>
     
     <script>
         // 檢查管理員登入

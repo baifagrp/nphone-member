@@ -3,8 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>管理後台 - 營業時間設定</title>
+    <title>營業時間管理 - NPHONE</title>
     <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/design-system.css">
+    <link rel="stylesheet" href="../css/admin-enhancements.css">
+    <link rel="stylesheet" href="../css/animations.css">
     <style>
         .business-hours-grid {
             display: grid;
@@ -234,14 +237,15 @@
     <!-- 導航列 -->
     <nav class="navbar">
         <div class="container navbar-container">
-            <a href="dashboard.html" class="navbar-brand">NPHONE</a>
+            <a href="dashboard.html" class="navbar-brand">NPHONE 管理後台</a>
             <div class="navbar-menu">
-                <a href="dashboard.html" class="navbar-link">首頁</a>
+                <a href="dashboard.html" class="navbar-link">儀表板</a>
                 <a href="members.html" class="navbar-link">會員管理</a>
+                <a href="services.html" class="navbar-link">服務管理</a>
                 <a href="bookings.html" class="navbar-link">預約管理</a>
-                <a href="services.html" class="navbar-link">服務項目</a>
                 <a href="checkout.html" class="navbar-link">結帳管理</a>
                 <a href="business-hours.html" class="navbar-link active">營業時間</a>
+                <a href="wallet-points.html" class="navbar-link">儲值/積分</a>
                 <button id="btn-admin-logout" class="btn btn-sm btn-secondary">登出</button>
             </div>
         </div>
@@ -249,48 +253,48 @@
 
     <!-- 主要內容 -->
     <div class="container" style="margin-top: 40px;">
-        <h1 style="font-size: 32px; font-weight: 700; margin-bottom: 32px;">營業時間設定</h1>
+        <h1 class="page-title ds-mb-lg">營業時間設定</h1>
         
         <!-- 儲存狀態提示 -->
         <div id="save-status" class="save-status"></div>
         
         <!-- 營業時間設定 -->
-        <div class="card">
-            <div class="card-header">每週營業時間</div>
-            <div class="card-body">
+        <div class="ds-card ds-mb-lg">
+            <div class="ds-card-header">
+                <div class="ds-card-title">每週營業時間</div>
+            </div>
+            <div class="ds-card-body">
                 <div class="business-hours-grid" id="business-hours-grid">
                     <!-- 動態載入 -->
                 </div>
                 <div style="margin-top: 20px;">
-                    <button id="btn-save-hours" class="btn btn-primary">儲存營業時間</button>
+                    <button id="btn-save-hours" class="ds-btn ds-btn-primary">儲存營業時間</button>
                 </div>
             </div>
         </div>
         
         <!-- 時間段設定 -->
         <div class="time-slots-section">
-            <div class="card">
-                <div class="card-header">
-                    <div class="time-slots-header">
-                        <span>開放時間段</span>
-                    </div>
+            <div class="ds-card">
+                <div class="ds-card-header">
+                    <div class="ds-card-title">開放時間段</div>
                 </div>
-                <div class="card-body">
+                <div class="ds-card-body">
                     <div class="time-slots-grid" id="time-slots-grid">
                         <!-- 動態載入 -->
                     </div>
                     
                     <!-- 新增時間段表單 -->
                     <div class="add-time-slot-form">
-                        <div class="form-group">
-                            <label>時間</label>
-                            <input type="time" id="new-time-slot" class="form-input" step="1800" required>
+                        <div class="ds-form-group">
+                            <label class="ds-form-label">時間</label>
+                            <input type="time" id="new-time-slot" class="ds-form-input" step="1800" required>
                         </div>
-                        <div class="form-group">
-                            <label>最大預約數</label>
-                            <input type="number" id="new-max-bookings" class="form-input" value="1" min="1" required>
+                        <div class="ds-form-group">
+                            <label class="ds-form-label">最大預約數</label>
+                            <input type="number" id="new-max-bookings" class="ds-form-input" value="1" min="1" required>
                         </div>
-                        <button id="btn-add-time-slot" class="btn btn-primary">新增時間段</button>
+                        <button id="btn-add-time-slot" class="ds-btn ds-btn-primary">新增時間段</button>
                     </div>
                 </div>
             </div>

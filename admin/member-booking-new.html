@@ -5,101 +5,107 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>新增預約 - NPHONE</title>
     <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/design-system.css">
+    <link rel="stylesheet" href="../css/admin-enhancements.css">
+    <link rel="stylesheet" href="../css/animations.css">
 </head>
-<body>
+<body class="ds-page">
     <!-- 導航列 -->
     <nav class="navbar">
         <div class="container navbar-container">
-            <a href="dashboard.html" class="navbar-brand">NPHONE</a>
+            <a href="dashboard.html" class="navbar-brand">NPHONE 管理後台</a>
             <div class="navbar-menu">
-                <a href="dashboard.html" class="navbar-link">首頁</a>
+                <a href="dashboard.html" class="navbar-link">儀表板</a>
                 <a href="members.html" class="navbar-link">會員管理</a>
-                <a href="bookings.html" class="navbar-link">預約管理</a>
-                <a href="services.html" class="navbar-link">服務項目</a>
+                <a href="services.html" class="navbar-link">服務管理</a>
+                <a href="bookings.html" class="navbar-link active">預約管理</a>
                 <a href="checkout.html" class="navbar-link">結帳管理</a>
                 <a href="business-hours.html" class="navbar-link">營業時間</a>
+                <a href="wallet-points.html" class="navbar-link">儲值/積分</a>
                 <button id="btn-admin-logout" class="btn btn-sm btn-secondary">登出</button>
             </div>
         </div>
     </nav>
 
     <!-- 主要內容 -->
-    <div class="container-sm" style="margin-top: 40px;">
-        <h1 style="font-size: 32px; font-weight: 700; margin-bottom: 24px;">新增預約</h1>
+    <div class="container" style="margin-top: 40px;">
+        <h1 class="page-title ds-mb-lg">新增預約</h1>
         
         <!-- 新增預約表單 -->
-        <div class="card">
+        <div class="ds-card">
+            <div class="ds-card-body">
             <!-- 會員選擇 -->
-            <div class="form-group" style="margin-bottom: 24px;">
-                <label for="member-select" class="form-label">選擇會員 <span style="color: #FF3B30;">*</span></label>
-                <select id="member-select" class="form-input" required>
+            <div class="ds-form-group">
+                <label for="member-select" class="ds-form-label">選擇會員 <span class="ds-text-error">*</span></label>
+                <select id="member-select" class="ds-form-input" required>
                     <option value="">請選擇會員</option>
                 </select>
             </div>
             
             <!-- 服務選擇 -->
-            <div class="form-group" style="margin-bottom: 24px;">
-                <label for="service-select" class="form-label">選擇服務 <span style="color: #FF3B30;">*</span></label>
-                <select id="service-select" class="form-input" required>
+            <div class="ds-form-group">
+                <label for="service-select" class="ds-form-label">選擇服務 <span class="ds-text-error">*</span></label>
+                <select id="service-select" class="ds-form-input" required>
                     <option value="">請選擇服務</option>
                 </select>
-                <div id="service-options-container" style="margin-top: 12px; display: none;">
-                    <label class="form-label">服務選項</label>
-                    <select id="service-option-select" class="form-input">
+                <div id="service-options-container" class="ds-mt-sm" style="display: none;">
+                    <label class="ds-form-label">服務選項</label>
+                    <select id="service-option-select" class="ds-form-input">
                         <option value="">不需要選項</option>
                     </select>
                 </div>
-                <div id="service-preview" style="margin-top: 12px; padding: 16px; background: #F5F5F7; border-radius: 8px; display: none;">
+                <div id="service-preview" class="ds-info-box ds-mt-sm" style="display: none;">
                     <!-- 動態載入服務詳情 -->
                 </div>
             </div>
             
             <!-- 日期選擇 -->
-            <div class="form-group" style="margin-bottom: 24px;">
-                <label for="booking-date" class="form-label">預約日期 <span style="color: #FF3B30;">*</span></label>
+            <div class="ds-form-group">
+                <label for="booking-date" class="ds-form-label">預約日期 <span class="ds-text-error">*</span></label>
                 <input 
                     type="date" 
                     id="booking-date" 
-                    class="form-input" 
+                    class="ds-form-input" 
                     required
                     min=""
                 >
             </div>
             
             <!-- 時間選擇 -->
-            <div class="form-group" style="margin-bottom: 24px;">
-                <label for="booking-time" class="form-label">預約時間 <span style="color: #FF3B30;">*</span></label>
-                <select id="booking-time" class="form-input" required>
+            <div class="ds-form-group">
+                <label for="booking-time" class="ds-form-label">預約時間 <span class="ds-text-error">*</span></label>
+                <select id="booking-time" class="ds-form-input" required>
                     <option value="">請選擇時間</option>
                 </select>
             </div>
             
             <!-- 備註 -->
-            <div class="form-group" style="margin-bottom: 24px;">
-                <label for="booking-notes" class="form-label">備註（選填）</label>
+            <div class="ds-form-group">
+                <label for="booking-notes" class="ds-form-label">備註（選填）</label>
                 <textarea 
                     id="booking-notes" 
-                    class="form-input" 
+                    class="ds-form-input" 
                     rows="3"
                     placeholder="如有特殊需求或備註，請在此填寫"
                 ></textarea>
             </div>
             
             <!-- 管理員備註 -->
-            <div class="form-group" style="margin-bottom: 24px;">
-                <label for="admin-notes" class="form-label">管理員備註（選填）</label>
+            <div class="ds-form-group">
+                <label for="admin-notes" class="ds-form-label">管理員備註（選填）</label>
                 <textarea 
                     id="admin-notes" 
-                    class="form-input" 
+                    class="ds-form-input" 
                     rows="3"
                     placeholder="僅管理員可見的備註"
                 ></textarea>
             </div>
+            </div>
             
             <!-- 按鈕 -->
-            <div style="display: flex; gap: 12px; margin-top: 32px;">
-                <a href="bookings.html" class="btn btn-secondary" style="flex: 1; text-align: center;">取消</a>
-                <button id="btn-submit-booking" class="btn btn-success" style="flex: 2;">建立預約</button>
+            <div class="ds-card-footer">
+                <a href="bookings.html" class="ds-btn ds-btn-secondary">取消</a>
+                <button id="btn-submit-booking" class="ds-btn ds-btn-primary">建立預約</button>
             </div>
         </div>
     </div>
@@ -113,6 +119,7 @@
     <script src="../js/member.js"></script>
     <script src="../js/admin.js"></script>
     <script src="../js/booking.js"></script>
+    <script src="../js/animation-utils.js"></script>
     
     <script>
         let allMembers = [];
