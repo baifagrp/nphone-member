@@ -203,6 +203,7 @@
         function setupEventListeners() {
             // 新增交易按鈕
             document.getElementById('btn-new-transaction').addEventListener('click', () => {
+                resetForm(); // 確保表單是乾淨的
                 showCheckoutForm();
             });
             
@@ -327,13 +328,27 @@
                     }));
                 }
                 
-                // 過濾：只顯示未取消的預約，且顯示所有付款狀態（讓管理員可以選擇）
-                // 但也可以選擇只顯示未付款或部分付款的預約
+                // 過濾：只顯示未取消的預約
                 memberBookings = memberBookings.filter(b => 
                     b.status !== 'cancelled'
                 );
                 
+                // 檢查每個預約是否已有付款交易
+                for (const booking of memberBookings) {
+                    const { data: payments } = await client
+                        .from('transactions')
+                        .select('id')
+                        .eq('booking_id', booking.id)
+                        .eq('transaction_type', 'payment')
+                        .eq('status', 'completed')
+                        .limit(1);
+                    
+                    booking.hasPayment = (payments && payments.length > 0);
+                }
+                
                 const bookingSelect = document.getElementById('booking-select');
+                const editId = document.getElementById('checkout-form').getAttribute('data-edit-id');
+                
                 if (memberBookings.length === 0) {
                     bookingSelect.innerHTML = '<option value="">該會員尚無可關聯的預約</option>';
                 } else {
@@ -343,8 +358,13 @@
                                                       booking.payment_status === 'partial' ? '部分付款' :
                                                       booking.payment_status === 'paid' ? '已付款' :
                                                       booking.payment_status === 'refunded' ? '已退款' : '未知';
+                            
+                            // 如果是編輯模式，允許選擇已結帳的預約；否則禁用已結帳的預約
+                            const hasPayment = booking.hasPayment || booking.payment_status === 'paid';
+                            const isDisabled = hasPayment && !editId;
+                            
                             return `
-                                <option value="${booking.id}">${booking.service_name} - ${booking.booking_date} ${booking.booking_time} (NT$ ${booking.service_price.toLocaleString()}) [${paymentStatusText}]</option>
+                                <option value="${booking.id}" ${isDisabled ? 'disabled' : ''}>${booking.service_name} - ${booking.booking_date} ${booking.booking_time} (NT$ ${booking.service_price.toLocaleString()}) [${paymentStatusText}]${hasPayment && !editId ? ' [已結帳]' : ''}</option>
                             `;
                         }).join('');
                 }
@@ -485,11 +505,20 @@
                                 </div>
                                 <div style="color: #86868B; font-size: 14px;">
                                     <div>會員：${member.name || '未知'} (${member.phone || '無電話'})</div>
+                                    ${transaction.bookings ? `<div>預約：${transaction.bookings.service_name || '未知'} - ${transaction.bookings.booking_date || ''} ${transaction.bookings.booking_time || ''}</div>` : ''}
                                     <div>金額：<span style="color: ${amountColor}; font-weight: 600; font-size: 18px;">NT$ ${Math.abs(transaction.amount).toLocaleString()}</span></div>
                                     <div>付款方式：${transaction.payment_method_name || '未知'}</div>
                                     ${transaction.description ? `<div>說明：${transaction.description}</div>` : ''}
                                     ${transaction.created_at ? `<div>時間：${formatDateTime(transaction.created_at)}</div>` : ''}
                                 </div>
+                            </div>
+                            <div style="display: flex; gap: 8px; align-items: flex-start;">
+                                <button class="btn btn-sm btn-secondary" onclick="editTransaction('${transaction.id}')" title="編輯">
+                                    編輯
+                                </button>
+                                <button class="btn btn-sm btn-danger" onclick="deleteTransaction('${transaction.id}')" title="刪除">
+                                    刪除
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -524,6 +553,9 @@
             document.getElementById('reference-number').value = '';
             document.getElementById('notes').value = '';
             document.getElementById('admin-notes').value = '';
+            
+            // 清除編輯 ID
+            document.getElementById('checkout-form').removeAttribute('data-edit-id');
             
             // 清空預約資料
             memberBookings = [];
@@ -563,24 +595,49 @@
                 // 計算總金額
                 const totalAmount = amount + discountAmount;
                 
-                showMessage('建立交易中...', 'info');
+                const form = document.getElementById('checkout-form');
+                const editId = form.getAttribute('data-edit-id');
+                const isEdit = !!editId;
                 
-                const transaction = await CheckoutAPI.createTransaction({
-                    lineUserId: memberSelect.value,
-                    bookingId: bookingSelect.value || null,
-                    transactionType: transactionType,
-                    amount: amount,
-                    totalAmount: totalAmount,
-                    discountAmount: discountAmount,
-                    paymentMethodCode: paymentMethod,
-                    description: description || null,
-                    receiptNumber: receiptNumber || null,
-                    referenceNumber: referenceNumber || null,
-                    notes: notes || null,
-                    adminNotes: adminNotes || null,
-                });
+                showMessage(isEdit ? '更新交易中...' : '建立交易中...', 'info');
                 
-                showMessage('交易建立成功！', 'success');
+                let transaction;
+                if (isEdit) {
+                    // 更新交易
+                    transaction = await CheckoutAPI.updateTransaction(editId, {
+                        transaction_type: transactionType,
+                        amount: transactionType === 'refund' ? -Math.abs(amount) : Math.abs(amount),
+                        total_amount: totalAmount,
+                        discount_amount: discountAmount,
+                        payment_method_code: paymentMethod,
+                        description: description || null,
+                        receipt_number: receiptNumber || null,
+                        reference_number: referenceNumber || null,
+                        notes: notes || null,
+                        admin_notes: adminNotes || null,
+                        updated_at: new Date().toISOString()
+                    });
+                    
+                    showMessage('交易更新成功！', 'success');
+                } else {
+                    // 建立新交易
+                    transaction = await CheckoutAPI.createTransaction({
+                        lineUserId: memberSelect.value,
+                        bookingId: bookingSelect.value || null,
+                        transactionType: transactionType,
+                        amount: amount,
+                        totalAmount: totalAmount,
+                        discountAmount: discountAmount,
+                        paymentMethodCode: paymentMethod,
+                        description: description || null,
+                        receiptNumber: receiptNumber || null,
+                        referenceNumber: referenceNumber || null,
+                        notes: notes || null,
+                        adminNotes: adminNotes || null,
+                    });
+                    
+                    showMessage('交易建立成功！', 'success');
+                }
                 
                 // 重置表單並重新載入交易列表
                 resetForm();
@@ -603,6 +660,79 @@
                 hour: '2-digit',
                 minute: '2-digit',
             });
+        }
+        
+        // 編輯交易
+        async function editTransaction(transactionId) {
+            try {
+                // 取得交易記錄
+                const transaction = await CheckoutAPI.getTransactionById(transactionId);
+                
+                // 填入表單
+                const member = transaction.members || {};
+                const memberOption = Array.from(document.getElementById('member-select').options)
+                    .find(opt => opt.value === member.line_user_id);
+                
+                if (memberOption) {
+                    document.getElementById('member-select').value = member.line_user_id;
+                    // 觸發會員選擇變更事件
+                    document.getElementById('member-select').dispatchEvent(new Event('change'));
+                    
+                    // 等待預約載入後再選擇預約
+                    setTimeout(async () => {
+                        if (transaction.booking_id) {
+                            document.getElementById('booking-select').value = transaction.booking_id;
+                            document.getElementById('booking-select').dispatchEvent(new Event('change'));
+                        }
+                        
+                        document.getElementById('transaction-type').value = transaction.transaction_type || 'payment';
+                        document.getElementById('amount').value = Math.abs(transaction.amount || 0);
+                        document.getElementById('discount-amount').value = transaction.discount_amount || 0;
+                        document.getElementById('payment-method').value = transaction.payment_method_code || '';
+                        document.getElementById('description').value = transaction.description || '';
+                        document.getElementById('receipt-number').value = transaction.receipt_number || '';
+                        document.getElementById('reference-number').value = transaction.reference_number || '';
+                        document.getElementById('notes').value = transaction.notes || '';
+                        document.getElementById('admin-notes').value = transaction.admin_notes || '';
+                        
+                        // 更新表單標題
+                        document.getElementById('form-title').textContent = '編輯交易';
+                        
+                        // 儲存編輯的交易 ID
+                        document.getElementById('checkout-form').setAttribute('data-edit-id', transactionId);
+                        
+                        // 顯示表單
+                        showCheckoutForm();
+                    }, 500);
+                } else {
+                    showMessage('找不到對應的會員資料', 'error');
+                }
+            } catch (error) {
+                CONFIG.error('載入交易資料失敗', error);
+                showMessage('載入交易資料失敗：' + (error.message || '未知錯誤'), 'error');
+            }
+        }
+        
+        // 刪除交易
+        async function deleteTransaction(transactionId) {
+            if (!confirm('確定要刪除此交易記錄嗎？\n\n注意：刪除交易後，關聯的預約付款狀態也會被更新。')) {
+                return;
+            }
+            
+            try {
+                showMessage('刪除中...', 'info');
+                
+                await CheckoutAPI.deleteTransaction(transactionId);
+                
+                showMessage('交易記錄已刪除', 'success');
+                
+                // 重新載入交易列表
+                await loadAllTransactions();
+                
+            } catch (error) {
+                CONFIG.error('刪除交易失敗', error);
+                showMessage('刪除失敗：' + (error.message || '未知錯誤'), 'error');
+            }
         }
         
         // 顯示訊息

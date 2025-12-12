@@ -201,6 +201,175 @@ const CheckoutAPI = {
       throw error;
     }
   },
+  
+  // =============================================
+  // 取得單一交易記錄
+  // =============================================
+  async getTransactionById(id) {
+    try {
+      const client = getSupabase();
+      
+      const { data, error } = await client
+        .from('transactions')
+        .select('*, members(*), bookings(*)')
+        .eq('id', id)
+        .single();
+      
+      if (error) throw error;
+      
+      CONFIG.log('取得交易記錄成功', data);
+      return data;
+    } catch (error) {
+      CONFIG.error('取得交易記錄失敗', error);
+      throw error;
+    }
+  },
+  
+  // =============================================
+  // 更新交易記錄（管理員使用）
+  // =============================================
+  async updateTransaction(id, updates) {
+    try {
+      const client = getSupabase();
+      
+      // 如果更新了付款方式代碼，需要同時更新付款方式名稱和 ID
+      if (updates.payment_method_code) {
+        const { data: paymentMethod, error: pmError } = await client
+          .from('payment_methods')
+          .select('*')
+          .eq('code', updates.payment_method_code)
+          .eq('is_active', true)
+          .single();
+        
+        if (pmError) {
+          CONFIG.error('取得付款方式失敗', pmError);
+          throw new Error('付款方式不存在或已停用');
+        }
+        
+        updates.payment_method_id = paymentMethod.id;
+        updates.payment_method_name = paymentMethod.name;
+      }
+      
+      const { data, error } = await client
+        .from('transactions')
+        .update(updates)
+        .eq('id', id)
+        .select('*, members(*), bookings(*)')
+        .single();
+      
+      if (error) throw error;
+      
+      CONFIG.log('更新交易記錄成功', data);
+      return data;
+    } catch (error) {
+      CONFIG.error('更新交易記錄失敗', error);
+      throw error;
+    }
+  },
+  
+  // =============================================
+  // 刪除交易記錄（管理員使用）
+  // =============================================
+  async deleteTransaction(id) {
+    try {
+      const client = getSupabase();
+      
+      // 先取得交易記錄，以便後續更新預約狀態
+      const { data: transaction, error: fetchError } = await client
+        .from('transactions')
+        .select('*, bookings(*)')
+        .eq('id', id)
+        .single();
+      
+      if (fetchError) throw fetchError;
+      
+      // 刪除交易記錄
+      const { error } = await client
+        .from('transactions')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+      
+      // 如果該交易關聯了預約且是付款類型，更新預約的付款狀態
+      if (transaction.booking_id && transaction.transaction_type === 'payment') {
+        // 檢查是否還有其他完成的付款交易
+        const { data: otherPayments } = await client
+          .from('transactions')
+          .select('amount')
+          .eq('booking_id', transaction.booking_id)
+          .eq('transaction_type', 'payment')
+          .eq('status', 'completed');
+        
+        const totalPaid = (otherPayments || []).reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
+        const bookingPrice = transaction.bookings?.service_price || 0;
+        
+        let paymentStatus = 'unpaid';
+        let paidAmount = 0;
+        
+        if (totalPaid > 0) {
+          if (totalPaid >= bookingPrice) {
+            paymentStatus = 'paid';
+            paidAmount = bookingPrice;
+          } else {
+            paymentStatus = 'partial';
+            paidAmount = totalPaid;
+          }
+        }
+        
+        // 更新預約的付款狀態
+        await client
+          .from('bookings')
+          .update({
+            payment_status: paymentStatus,
+            paid_amount: paidAmount,
+            transaction_id: null,  // 清除關聯的交易 ID
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', transaction.booking_id);
+      }
+      
+      CONFIG.log('刪除交易記錄成功', id);
+      return true;
+    } catch (error) {
+      CONFIG.error('刪除交易記錄失敗', error);
+      throw error;
+    }
+  },
+  
+  // =============================================
+  // 取得所有交易記錄（管理員使用）
+  // =============================================
+  async getAllTransactions(limit = 100, offset = 0, filters = {}) {
+    try {
+      const client = getSupabase();
+      
+      let query = client
+        .from('transactions')
+        .select('*, members(line_user_id, name, phone), bookings(id, service_name, booking_date, booking_time)', { count: 'exact' })
+        .order('created_at', { ascending: false })
+        .range(offset, offset + limit - 1);
+      
+      if (filters.status) {
+        query = query.eq('status', filters.status);
+      }
+      if (filters.transactionType) {
+        query = query.eq('transaction_type', filters.transactionType);
+      }
+      if (filters.memberId) {
+        query = query.eq('member_id', filters.memberId);
+      }
+      
+      const { data, error, count } = await query;
+      
+      if (error) throw error;
+      
+      return { transactions: data || [], total: count || 0 };
+    } catch (error) {
+      CONFIG.error('取得交易記錄失敗', error);
+      throw error;
+    }
+  },
 };
 
 

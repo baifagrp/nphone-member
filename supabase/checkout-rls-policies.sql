@@ -240,6 +240,18 @@ BEGIN
         IF NOT FOUND THEN
             RAISE EXCEPTION '找不到對應的預約記錄';
         END IF;
+        
+        -- 如果是付款類型，檢查該預約是否已經有完成的付款交易（防止重複結帳）
+        IF p_transaction_type = 'payment' THEN
+            IF EXISTS (
+                SELECT 1 FROM public.transactions
+                WHERE booking_id = p_booking_id
+                  AND transaction_type = 'payment'
+                  AND status = 'completed'
+            ) THEN
+                RAISE EXCEPTION '該預約已經有付款記錄，無法重複結帳。如需修改，請使用編輯功能。';
+            END IF;
+        END IF;
     END IF;
     
     -- 查找付款方式
