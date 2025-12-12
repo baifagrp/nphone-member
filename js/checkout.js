@@ -255,32 +255,29 @@ const CheckoutAPI = {
     try {
       const client = getSupabase();
       
-      // 如果更新了付款方式代碼，需要同時更新付款方式名稱和 ID
-      if (updates.payment_method_code) {
-        const { data: paymentMethod, error: pmError } = await client
-          .from('payment_methods')
-          .select('*')
-          .eq('code', updates.payment_method_code)
-          .eq('is_active', true)
-          .single();
-        
-        if (pmError) {
-          CONFIG.error('取得付款方式失敗', pmError);
-          throw new Error('付款方式不存在或已停用');
-        }
-        
-        updates.payment_method_id = paymentMethod.id;
-        updates.payment_method_name = paymentMethod.name;
+      CONFIG.log('呼叫 update_transaction RPC', { transaction_id: id, updates });
+      
+      // 準備 RPC 參數
+      const rpcParams = {
+        p_transaction_id: id,
+      };
+      
+      // 映射更新參數到 RPC 參數
+      if (updates.amount !== undefined) rpcParams.p_amount = updates.amount;
+      if (updates.total_amount !== undefined) rpcParams.p_total_amount = updates.total_amount;
+      if (updates.discount_amount !== undefined) rpcParams.p_discount_amount = updates.discount_amount;
+      if (updates.payment_method_code !== undefined) rpcParams.p_payment_method_code = updates.payment_method_code;
+      if (updates.description !== undefined) rpcParams.p_description = updates.description;
+      if (updates.notes !== undefined) rpcParams.p_notes = updates.notes;
+      if (updates.admin_notes !== undefined) rpcParams.p_admin_notes = updates.admin_notes;
+      
+      // 使用 RPC 函數更新交易，會自動處理儲值金和積分變更
+      const { data: transaction, error } = await client.rpc('update_transaction', rpcParams);
+      
+      if (error) {
+        CONFIG.error('update_transaction RPC 錯誤', error);
+        throw error;
       }
-      
-      const { data: transaction, error } = await client
-        .from('transactions')
-        .update(updates)
-        .eq('id', id)
-        .select('*')
-        .single();
-      
-      if (error) throw error;
       
       // 查詢會員資料
       if (transaction.member_id) {
@@ -304,7 +301,7 @@ const CheckoutAPI = {
         transaction.bookings = booking || null;
       }
       
-      CONFIG.log('更新交易記錄成功', transaction);
+      CONFIG.log('更新交易記錄成功（已自動處理儲值金和積分變更）', transaction);
       return transaction;
     } catch (error) {
       CONFIG.error('更新交易記錄失敗', error);
@@ -319,74 +316,19 @@ const CheckoutAPI = {
     try {
       const client = getSupabase();
       
-      // 先取得交易記錄，以便後續更新預約狀態
-      // 明確指定查詢的欄位，避免關聯關係衝突
-      const { data: transaction, error: fetchError } = await client
-        .from('transactions')
-        .select('id, booking_id, transaction_type, amount, status')
-        .eq('id', id)
-        .single();
+      CONFIG.log('呼叫 delete_transaction RPC', { transaction_id: id });
       
-      if (fetchError) throw fetchError;
+      // 使用 RPC 函數刪除交易，會自動處理儲值金退回和積分收回
+      const { data, error } = await client.rpc('delete_transaction', {
+        p_transaction_id: id
+      });
       
-      // 如果該交易關聯了預約且是付款類型，需要先取得預約資料
-      let bookingPrice = 0;
-      if (transaction.booking_id && transaction.transaction_type === 'payment') {
-        const { data: booking } = await client
-          .from('bookings')
-          .select('service_price')
-          .eq('id', transaction.booking_id)
-          .single();
-        
-        bookingPrice = booking?.service_price || 0;
+      if (error) {
+        CONFIG.error('delete_transaction RPC 錯誤', error);
+        throw error;
       }
       
-      // 刪除交易記錄
-      const { error } = await client
-        .from('transactions')
-        .delete()
-        .eq('id', id);
-      
-      if (error) throw error;
-      
-      // 如果該交易關聯了預約且是付款類型，更新預約的付款狀態
-      if (transaction.booking_id && transaction.transaction_type === 'payment') {
-        // 檢查是否還有其他完成的付款交易
-        const { data: otherPayments } = await client
-          .from('transactions')
-          .select('amount')
-          .eq('booking_id', transaction.booking_id)
-          .eq('transaction_type', 'payment')
-          .eq('status', 'completed');
-        
-        const totalPaid = (otherPayments || []).reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
-        
-        let paymentStatus = 'unpaid';
-        let paidAmount = 0;
-        
-        if (totalPaid > 0) {
-          if (totalPaid >= bookingPrice) {
-            paymentStatus = 'paid';
-            paidAmount = bookingPrice;
-          } else {
-            paymentStatus = 'partial';
-            paidAmount = totalPaid;
-          }
-        }
-        
-        // 更新預約的付款狀態
-        await client
-          .from('bookings')
-          .update({
-            payment_status: paymentStatus,
-            paid_amount: paidAmount,
-            transaction_id: null,  // 清除關聯的交易 ID
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', transaction.booking_id);
-      }
-      
-      CONFIG.log('刪除交易記錄成功', id);
+      CONFIG.log('刪除交易記錄成功（已自動處理儲值金退回和積分收回）', { transaction_id: id, result: data });
       return true;
     } catch (error) {
       CONFIG.error('刪除交易記錄失敗', error);

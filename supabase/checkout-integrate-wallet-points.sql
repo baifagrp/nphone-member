@@ -71,37 +71,6 @@ BEGIN
         RAISE EXCEPTION '找不到對應的會員資料';
     END IF;
     
-    -- 如果付款方式為儲值金，檢查餘額並扣除
-    -- 注意：這裡檢查 payment_method_code 是否為 'wallet'
-    IF p_payment_method_code = 'wallet' THEN
-        DECLARE
-            v_wallet_balance DECIMAL(10, 2);
-            v_wallet_payment_amount DECIMAL(10, 2);
-        BEGIN
-            -- 取得儲值金餘額
-            SELECT balance INTO v_wallet_balance
-            FROM public.wallets
-            WHERE member_id = v_member_id;
-            
-            IF v_wallet_balance IS NULL OR v_wallet_balance <= 0 THEN
-                RAISE EXCEPTION '會員儲值金餘額不足，無法使用儲值金付款';
-            END IF;
-            
-            -- 計算應扣除的儲值金金額（不超過餘額和總金額）
-            v_wallet_payment_amount := LEAST(v_total_amount, v_wallet_balance);
-            
-            -- 使用儲值金付款
-            SELECT public.pay_with_wallet(
-                v_member_id,
-                v_wallet_payment_amount,
-                COALESCE(p_description, '使用儲值金付款') || ' (交易編號: ' || COALESCE(p_receipt_number, '待生成') || ')',
-                NULL,  -- reference_id 會在交易建立後更新
-                'transaction',
-                v_admin_id
-            ) INTO v_wallet_transaction_id;
-        END;
-    END IF;
-    
     -- 如果提供了 booking_id，驗證預約是否存在
     IF p_booking_id IS NOT NULL THEN
         SELECT * INTO v_booking
@@ -148,6 +117,38 @@ BEGIN
                             ), 0) + 1)::TEXT, 4, '0');
     ELSE
         v_receipt_number := p_receipt_number;
+    END IF;
+    
+    -- 如果付款方式為儲值金，檢查餘額並扣除
+    -- 注意：這裡檢查 payment_method_code 是否為 'wallet'，且必須在 v_total_amount 和 v_receipt_number 賦值之後執行
+    IF p_payment_method_code = 'wallet' THEN
+        DECLARE
+            v_wallet_balance DECIMAL(10, 2);
+            v_wallet_payment_amount DECIMAL(10, 2);
+        BEGIN
+            -- 取得儲值金餘額
+            SELECT balance INTO v_wallet_balance
+            FROM public.wallets
+            WHERE member_id = v_member_id;
+            
+            IF v_wallet_balance IS NULL OR v_wallet_balance <= 0 THEN
+                RAISE EXCEPTION '會員儲值金餘額不足，無法使用儲值金付款';
+            END IF;
+            
+            -- 計算應扣除的儲值金金額（使用 p_amount 而不是 v_total_amount）
+            -- v_total_amount 包含折扣，p_amount 才是實際付款金額
+            v_wallet_payment_amount := LEAST(p_amount, v_wallet_balance);
+            
+            -- 使用儲值金付款
+            SELECT public.pay_with_wallet(
+                v_member_id,
+                v_wallet_payment_amount,
+                '使用儲值金付款 (交易編號: ' || v_receipt_number || ')',
+                NULL,  -- reference_id 會在交易建立後更新
+                'transaction',
+                v_admin_id
+            ) INTO v_wallet_transaction_id;
+        END;
     END IF;
     
     -- 建立交易記錄
@@ -209,28 +210,41 @@ BEGIN
     
     -- 如果是付款類型，自動計算並添加積分
     IF p_transaction_type = 'payment' AND p_amount > 0 THEN
-        -- 取得積分規則（每消費 10 元獲得 1 點）
-        SELECT rule_value INTO v_point_rule_value
-        FROM public.point_rules
-        WHERE rule_name = 'spend_rate'
-          AND is_active = true
-        LIMIT 1;
+        -- 取得積分規則（每消費指定金額獲得 1 點）
+        -- 使用預設值：每 10 元 1 點
+        v_point_rule_value := 10;
         
-        -- 如果找到規則，計算積分
+        -- 嘗試從 point_rules 表獲取消費積分規則
+        BEGIN
+            SELECT value INTO v_point_rule_value
+            FROM public.point_rules
+            WHERE rule_type = 'spend_rate'
+              AND is_active = true
+            LIMIT 1;
+        EXCEPTION WHEN OTHERS THEN
+            -- 如果查詢失敗，保持預設值 10
+            NULL;
+        END;
+        
+        -- 計算積分：實際付款金額 / 規則值（例如：100 元 / 10 = 10 點）
         IF v_point_rule_value IS NOT NULL AND v_point_rule_value > 0 THEN
-            -- 計算積分：實際付款金額 / 規則值（例如：100 元 / 10 = 10 點）
             v_points_to_earn := FLOOR((p_amount - COALESCE(p_discount_amount, 0)) / v_point_rule_value)::INTEGER;
             
             IF v_points_to_earn > 0 THEN
                 -- 添加積分
-                PERFORM public.earn_points(
-                    v_member_id,
-                    v_points_to_earn,
-                    '消費獲得積分 (交易編號: ' || v_receipt_number || ')',
-                    v_transaction.id,
-                    'transaction',
-                    v_admin_id
-                );
+                BEGIN
+                    PERFORM public.earn_points(
+                        v_member_id,
+                        v_points_to_earn,
+                        '消費獲得積分 (交易編號: ' || v_receipt_number || ')',
+                        v_transaction.id,
+                        'transaction',
+                        v_admin_id
+                    );
+                EXCEPTION WHEN OTHERS THEN
+                    -- 如果積分添加失敗，記錄但不影響交易
+                    RAISE NOTICE '添加積分失敗，但交易已成功建立';
+                END;
             END IF;
         END IF;
     END IF;
