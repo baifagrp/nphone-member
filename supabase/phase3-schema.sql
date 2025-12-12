@@ -109,10 +109,12 @@ CREATE TABLE IF NOT EXISTS public.point_rules (
 -- 插入預設積分規則
 INSERT INTO public.point_rules (rule_type, value, bonus_points, description, is_active)
 VALUES 
-    ('spend_rate', 10, 0, '每消費 10 元獲得 1 點', true),
-    ('signup_bonus', 0, 100, '註冊會員贈送 100 點', true),
-    ('birthday_bonus', 0, 200, '生日當月贈送 200 點', true)
-ON CONFLICT (rule_type) DO NOTHING;
+    ('spend_rate', 10, 0, '每消費 10 元獲得 1 點', true)
+ON CONFLICT (rule_type) DO UPDATE SET
+    value = EXCLUDED.value,
+    bonus_points = EXCLUDED.bonus_points,
+    description = EXCLUDED.description,
+    is_active = EXCLUDED.is_active;
 
 -- =============================================
 -- 自動更新 updated_at 的觸發器

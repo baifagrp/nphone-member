@@ -94,6 +94,18 @@
                         </select>
                     </div>
                     
+                    <!-- 會員編號 -->
+                    <div class="form-group">
+                        <label for="edit-member-code" class="form-label">會員編號</label>
+                        <input 
+                            type="text" 
+                            id="edit-member-code" 
+                            class="form-input" 
+                            placeholder="請輸入會員編號（用於顯示條碼）"
+                        >
+                        <div class="form-help">會員編號會顯示在會員首頁的條碼中</div>
+                    </div>
+                    
                     <!-- LINE User ID -->
                     <div class="form-group">
                         <label for="edit-line-user-id" class="form-label">LINE User ID</label>
@@ -165,6 +177,7 @@
                 email: document.getElementById('edit-email').value,
                 birthday: document.getElementById('edit-birthday').value,
                 gender: document.getElementById('edit-gender').value,
+                member_code: document.getElementById('edit-member-code').value.trim() || null,
                 line_user_id: currentMember.line_user_id, // 保持原值
             };
             

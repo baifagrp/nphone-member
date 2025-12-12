@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>會員中心</title>
     <link rel="stylesheet" href="../css/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
 </head>
 <body>
     <!-- 導航列 -->
@@ -24,6 +25,36 @@
 
     <!-- 主要內容 -->
     <div class="container-sm" style="margin-top: 40px;">
+        <!-- 會員編號條碼卡片 -->
+        <div id="member-code-card" class="card" style="margin-bottom: 24px; display: none;">
+            <div class="card-header" style="text-align: center;">會員編號</div>
+            <div class="card-body" style="text-align: center; padding: 32px;">
+                <div id="member-code" style="font-size: 24px; font-weight: 600; margin-bottom: 16px; color: var(--color-text-primary);"></div>
+                <svg id="barcode" style="max-width: 100%; height: auto;"></svg>
+            </div>
+        </div>
+
+        <!-- 儲值金與積分卡片 -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-bottom: 24px;">
+            <!-- 儲值金卡片 -->
+            <div class="card" style="background: linear-gradient(135deg, #007AFF 0%, #0051D5 100%); color: white;">
+                <div style="padding: 24px;">
+                    <div style="font-size: 14px; opacity: 0.9; margin-bottom: 8px;">儲值金餘額</div>
+                    <div id="wallet-balance" style="font-size: 36px; font-weight: 600; margin-bottom: 12px;">NT$ 0</div>
+                    <a href="wallet.html" style="color: white; text-decoration: underline; font-size: 14px;">查看詳情 →</a>
+                </div>
+            </div>
+
+            <!-- 積分卡片 -->
+            <div class="card" style="background: linear-gradient(135deg, #FF9500 0%, #FF6B00 100%); color: white;">
+                <div style="padding: 24px;">
+                    <div style="font-size: 14px; opacity: 0.9; margin-bottom: 8px;">積分餘額</div>
+                    <div id="points-balance" style="font-size: 36px; font-weight: 600; margin-bottom: 12px;">0 點</div>
+                    <a href="points.html" style="color: white; text-decoration: underline; font-size: 14px;">查看詳情 →</a>
+                </div>
+            </div>
+        </div>
+
         <!-- 會員資料卡片 -->
         <div class="card">
             <div class="profile-header">
@@ -92,8 +123,10 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="../js/config.js"></script>
     <script src="../js/supabase-client.js"></script>
+    <script src="../js/ui-utils.js"></script>
     <script src="../js/auth.js"></script>
     <script src="../js/member.js"></script>
+    <script src="../js/wallet-points.js"></script>
     
     <script>
         // 頁面載入時初始化
@@ -109,12 +142,69 @@
                 }
                 
                 Member.displayProfile();
+                
+                // 載入儲值金和積分
+                await loadWalletAndPoints();
+                
+                // 顯示會員編號條碼
+                displayMemberCode();
             } catch (error) {
                 CONFIG.error('初始化失敗', error);
-                alert('載入失敗，請重新登入');
+                if (typeof UI !== 'undefined') {
+                    UI.error('載入失敗，請重新登入');
+                } else {
+                    alert('載入失敗，請重新登入');
+                }
                 Auth.memberLogout();
             }
         });
+
+        // 載入儲值金和積分
+        async function loadWalletAndPoints() {
+            try {
+                const session = Auth.getMemberSession();
+                if (!session) return;
+
+                // 載入儲值金
+                const wallet = await WalletPointsAPI.getMemberWallet(session.lineUserId);
+                const walletBalance = wallet ? wallet.balance : 0;
+                document.getElementById('wallet-balance').textContent = WalletPointsAPI.formatAmount(walletBalance);
+
+                // 載入積分
+                const points = await WalletPointsAPI.getMemberPoints(session.lineUserId);
+                const pointsBalance = points ? points.balance : 0;
+                document.getElementById('points-balance').textContent = WalletPointsAPI.formatPoints(pointsBalance);
+            } catch (error) {
+                CONFIG.error('載入儲值金和積分失敗', error);
+            }
+        }
+
+        // 顯示會員編號條碼
+        function displayMemberCode() {
+            const member = Member.currentMember;
+            if (!member || !member.member_code) {
+                document.getElementById('member-code-card').style.display = 'none';
+                return;
+            }
+
+            // 顯示會員編號
+            document.getElementById('member-code').textContent = member.member_code;
+            document.getElementById('member-code-card').style.display = 'block';
+
+            // 生成條碼
+            try {
+                JsBarcode("#barcode", member.member_code, {
+                    format: "CODE128",
+                    width: 2,
+                    height: 80,
+                    displayValue: true,
+                    fontSize: 16,
+                    margin: 10
+                });
+            } catch (error) {
+                CONFIG.error('生成條碼失敗', error);
+            }
+        }
     </script>
 </body>
 </html>

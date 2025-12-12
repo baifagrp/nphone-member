@@ -263,6 +263,7 @@ const Admin = {
     this.setInputValue('edit-email', member.email);
     this.setInputValue('edit-birthday', member.birthday);
     this.setInputValue('edit-gender', member.gender);
+    this.setInputValue('edit-member-code', member.member_code);
     this.setInputValue('edit-line-user-id', member.line_user_id);
   },
   
@@ -337,6 +338,7 @@ const Admin = {
         email: formData.email || null,
         birthday: formData.birthday || null,
         gender: formData.gender || null,
+        member_code: formData.member_code || null,
         line_user_id: formData.line_user_id || null,
       });
       
