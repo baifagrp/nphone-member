@@ -211,16 +211,30 @@
         function displayMemberCode() {
             const member = Member.currentMember;
             if (!member || !member.member_code) {
-                document.getElementById('member-code-card').style.display = 'none';
+                const codeCard = document.getElementById('member-code-card');
+                if (codeCard) {
+                    codeCard.style.display = 'none';
+                }
                 return;
             }
 
-            // 顯示會員編號
-            document.getElementById('member-code').textContent = member.member_code;
-            document.getElementById('member-code-card').style.display = 'block';
+            const codeCard = document.getElementById('member-code-card');
+            if (!codeCard) {
+                CONFIG.error('找不到會員編號卡片元素');
+                return;
+            }
+
+            // 顯示卡片
+            codeCard.style.display = 'block';
 
             // 生成條碼
             try {
+                const barcodeSvg = document.getElementById('barcode');
+                if (!barcodeSvg) {
+                    CONFIG.error('找不到條碼 SVG 元素');
+                    return;
+                }
+                
                 JsBarcode("#barcode", member.member_code, {
                     format: "CODE128",
                     width: 2,
