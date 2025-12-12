@@ -24,9 +24,7 @@ CREATE OR REPLACE FUNCTION public.create_transaction(
     p_receipt_number TEXT DEFAULT NULL,
     p_reference_number TEXT DEFAULT NULL,
     p_notes TEXT DEFAULT NULL,
-    p_admin_notes TEXT DEFAULT NULL,
-    p_use_wallet_payment BOOLEAN DEFAULT FALSE,
-    p_wallet_payment_amount DECIMAL(10, 2) DEFAULT 0
+    p_admin_notes TEXT DEFAULT NULL
 )
 RETURNS public.transactions
 LANGUAGE plpgsql
@@ -73,26 +71,35 @@ BEGIN
         RAISE EXCEPTION '找不到對應的會員資料';
     END IF;
     
-    -- 如果使用儲值金付款，檢查餘額並扣除
-    IF p_use_wallet_payment AND p_wallet_payment_amount > 0 THEN
-        -- 檢查儲值金餘額
-        IF NOT EXISTS (
-            SELECT 1 FROM public.wallets
-            WHERE member_id = v_member_id
-              AND balance >= p_wallet_payment_amount
-        ) THEN
-            RAISE EXCEPTION '儲值金餘額不足';
-        END IF;
-        
-        -- 使用儲值金付款
-        SELECT public.pay_with_wallet(
-            v_member_id,
-            p_wallet_payment_amount,
-            COALESCE(p_description, '使用儲值金付款') || ' (交易編號: ' || COALESCE(p_receipt_number, '待生成') || ')',
-            NULL,  -- reference_id 會在交易建立後更新
-            'transaction',
-            v_admin_id
-        ) INTO v_wallet_transaction_id;
+    -- 如果付款方式為儲值金，檢查餘額並扣除
+    -- 注意：這裡檢查 payment_method_code 是否為 'wallet'
+    IF p_payment_method_code = 'wallet' THEN
+        DECLARE
+            v_wallet_balance DECIMAL(10, 2);
+            v_wallet_payment_amount DECIMAL(10, 2);
+        BEGIN
+            -- 取得儲值金餘額
+            SELECT balance INTO v_wallet_balance
+            FROM public.wallets
+            WHERE member_id = v_member_id;
+            
+            IF v_wallet_balance IS NULL OR v_wallet_balance <= 0 THEN
+                RAISE EXCEPTION '會員儲值金餘額不足，無法使用儲值金付款';
+            END IF;
+            
+            -- 計算應扣除的儲值金金額（不超過餘額和總金額）
+            v_wallet_payment_amount := LEAST(v_total_amount, v_wallet_balance);
+            
+            -- 使用儲值金付款
+            SELECT public.pay_with_wallet(
+                v_member_id,
+                v_wallet_payment_amount,
+                COALESCE(p_description, '使用儲值金付款') || ' (交易編號: ' || COALESCE(p_receipt_number, '待生成') || ')',
+                NULL,  -- reference_id 會在交易建立後更新
+                'transaction',
+                v_admin_id
+            ) INTO v_wallet_transaction_id;
+        END;
     END IF;
     
     -- 如果提供了 booking_id，驗證預約是否存在

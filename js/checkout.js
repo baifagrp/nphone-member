@@ -74,8 +74,6 @@ const CheckoutAPI = {
     referenceNumber = null,
     notes = null,
     adminNotes = null,
-    useWalletPayment = false,
-    walletPaymentAmount = 0,
   }) {
     try {
       const client = getSupabase();
@@ -122,10 +120,6 @@ const CheckoutAPI = {
       }
       if (adminNotes) {
         params.p_admin_notes = String(adminNotes);
-      }
-      if (useWalletPayment) {
-        params.p_use_wallet_payment = Boolean(useWalletPayment);
-        params.p_wallet_payment_amount = Number(walletPaymentAmount);
       }
       
       CONFIG.log('建立交易參數', params);

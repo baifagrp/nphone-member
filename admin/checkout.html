@@ -54,33 +54,6 @@
                 </div>
             </div>
             
-            <!-- 會員儲值金資訊 -->
-            <div id="member-wallet-info" class="form-group" style="margin-bottom: 24px; padding: 16px; background: #F0F9FF; border: 1px solid #B3E5FC; border-radius: 8px; display: none;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                    <span style="font-weight: 600; color: #0277BD;">儲值金餘額</span>
-                    <span id="wallet-balance-display" style="font-size: 18px; font-weight: 700; color: #0277BD;">NT$ 0</span>
-                </div>
-                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                    <input type="checkbox" id="use-wallet-payment" style="width: 18px; height: 18px; cursor: pointer;">
-                    <span style="font-weight: 500;">使用儲值金付款</span>
-                </label>
-                <div id="wallet-payment-amount-group" style="margin-top: 12px; display: none;">
-                    <label for="wallet-payment-amount" class="form-label">使用儲值金金額</label>
-                    <input 
-                        type="number" 
-                        id="wallet-payment-amount" 
-                        class="form-input" 
-                        step="0.01"
-                        min="0"
-                        placeholder="0"
-                        style="margin-top: 8px;"
-                    >
-                    <div style="margin-top: 8px; font-size: 13px; color: #666;">
-                        <span id="remaining-amount-display">剩餘需付：NT$ 0</span>
-                    </div>
-                </div>
-            </div>
-            
             <!-- 交易類型 -->
             <div class="form-group" style="margin-bottom: 24px;">
                 <label for="transaction-type" class="form-label">交易類型 <span style="color: #FF3B30;">*</span></label>
@@ -124,6 +97,16 @@
                 <select id="payment-method" class="form-input" required>
                     <option value="">請選擇付款方式</option>
                 </select>
+                <!-- 儲值金餘額提示（當選擇儲值金時顯示） -->
+                <div id="wallet-balance-hint" style="margin-top: 8px; padding: 12px; background: #F0F9FF; border: 1px solid #B3E5FC; border-radius: 8px; display: none;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-weight: 600; color: #0277BD;">可用儲值金餘額</span>
+                        <span id="wallet-balance-display" style="font-size: 16px; font-weight: 700; color: #0277BD;">NT$ 0</span>
+                    </div>
+                    <div style="margin-top: 8px; font-size: 13px; color: #666;">
+                        <span id="wallet-payment-info">系統將使用儲值金支付此筆交易</span>
+                    </div>
+                </div>
             </div>
             
             <!-- 交易描述 -->
@@ -261,23 +244,25 @@
                 }
             });
             
-            // 使用儲值金付款 checkbox
-            document.getElementById('use-wallet-payment').addEventListener('change', (e) => {
-                const walletAmountGroup = document.getElementById('wallet-payment-amount-group');
-                if (e.target.checked) {
-                    walletAmountGroup.style.display = 'block';
-                    updateRemainingAmount();
+            // 付款方式變更（檢查是否選擇儲值金）
+            document.getElementById('payment-method').addEventListener('change', async (e) => {
+                const paymentMethod = e.target.value;
+                const memberSelect = document.getElementById('member-select');
+                
+                if (paymentMethod === 'wallet' && memberSelect.value) {
+                    // 選擇儲值金付款，顯示餘額資訊
+                    await loadMemberWalletInfo(memberSelect.value);
+                    document.getElementById('wallet-balance-hint').style.display = 'block';
+                    updateWalletPaymentInfo();
                 } else {
-                    walletAmountGroup.style.display = 'none';
-                    document.getElementById('wallet-payment-amount').value = '';
-                    updateRemainingAmount();
+                    // 選擇其他付款方式，隱藏儲值金提示
+                    document.getElementById('wallet-balance-hint').style.display = 'none';
                 }
             });
             
-            // 儲值金金額輸入變化時更新剩餘金額
-            document.getElementById('wallet-payment-amount').addEventListener('input', updateRemainingAmount);
-            document.getElementById('amount').addEventListener('input', updateRemainingAmount);
-            document.getElementById('discount-amount').addEventListener('input', updateRemainingAmount);
+            // 金額或折扣變更時更新儲值金提示
+            document.getElementById('amount').addEventListener('input', updateWalletPaymentInfo);
+            document.getElementById('discount-amount').addEventListener('input', updateWalletPaymentInfo);
             
             // 預約選擇變更
             document.getElementById('booking-select').addEventListener('change', (e) => {
@@ -687,12 +672,8 @@
             memberBookings = [];
             
             // 重置儲值金相關
-            document.getElementById('member-wallet-info').style.display = 'none';
-            document.getElementById('use-wallet-payment').checked = false;
-            document.getElementById('wallet-payment-amount-group').style.display = 'none';
-            document.getElementById('wallet-payment-amount').value = '';
+            document.getElementById('wallet-balance-hint').style.display = 'none';
             document.getElementById('wallet-balance-display').textContent = 'NT$ 0';
-            document.getElementById('remaining-amount-display').textContent = '剩餘需付：NT$ 0';
         }
         
         // 載入會員儲值金資訊
@@ -767,21 +748,19 @@
                     return;
                 }
                 
-                // 檢查是否使用儲值金付款
-                const useWallet = document.getElementById('use-wallet-payment').checked;
-                let walletPaymentAmount = 0;
-                if (useWallet) {
-                    walletPaymentAmount = parseFloat(document.getElementById('wallet-payment-amount').value) || 0;
-                    if (walletPaymentAmount <= 0) {
-                        UI.error('請輸入有效的儲值金付款金額');
+                // 檢查儲值金付款（如果付款方式為儲值金）
+                const useWalletPayment = paymentMethod === 'wallet';
+                if (useWalletPayment) {
+                    const wallet = window.currentMemberWallet || await WalletPointsAPI.getMemberWallet(memberSelect.value);
+                    if (!wallet || wallet.balance <= 0) {
+                        UI.error('會員儲值金餘額不足，無法使用儲值金付款');
                         return;
                     }
                     
-                    // 檢查儲值金餘額
-                    const wallet = await WalletPointsAPI.getMemberWallet(memberSelect.value);
-                    if (!wallet || wallet.balance < walletPaymentAmount) {
-                        UI.error('儲值金餘額不足');
-                        return;
+                    // 檢查儲值金是否足夠支付總金額
+                    if (wallet.balance < totalAmount) {
+                        UI.warning(`儲值金餘額（NT$ ${WalletPointsAPI.formatAmount(wallet.balance)}）不足以支付全額（NT$ ${totalAmount.toLocaleString('zh-TW', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}），請選擇其他付款方式或部分使用儲值金`);
+                        // 注意：這裡我們允許部分支付，系統會在後端處理
                     }
                 }
                 
@@ -813,8 +792,7 @@
                     referenceNumber: referenceNumber || null,
                     notes: notes || null,
                     adminNotes: adminNotes || null,
-                    useWalletPayment: useWallet,
-                    walletPaymentAmount: walletPaymentAmount,
+                    useWalletPayment: useWalletPayment,
                 });
                 
                 UI.hideLoading();
