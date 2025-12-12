@@ -25,7 +25,11 @@ const Admin = {
     // 驗證管理員身份
     const isValid = await Auth.verifyAdminAuth();
     if (!isValid) {
-      alert('身份驗證失敗，請重新登入');
+      if (typeof UI !== 'undefined') {
+        UI.error('身份驗證失敗，請重新登入');
+      } else {
+        alert('身份驗證失敗，請重新登入');
+      }
       Auth.adminLogout();
       return;
     }

@@ -170,6 +170,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="../js/config.js"></script>
     <script src="../js/supabase-client.js"></script>
+    <script src="../js/ui-utils.js"></script>
     <script src="../js/auth.js"></script>
     <script src="../js/member.js"></script>
     <script src="../js/admin.js"></script>
@@ -441,6 +442,12 @@
         // 載入所有交易記錄
         async function loadAllTransactions() {
             try {
+                // 顯示骨架屏
+                const transactionsList = document.getElementById('transactions-list');
+                if (transactionsList && typeof UI !== 'undefined') {
+                    UI.showSkeleton(transactionsList, 'list');
+                }
+                
                 const client = getSupabase();
                 
                 // 先查詢交易記錄
@@ -646,6 +653,7 @@
                         updated_at: new Date().toISOString()
                     });
                     
+                    hideLoading();
                     showMessage('交易更新成功！', 'success');
                 } else {
                     // 建立新交易
@@ -664,6 +672,7 @@
                         adminNotes: adminNotes || null,
                     });
                     
+                    hideLoading();
                     showMessage('交易建立成功！', 'success');
                 }
                 
@@ -748,16 +757,18 @@
             }
             
             try {
-                showMessage('刪除中...', 'info');
+                showLoading('刪除中...');
                 
                 await CheckoutAPI.deleteTransaction(transactionId);
                 
-                showMessage('交易記錄已刪除', 'success');
+                    hideLoading();
+                    showMessage('交易記錄已刪除', 'success');
                 
                 // 重新載入交易列表
                 await loadAllTransactions();
                 
             } catch (error) {
+                hideLoading();
                 CONFIG.error('刪除交易失敗', error);
                 showMessage('刪除失敗：' + (error.message || '未知錯誤'), 'error');
             }

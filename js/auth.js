@@ -22,7 +22,11 @@ const Auth = {
       window.location.href = loginUrl;
     } catch (error) {
       CONFIG.error('LINE Login 失敗', error);
-      alert('登入失敗，請稍後再試');
+      if (typeof UI !== 'undefined') {
+        UI.error('登入失敗，請稍後再試');
+      } else {
+        alert('登入失敗，請稍後再試');
+      }
     }
   },
   
@@ -158,7 +162,11 @@ const Auth = {
   // 要求會員登入（未登入時導向首頁）
   requireMemberLogin() {
     if (!this.isMemberLoggedIn()) {
-      alert('請先登入');
+      if (typeof UI !== 'undefined') {
+        UI.warning('請先登入');
+      } else {
+        alert('請先登入');
+      }
       window.location.href = '/index.html';
       return false;
     }
@@ -248,7 +256,11 @@ const Auth = {
   // 要求管理員登入（未登入時導向登入頁）
   requireAdminLogin() {
     if (!this.isAdminLoggedIn()) {
-      alert('請先登入管理後台');
+      if (typeof UI !== 'undefined') {
+        UI.warning('請先登入管理後台');
+      } else {
+        alert('請先登入管理後台');
+      }
       window.location.href = '/admin/login.html';
       return false;
     }
@@ -326,17 +338,43 @@ function validateEmail(email) {
 // 輔助函數：顯示載入中
 // =============================================
 function showLoading(message = '載入中...') {
-  // 移除舊的 loading
+  // 優先使用新的 UI 工具
+  if (typeof UI !== 'undefined' && UI.showLoading) {
+    UI.showLoading(message);
+    return;
+  }
+  
+  // 後備方案：舊的載入方式
   hideLoading();
   
   const loadingDiv = document.createElement('div');
   loadingDiv.id = 'loading-overlay';
-  loadingDiv.innerHTML = `
-    <div class="loading-content">
-      <div class="loading-spinner"></div>
-      <p>${message}</p>
-    </div>
+  loadingDiv.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(4px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    gap: 16px;
   `;
+  
+  const spinner = document.createElement('div');
+  spinner.className = 'loading-spinner';
+  spinner.style.cssText = 'width: 48px; height: 48px; border-width: 4px;';
+  
+  const text = document.createElement('div');
+  text.textContent = message;
+  text.style.cssText = 'font-size: 16px; color: var(--color-text-secondary, #86868B); font-weight: 500;';
+  
+  loadingDiv.appendChild(spinner);
+  loadingDiv.appendChild(text);
   document.body.appendChild(loadingDiv);
 }
 
@@ -344,9 +382,20 @@ function showLoading(message = '載入中...') {
 // 輔助函數：隱藏載入中
 // =============================================
 function hideLoading() {
+  // 優先使用新的 UI 工具
+  if (typeof UI !== 'undefined' && UI.hideLoading) {
+    UI.hideLoading();
+    return;
+  }
+  
+  // 後備方案：移除舊的載入元素
   const loading = document.getElementById('loading-overlay');
   if (loading) {
-    loading.remove();
+    loading.style.opacity = '0';
+    loading.style.transition = 'opacity 0.3s ease';
+    setTimeout(() => {
+      loading.remove();
+    }, 300);
   }
 }
 
@@ -354,6 +403,13 @@ function hideLoading() {
 // 輔助函數：顯示提示訊息
 // =============================================
 function showMessage(message, type = 'info') {
+  // 優先使用新的 UI 工具
+  if (typeof UI !== 'undefined' && UI.showToast) {
+    UI.showToast(message, type);
+    return;
+  }
+  
+  // 後備方案：舊的通知方式
   const messageDiv = document.createElement('div');
   messageDiv.className = `message-toast message-${type}`;
   messageDiv.textContent = message;

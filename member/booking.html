@@ -158,11 +158,33 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="../js/config.js"></script>
     <script src="../js/supabase-client.js"></script>
+    <script src="../js/ui-utils.js"></script>
     <script src="../js/auth.js"></script>
     <script src="../js/member.js"></script>
     <script src="../js/booking.js"></script>
     
     <script>
+        // 輔助函數：向後兼容舊的 showMessage 和 showLoading
+        function showMessage(message, type = 'info') {
+            if (typeof UI !== 'undefined') {
+                UI.showToast(message, type);
+            } else {
+                alert(message);
+            }
+        }
+        
+        function showLoading(message) {
+            if (typeof UI !== 'undefined') {
+                UI.showLoading(message);
+            }
+        }
+        
+        function hideLoading() {
+            if (typeof UI !== 'undefined') {
+                UI.hideLoading();
+            }
+        }
+        
         let currentStep = 1;
         let selectedService = null;
         let selectedServiceOption = null;
@@ -182,21 +204,28 @@
                 const today = new Date().toISOString().split('T')[0];
                 document.getElementById('booking-date').setAttribute('min', today);
                 
+                // 顯示骨架屏
+                const servicesList = document.getElementById('services-list');
+                if (servicesList && typeof UI !== 'undefined') {
+                    UI.showSkeleton(servicesList, 'card');
+                }
+                
                 // 載入服務列表
                 await loadServices();
                 
             } catch (error) {
                 CONFIG.error('初始化失敗', error);
+                if (typeof UI !== 'undefined') {
+                    UI.error('初始化失敗，請重新整理頁面');
+                }
             }
         });
         
         // 載入服務列表
         async function loadServices() {
             try {
-                showLoading('載入服務項目...');
+                // 骨架屏已在初始化時顯示，不需要額外的載入提示
                 availableServices = await BookingAPI.getActiveServices();
-                hideLoading();
-                
                 if (availableServices.length === 0) {
                     document.getElementById('services-list').innerHTML = '<p style="text-align: center; color: #999; padding: 40px;">暫無可預約的服務項目</p>';
                     return;
@@ -234,9 +263,12 @@
                 `).join('');
                 
             } catch (error) {
-                hideLoading();
                 CONFIG.error('載入服務失敗', error);
-                showMessage('載入服務失敗', 'error');
+                const servicesList = document.getElementById('services-list');
+                if (servicesList) {
+                    servicesList.innerHTML = '<p style="text-align: center; color: #999; padding: 40px;">載入服務失敗，請重新整理頁面</p>';
+                }
+                showMessage('載入服務失敗，請重新整理頁面', 'error');
             }
         }
         
@@ -394,7 +426,7 @@
         // 步驟 1.5 下一步
         document.getElementById('btn-next-step-1.5').addEventListener('click', () => {
             if (!selectedServiceOption) {
-                alert('請選擇選項');
+                showMessage('請選擇選項', 'warning');
                 return;
             }
             goToStep(2);
@@ -409,7 +441,7 @@
         document.getElementById('btn-next-step-2').addEventListener('click', () => {
             const date = document.getElementById('booking-date').value;
             if (!date) {
-                alert('請選擇預約日期');
+                showMessage('請選擇預約日期', 'warning');
                 return;
             }
             
@@ -483,7 +515,10 @@
                 
             } catch (error) {
                 CONFIG.error('載入時間段失敗', error);
-                showMessage('載入時間段失敗', 'error');
+                document.getElementById('time-slots-list').innerHTML = '<p style="text-align: center; color: #999; padding: 40px;">載入時間段失敗，請稍後再試</p>';
+                if (typeof UI !== 'undefined') {
+                    UI.error('載入時間段失敗，請稍後再試');
+                }
             }
         }
         
@@ -504,7 +539,7 @@
         // 步驟 3 下一步
         document.getElementById('btn-next-step-3').addEventListener('click', () => {
             if (!selectedTime) {
-                alert('請選擇預約時間');
+                showMessage('請選擇預約時間', 'warning');
                 return;
             }
             
@@ -514,7 +549,7 @@
                 const now = new Date();
                 const currentTime = now.toTimeString().slice(0, 5); // HH:MM
                 if (selectedTime <= currentTime) {
-                    alert('無法預約已過的時間，請選擇其他時間');
+                    showMessage('無法預約已過的時間，請選擇其他時間', 'warning');
                     return;
                 }
             }
@@ -706,8 +741,10 @@
                     notes
                 );
                 
-                hideLoading();
-                showMessage('預約成功！', 'success');
+                    hideLoading();
+                    showMessage('預約成功！', 'success');
+                    
+                    // 延遲後跳轉到預約列表
                 
                 // 2 秒後導向預約記錄頁面
                 setTimeout(() => {

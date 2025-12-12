@@ -108,6 +108,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="../js/config.js"></script>
     <script src="../js/supabase-client.js"></script>
+    <script src="../js/ui-utils.js"></script>
     <script src="../js/auth.js"></script>
     <script src="../js/member.js"></script>
     <script src="../js/admin.js"></script>
@@ -333,7 +334,7 @@
                     return;
                 }
                 
-                showMessage('建立預約中...', 'info');
+                showLoading('建立預約中...');
                 
                 const booking = await BookingAPI.createBooking(
                     memberLineUserId,
@@ -362,14 +363,33 @@
             }
         }
         
-        // 顯示訊息
+        // 顯示訊息（使用新的 UI 工具）
         function showMessage(message, type = 'info') {
-            if (type === 'error') {
-                alert('❌ ' + message);
-            } else if (type === 'success') {
-                alert('✅ ' + message);
+            if (typeof UI !== 'undefined') {
+                UI.showToast(message, type);
             } else {
-                alert(message);
+                // 後備方案
+                if (type === 'error') {
+                    alert('❌ ' + message);
+                } else if (type === 'success') {
+                    alert('✅ ' + message);
+                } else {
+                    alert(message);
+                }
+            }
+        }
+        
+        // 顯示載入狀態
+        function showLoading(message) {
+            if (typeof UI !== 'undefined') {
+                UI.showLoading(message);
+            }
+        }
+        
+        // 隱藏載入狀態
+        function hideLoading() {
+            if (typeof UI !== 'undefined') {
+                UI.hideLoading();
             }
         }
     </script>

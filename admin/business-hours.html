@@ -301,6 +301,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="../js/config.js"></script>
     <script src="../js/supabase-client.js"></script>
+    <script src="../js/ui-utils.js"></script>
     <script src="../js/auth.js"></script>
     <script src="../js/booking.js"></script>
     
@@ -537,14 +538,22 @@
                 const maxBookings = parseInt(maxInput.value) || 1;
                 
                 if (!time) {
-                    alert('請輸入時間');
+                    if (typeof UI !== 'undefined') {
+                        UI.warning('請輸入時間');
+                    } else {
+                        alert('請輸入時間');
+                    }
                     return;
                 }
                 
                 // 檢查是否已存在
                 const existing = timeSlots.find(s => s.time_slot === time + ':00');
                 if (existing) {
-                    alert('該時間段已存在');
+                    if (typeof UI !== 'undefined') {
+                        UI.warning('該時間段已存在');
+                    } else {
+                        alert('該時間段已存在');
+                    }
                     return;
                 }
                 
@@ -577,7 +586,11 @@
             
             const maxBookings = parseInt(newMax);
             if (isNaN(maxBookings) || maxBookings < 1) {
-                alert('請輸入有效的數字（至少為 1）');
+                    if (typeof UI !== 'undefined') {
+                        UI.warning('請輸入有效的數字（至少為 1）');
+                    } else {
+                        alert('請輸入有效的數字（至少為 1）');
+                    }
                 return;
             }
             
@@ -628,26 +641,38 @@
             }
         }
         
-        // 顯示訊息
-        function showMessage(message, type) {
+        // 顯示訊息（使用新的 UI 工具）
+        function showMessage(message, type = 'info') {
+            // 同時顯示在頁面頂部（用於營業時間頁面）
             const statusEl = document.getElementById('save-status');
-            statusEl.textContent = message;
-            statusEl.className = `save-status ${type}`;
-            statusEl.style.display = 'block';
+            if (statusEl) {
+                statusEl.textContent = message;
+                statusEl.className = `save-status ${type}`;
+                statusEl.style.display = 'block';
+                
+                setTimeout(() => {
+                    statusEl.style.display = 'none';
+                }, 3000);
+            }
             
-            setTimeout(() => {
-                statusEl.style.display = 'none';
-            }, 3000);
+            // 使用新的 Toast 通知
+            if (typeof UI !== 'undefined') {
+                UI.showToast(message, type);
+            }
         }
         
         // 顯示載入中
         function showLoading(message) {
-            // 可以在這裡添加載入指示器
+            if (typeof UI !== 'undefined') {
+                UI.showLoading(message);
+            }
         }
         
         // 隱藏載入中
         function hideLoading() {
-            // 可以在這裡移除載入指示器
+            if (typeof UI !== 'undefined') {
+                UI.hideLoading();
+            }
         }
         
         // 登出
