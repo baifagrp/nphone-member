@@ -26,6 +26,41 @@
     <!-- 主要內容 -->
     <div class="container-sm" style="margin-top: 40px;">
 
+        <!-- 會員資料卡片 -->
+        <div class="card">
+            <div class="profile-header">
+                <div class="profile-avatar-container">
+                    <img id="member-avatar" src="" alt="會員頭像" class="member-avatar">
+                </div>
+                <h2 class="profile-name" id="member-name">載入中...</h2>
+                <div id="line-status"></div>
+            </div>
+
+            <div class="card-body">
+                <div class="profile-info-row">
+                    <span class="profile-label">電話</span>
+                    <span class="profile-value" id="member-phone">-</span>
+                </div>
+                
+                <div class="profile-info-row">
+                    <span class="profile-label">生日</span>
+                    <span class="profile-value" id="member-birthday">-</span>
+                </div>
+            </div>
+            
+            <!-- 會員編號條碼卡片 -->
+            <div id="member-code-card" class="card">
+                <div class="card-header" style="text-align: center;">會員條碼</div>
+                <div class="card-body" style="text-align: center; padding: 32px;">
+                    <svg id="barcode" style="max-width: 100%; height: auto;"></svg>
+                </div>
+            </div>
+            
+            <div style="margin-top: 24px; text-align: center;">
+                <a href="edit.html" class="btn btn-primary">編輯個人資料</a>
+            </div>
+        </div>
+        
         <!-- 儲值金與積分卡片 -->
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 24px;">
             <!-- 儲值金卡片 -->
@@ -44,41 +79,6 @@
                     <div id="points-balance" style="font-size: 24px; font-weight: 600; color: var(--color-warning); margin-bottom: 12px;">0 點</div>
                     <a href="points.html" style="color: var(--color-warning); text-decoration: none; font-size: 13px; font-weight: 500;">查看詳情 →</a>
                 </div>
-            </div>
-        </div>
-
-        <!-- 會員資料卡片 -->
-        <div class="card">
-            <div class="profile-header">
-                <div class="profile-avatar-container">
-                    <img id="member-avatar" src="" alt="會員頭像" class="member-avatar">
-                </div>
-                <h2 class="profile-name" id="member-name">載入中...</h2>
-                <div id="line-status"></div>
-            </div>
-
-            <!-- 會員編號條碼卡片 -->
-            <div id="member-code-card" class="card">
-                <div class="card-header" style="text-align: center;">會員條碼</div>
-                <div class="card-body" style="text-align: center; padding: 32px;">
-                    <svg id="barcode" style="max-width: 100%; height: auto;"></svg>
-                </div>
-            </div>
-            
-            <div class="card-body">
-                <div class="profile-info-row">
-                    <span class="profile-label">電話</span>
-                    <span class="profile-value" id="member-phone">-</span>
-                </div>
-                
-                <div class="profile-info-row">
-                    <span class="profile-label">生日</span>
-                    <span class="profile-value" id="member-birthday">-</span>
-                </div>
-            </div>
-            
-            <div style="margin-top: 24px; text-align: center;">
-                <a href="edit.html" class="btn btn-primary">編輯個人資料</a>
             </div>
         </div>
 
