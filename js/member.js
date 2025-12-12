@@ -28,9 +28,16 @@ const Member = {
         this.currentMember = latestMember;
         // 更新 Session
         Auth.saveMemberSession(latestMember, session.lineUserId, session.accessToken);
+      } else {
+        // 如果資料庫中找不到會員，使用 Session 中的資料
+        CONFIG.log('資料庫中找不到會員，使用 Session 資料');
       }
     } catch (error) {
       CONFIG.error('載入會員資料失敗', error);
+      // 載入失敗時，繼續使用 Session 中的資料，不影響登入狀態
+      if (!this.currentMember && session.member) {
+        this.currentMember = session.member;
+      }
     }
     
     CONFIG.log('當前會員', this.currentMember);

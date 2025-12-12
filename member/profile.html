@@ -150,12 +150,24 @@
                 displayMemberCode();
             } catch (error) {
                 CONFIG.error('初始化失敗', error);
-                if (typeof UI !== 'undefined') {
-                    UI.error('載入失敗，請重新登入');
-                } else {
-                    alert('載入失敗，請重新登入');
+                
+                // 檢查是否是認證錯誤（Session 無效）
+                const session = Auth.getMemberSession();
+                if (!session) {
+                    // Session 無效，導向登入
+                    if (typeof UI !== 'undefined') {
+                        UI.warning('登入已過期，請重新登入');
+                    }
+                    window.location.href = '../index.html';
+                    return;
                 }
-                Auth.memberLogout();
+                
+                // 其他錯誤只顯示訊息，不登出
+                if (typeof UI !== 'undefined') {
+                    UI.error('載入資料失敗，請重新整理頁面');
+                } else {
+                    alert('載入資料失敗，請重新整理頁面');
+                }
             }
         });
 
@@ -163,19 +175,35 @@
         async function loadWalletAndPoints() {
             try {
                 const session = Auth.getMemberSession();
-                if (!session) return;
+                if (!session) {
+                    CONFIG.error('無法取得 Session，跳過載入儲值金和積分');
+                    return;
+                }
 
-                // 載入儲值金
-                const wallet = await WalletPointsAPI.getMemberWallet(session.lineUserId);
-                const walletBalance = wallet ? wallet.balance : 0;
-                document.getElementById('wallet-balance').textContent = WalletPointsAPI.formatAmount(walletBalance);
+                // 載入儲值金（即使失敗也不影響頁面顯示）
+                try {
+                    const wallet = await WalletPointsAPI.getMemberWallet(session.lineUserId);
+                    const walletBalance = wallet ? wallet.balance : 0;
+                    document.getElementById('wallet-balance').textContent = WalletPointsAPI.formatAmount(walletBalance);
+                } catch (error) {
+                    CONFIG.error('載入儲值金失敗', error);
+                    document.getElementById('wallet-balance').textContent = 'NT$ 0';
+                }
 
-                // 載入積分
-                const points = await WalletPointsAPI.getMemberPoints(session.lineUserId);
-                const pointsBalance = points ? points.balance : 0;
-                document.getElementById('points-balance').textContent = WalletPointsAPI.formatPoints(pointsBalance);
+                // 載入積分（即使失敗也不影響頁面顯示）
+                try {
+                    const points = await WalletPointsAPI.getMemberPoints(session.lineUserId);
+                    const pointsBalance = points ? points.balance : 0;
+                    document.getElementById('points-balance').textContent = WalletPointsAPI.formatPoints(pointsBalance);
+                } catch (error) {
+                    CONFIG.error('載入積分失敗', error);
+                    document.getElementById('points-balance').textContent = '0 點';
+                }
             } catch (error) {
                 CONFIG.error('載入儲值金和積分失敗', error);
+                // 設置預設值，不影響登入狀態
+                document.getElementById('wallet-balance').textContent = 'NT$ 0';
+                document.getElementById('points-balance').textContent = '0 點';
             }
         }
 
