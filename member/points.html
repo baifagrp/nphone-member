@@ -64,14 +64,14 @@
                 const member = Member.currentMember;
                 UI.showLoading('載入中...');
                 
-                const points = await WalletPointsAPI.getMemberPoints(member.id);
+                const points = await WalletPointsAPI.getMemberPoints(member.line_user_id);
                 if (points) {
                     document.getElementById('points-balance').textContent = `${points.balance || 0} 點`;
                     document.getElementById('total-earned').textContent = `${points.total_earned || 0} 點`;
                     document.getElementById('total-spent').textContent = `${points.total_spent || 0} 點`;
                 }
 
-                const transactions = await WalletPointsAPI.getMemberPointTransactions(member.id, 50);
+                const transactions = await WalletPointsAPI.getMemberPointTransactions(member.line_user_id, 50);
                 displayTransactions(transactions);
                 UI.hideLoading();
             } catch (error) {

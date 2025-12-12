@@ -54,14 +54,14 @@
                 const member = Member.currentMember;
                 UI.showLoading('載入中...');
                 
-                const wallet = await WalletPointsAPI.getMemberWallet(member.id);
+                const wallet = await WalletPointsAPI.getMemberWallet(member.line_user_id);
                 if (wallet) {
                     document.getElementById('wallet-balance').textContent = `NT$ ${Math.floor(wallet.balance || 0)}`;
                     document.getElementById('total-recharged').textContent = `NT$ ${Math.floor(wallet.total_recharged || 0)}`;
                     document.getElementById('total-spent').textContent = `NT$ ${Math.floor(wallet.total_spent || 0)}`;
                 }
 
-                const transactions = await WalletPointsAPI.getMemberWalletTransactions(member.id, 50);
+                const transactions = await WalletPointsAPI.getMemberWalletTransactions(member.line_user_id, 50);
                 displayTransactions(transactions);
                 UI.hideLoading();
             } catch (error) {

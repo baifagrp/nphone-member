@@ -212,14 +212,14 @@
                 const memberData = Member.currentMember;
                 if (!memberData) return;
 
-                // 載入儲值金
-                const wallet = await WalletPointsAPI.getMemberWallet(memberData.id);
+                // 載入儲值金（使用 line_user_id）
+                const wallet = await WalletPointsAPI.getMemberWallet(memberData.line_user_id);
                 if (wallet) {
                     document.getElementById('wallet-balance').textContent = Math.floor(wallet.balance || 0);
                 }
 
-                // 載入積分
-                const points = await WalletPointsAPI.getMemberPoints(memberData.id);
+                // 載入積分（使用 line_user_id）
+                const points = await WalletPointsAPI.getMemberPoints(memberData.line_user_id);
                 if (points) {
                     document.getElementById('points-balance').textContent = points.balance || 0;
                 }
