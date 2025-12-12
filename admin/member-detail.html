@@ -3,137 +3,310 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>會員詳情</title>
+    <title>會員詳情 - NPHONE</title>
     <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/design-system.css">
+    <link rel="stylesheet" href="../css/admin-enhancements.css">
 </head>
-<body>
+<body class="ds-page">
     <!-- 導航列 -->
     <nav class="navbar">
         <div class="container navbar-container">
-            <a href="dashboard.html" class="navbar-brand">NPHONE</a>
+            <a href="dashboard.html" class="navbar-brand">NPHONE 管理後台</a>
             <div class="navbar-menu">
-                <a href="dashboard.html" class="navbar-link">首頁</a>
-                <a href="members.html" class="navbar-link">會員管理</a>
+                <a href="dashboard.html" class="navbar-link">儀表板</a>
+                <a href="members.html" class="navbar-link active">會員管理</a>
+                <a href="services.html" class="navbar-link">服務管理</a>
                 <a href="bookings.html" class="navbar-link">預約管理</a>
-                <a href="services.html" class="navbar-link">服務項目</a>
                 <a href="checkout.html" class="navbar-link">結帳管理</a>
                 <a href="business-hours.html" class="navbar-link">營業時間</a>
+                <a href="wallet-points.html" class="navbar-link">儲值/積分</a>
                 <button id="btn-admin-logout" class="btn btn-sm btn-secondary">登出</button>
             </div>
         </div>
     </nav>
 
-    <!-- 主要內容 -->
-    <div class="container-sm" style="margin-top: 40px;">
-        <div style="margin-bottom: 24px;">
-            <a href="members.html" style="color: #007AFF; text-decoration: none;">← 返回會員列表</a>
+    <div class="container" style="margin-top: 40px;">
+        <div class="page-actions">
+            <div>
+                <button onclick="history.back()" class="ds-btn ds-btn-text" style="padding: 8px 16px; margin-bottom: var(--spacing-sm);">← 返回</button>
+                <h1 class="page-title">會員詳情</h1>
+            </div>
+            <div class="admin-actions">
+                <a href="#" id="edit-member-link" class="ds-btn ds-btn-primary">編輯會員</a>
+                <button id="delete-member-btn" class="ds-btn ds-btn-secondary">刪除會員</button>
+            </div>
         </div>
         
-        <!-- 會員資料卡片 -->
-        <div class="card">
-            <div class="profile-header">
-                <div class="profile-avatar-container">
-                    <img id="detail-avatar" src="" alt="會員頭像" class="member-avatar">
+        <!-- 會員資訊 -->
+        <div class="ds-grid ds-grid-2 ds-mb-lg" style="gap: var(--spacing-lg);">
+            <div class="ds-card">
+                <div class="ds-card-header">
+                    <div class="ds-card-title">基本資料</div>
                 </div>
-                <h2 class="profile-name" id="detail-name">載入中...</h2>
-                <div id="detail-line-status"></div>
-            </div>
-            
-            <div class="card-body">
-                <div class="profile-info-row">
-                    <span class="profile-label">電話</span>
-                    <span class="profile-value" id="detail-phone">-</span>
-                </div>
-                
-                <div class="profile-info-row">
-                    <span class="profile-label">Email</span>
-                    <span class="profile-value" id="detail-email">-</span>
-                </div>
-                
-                <div class="profile-info-row">
-                    <span class="profile-label">生日</span>
-                    <span class="profile-value" id="detail-birthday">-</span>
-                </div>
-                
-                <div class="profile-info-row">
-                    <span class="profile-label">性別</span>
-                    <span class="profile-value" id="detail-gender">-</span>
-                </div>
-                
-                <div class="profile-info-row">
-                    <span class="profile-label">會員編號</span>
-                    <span class="profile-value" id="detail-member-code">-</span>
-                </div>
-                
-                <div class="profile-info-row">
-                    <span class="profile-label">加入時間</span>
-                    <span class="profile-value" id="detail-created">-</span>
-                </div>
-                
-                <div class="profile-info-row">
-                    <span class="profile-label">最後更新</span>
-                    <span class="profile-value" id="detail-updated">-</span>
+                <div class="ds-card-body">
+                    <div class="profile-info">
+                        <div class="profile-info-row">
+                            <span class="profile-info-label">會員姓名</span>
+                            <span class="profile-info-value" id="detail-name">-</span>
+                        </div>
+                        <div class="profile-info-row">
+                            <span class="profile-info-label">聯絡電話</span>
+                            <span class="profile-info-value" id="detail-phone">-</span>
+                        </div>
+                        <div class="profile-info-row">
+                            <span class="profile-info-label">電子郵件</span>
+                            <span class="profile-info-value" id="detail-email">-</span>
+                        </div>
+                        <div class="profile-info-row">
+                            <span class="profile-info-label">性別</span>
+                            <span class="profile-info-value" id="detail-gender">-</span>
+                        </div>
+                        <div class="profile-info-row">
+                            <span class="profile-info-label">生日</span>
+                            <span class="profile-info-value" id="detail-birth-date">-</span>
+                        </div>
+                        <div class="profile-info-row">
+                            <span class="profile-info-label">會員編號</span>
+                            <span class="profile-info-value" id="detail-member-code">-</span>
+                        </div>
+                    </div>
                 </div>
             </div>
-            
-            <div class="flex flex-gap" style="margin-top: 24px;">
-                <button id="btn-edit-member" class="btn btn-primary" style="flex: 1;">編輯</button>
-                <button id="btn-delete-member" class="btn btn-danger" style="flex: 1;">刪除</button>
+
+            <div class="ds-card">
+                <div class="ds-card-header">
+                    <div class="ds-card-title">LINE 資訊</div>
+                </div>
+                <div class="ds-card-body">
+                    <div class="profile-info">
+                        <div class="profile-info-row">
+                            <span class="profile-info-label">LINE 綁定</span>
+                            <span class="profile-info-value" id="detail-line-status">
+                                <span class="ds-badge ds-badge-error">未綁定</span>
+                            </span>
+                        </div>
+                        <div class="profile-info-row">
+                            <span class="profile-info-label">LINE User ID</span>
+                            <span class="profile-info-value" id="detail-line-user-id" style="font-family: monospace; font-size: var(--font-size-sm);">-</span>
+                        </div>
+                        <div class="profile-info-row">
+                            <span class="profile-info-label">加入時間</span>
+                            <span class="profile-info-value" id="detail-created-at">-</span>
+                        </div>
+                        <div class="profile-info-row">
+                            <span class="profile-info-label">最後更新</span>
+                            <span class="profile-info-value" id="detail-updated-at">-</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 儲值金與積分 -->
+        <div class="ds-grid ds-grid-2 ds-mb-lg" style="gap: var(--spacing-lg);">
+            <div class="ds-card">
+                <div class="ds-card-header">
+                    <div class="ds-card-title">💰 儲值金資訊</div>
+                </div>
+                <div class="ds-card-body">
+                    <div style="text-align: center; padding: var(--spacing-lg);">
+                        <div style="font-size: var(--font-size-2xl); font-weight: var(--font-weight-bold); color: var(--primary-color); margin-bottom: var(--spacing-md);" id="wallet-balance">NT$ 0</div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-md); margin-top: var(--spacing-lg); padding-top: var(--spacing-lg); border-top: 1px solid var(--gray-200);">
+                            <div>
+                                <div style="font-size: var(--font-size-sm); color: var(--text-secondary);">累積儲值</div>
+                                <div style="font-size: var(--font-size-lg); font-weight: var(--font-weight-semibold); margin-top: 4px;" id="wallet-recharged">NT$ 0</div>
+                            </div>
+                            <div>
+                                <div style="font-size: var(--font-size-sm); color: var(--text-secondary);">累積消費</div>
+                                <div style="font-size: var(--font-size-lg); font-weight: var(--font-weight-semibold); margin-top: 4px;" id="wallet-spent">NT$ 0</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="ds-card">
+                <div class="ds-card-header">
+                    <div class="ds-card-title">🎁 積分資訊</div>
+                </div>
+                <div class="ds-card-body">
+                    <div style="text-align: center; padding: var(--spacing-lg);">
+                        <div style="font-size: var(--font-size-2xl); font-weight: var(--font-weight-bold); color: #FF9800; margin-bottom: var(--spacing-md);" id="points-balance">0 點</div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-md); margin-top: var(--spacing-lg); padding-top: var(--spacing-lg); border-top: 1px solid var(--gray-200);">
+                            <div>
+                                <div style="font-size: var(--font-size-sm); color: var(--text-secondary);">累積獲得</div>
+                                <div style="font-size: var(--font-size-lg); font-weight: var(--font-weight-semibold); margin-top: 4px;" id="points-earned">0 點</div>
+                            </div>
+                            <div>
+                                <div style="font-size: var(--font-size-sm); color: var(--text-secondary);">累積使用</div>
+                                <div style="font-size: var(--font-size-lg); font-weight: var(--font-weight-semibold); margin-top: 4px;" id="points-spent">0 點</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 預約記錄 -->
+        <div class="ds-card">
+            <div class="ds-card-header">
+                <div class="ds-card-title">預約記錄</div>
+            </div>
+            <div class="ds-card-body">
+                <div id="bookings-list">
+                    <div class="ds-text-center ds-p-xl"><div class="loading-spinner"></div></div>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- JavaScript -->
+    <div id="toast-container" class="toast-container"></div>
+
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="../js/config.js"></script>
     <script src="../js/supabase-client.js"></script>
+    <script src="../js/ui-utils.js"></script>
     <script src="../js/auth.js"></script>
+    <script src="../js/member.js"></script>
+    <script src="../js/booking.js"></script>
+    <script src="../js/wallet-points.js"></script>
     <script src="../js/admin.js"></script>
     
     <script>
         let currentMember = null;
-        
-        // 頁面載入時初始化
+
         window.addEventListener('DOMContentLoaded', async () => {
             try {
-                await Admin.init();
+                if (!Auth.requireAdminLogin()) return;
                 
-                // 取得會員 ID
                 const urlParams = new URLSearchParams(window.location.search);
                 const memberId = urlParams.get('id');
                 
                 if (!memberId) {
-                    alert('缺少會員 ID');
-                    window.location.href = 'members.html';
+                    UI.error('缺少會員 ID');
+                    setTimeout(() => location.href = 'members.html', 1500);
                     return;
                 }
                 
-                // 載入會員資料
-                currentMember = await Admin.loadMemberDetail(memberId);
-                Admin.displayMemberDetail(currentMember);
-                
-                // 編輯按鈕
-                document.getElementById('btn-edit-member').addEventListener('click', () => {
-                    window.location.href = `member-edit.html?id=${memberId}`;
-                });
-                
-                // 刪除按鈕
-                document.getElementById('btn-delete-member').addEventListener('click', async () => {
-                    const success = await Admin.deleteMember(memberId, currentMember.name);
-                    if (success) {
-                        setTimeout(() => {
-                            window.location.href = 'members.html';
-                        }, 1000);
-                    }
-                });
-                
+                UI.showLoading('載入中...');
+                await loadMemberDetail(memberId);
+                UI.hideLoading();
             } catch (error) {
-                CONFIG.error('初始化失敗', error);
-                alert('載入失敗');
-                window.location.href = 'members.html';
+                UI.hideLoading();
+                CONFIG.error('載入失敗', error);
+                UI.error('載入會員資料失敗');
+            }
+        });
+
+        async function loadMemberDetail(memberId) {
+            try {
+                currentMember = await MemberAPI.getById(memberId);
+                displayMemberInfo(currentMember);
+                
+                // 載入儲值金和積分
+                if (currentMember.line_user_id) {
+                    const [wallet, points] = await Promise.all([
+                        WalletPointsAPI.getMemberWallet(currentMember.line_user_id).catch(() => null),
+                        WalletPointsAPI.getMemberPoints(currentMember.line_user_id).catch(() => null)
+                    ]);
+                    
+                    if (wallet) {
+                        document.getElementById('wallet-balance').textContent = `NT$ ${Math.floor(wallet.balance || 0).toLocaleString()}`;
+                        document.getElementById('wallet-recharged').textContent = `NT$ ${Math.floor(wallet.total_recharged || 0).toLocaleString()}`;
+                        document.getElementById('wallet-spent').textContent = `NT$ ${Math.floor(wallet.total_spent || 0).toLocaleString()}`;
+                    }
+                    
+                    if (points) {
+                        document.getElementById('points-balance').textContent = `${points.balance || 0} 點`;
+                        document.getElementById('points-earned').textContent = `${points.total_earned || 0} 點`;
+                        document.getElementById('points-spent').textContent = `${points.total_spent || 0} 點`;
+                    }
+                }
+                
+                // 載入預約記錄
+                if (currentMember.line_user_id) {
+                    const bookings = await BookingAPI.getMyBookings(currentMember.line_user_id, 50);
+                    displayBookings(bookings);
+                } else {
+                    document.getElementById('bookings-list').innerHTML = '<div class="ds-empty-state"><div class="ds-empty-title">此會員尚未綁定 LINE，無預約記錄</div></div>';
+                }
+                
+                document.getElementById('edit-member-link').href = `member-edit.html?id=${memberId}`;
+            } catch (error) {
+                CONFIG.error('載入會員詳情失敗', error);
+                throw error;
+            }
+        }
+
+        function displayMemberInfo(member) {
+            document.getElementById('detail-name').textContent = member.name || '-';
+            document.getElementById('detail-phone').textContent = member.phone || '-';
+            document.getElementById('detail-email').textContent = member.email || '-';
+            document.getElementById('detail-gender').textContent = member.gender === 'M' ? '男' : member.gender === 'F' ? '女' : '其他';
+            document.getElementById('detail-birth-date').textContent = member.birth_date || '-';
+            document.getElementById('detail-member-code').textContent = member.member_code || '-';
+            
+            if (member.line_user_id) {
+                document.getElementById('detail-line-status').innerHTML = '<span class="ds-badge ds-badge-success">已綁定</span>';
+                document.getElementById('detail-line-user-id').textContent = member.line_user_id;
+            }
+            
+            document.getElementById('detail-created-at').textContent = new Date(member.created_at).toLocaleString('zh-TW');
+            document.getElementById('detail-updated-at').textContent = new Date(member.updated_at).toLocaleString('zh-TW');
+        }
+
+        function displayBookings(bookings) {
+            const container = document.getElementById('bookings-list');
+            if (!bookings || bookings.length === 0) {
+                container.innerHTML = '<div class="ds-empty-state"><div class="ds-empty-title">尚無預約記錄</div></div>';
+                return;
+            }
+
+            container.innerHTML = bookings.map(b => `
+                <div class="ds-list-item ds-mb-sm">
+                    <div class="ds-list-item-content">
+                        <div class="ds-list-item-title">${b.service_name || '未知服務'}</div>
+                        <div class="ds-list-item-subtitle">${b.booking_date} ${b.booking_time?.substring(0, 5)} | ${b.service_option_name || '無選項'}</div>
+                    </div>
+                    ${getStatusBadge(b.status)}
+                </div>
+            `).join('');
+        }
+
+        function getStatusBadge(status) {
+            const statusMap = {
+                'pending': { text: '待確認', class: 'ds-badge-warning' },
+                'confirmed': { text: '已確認', class: 'ds-badge-success' },
+                'completed': { text: '已完成', class: 'ds-badge-info' },
+                'cancelled': { text: '已取消', class: 'ds-badge-error' }
+            };
+            const statusInfo = statusMap[status] || { text: status, class: 'ds-badge-primary' };
+            return `<span class="ds-badge ${statusInfo.class}">${statusInfo.text}</span>`;
+        }
+
+        document.getElementById('delete-member-btn').addEventListener('click', async () => {
+            if (!currentMember) return;
+            if (!confirm(`確定要刪除會員「${currentMember.name}」嗎？此操作無法復原！`)) return;
+            
+            try {
+                UI.showLoading('刪除中...');
+                await MemberAPI.delete(currentMember.id);
+                UI.hideLoading();
+                UI.success('刪除成功');
+                setTimeout(() => location.href = 'members.html', 1500);
+            } catch (error) {
+                UI.hideLoading();
+                CONFIG.error('刪除失敗', error);
+                UI.error('刪除失敗');
+            }
+        });
+
+        document.getElementById('btn-admin-logout').addEventListener('click', () => {
+            if (confirm('確定要登出嗎？')) {
+                Auth.adminLogout();
             }
         });
     </script>
 </body>
 </html>
-

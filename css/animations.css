@@ -1,0 +1,538 @@
+/**
+ * =============================================
+ * NPHONE 動畫效果庫
+ * =============================================
+ */
+
+/* ==================== 頁面載入動畫 ==================== */
+
+/* 淡入效果 */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* 從下方滑入 */
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 從上方滑入 */
+@keyframes slideInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 從左側滑入 */
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* 從右側滑入 */
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* 縮放進入 */
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* ==================== 頁面過渡 ==================== */
+
+.page-transition {
+  animation: fadeIn 0.3s ease-out;
+}
+
+.page-transition-fast {
+  animation: fadeIn 0.2s ease-out;
+}
+
+.page-transition-slow {
+  animation: fadeIn 0.5s ease-out;
+}
+
+/* ==================== 卡片動畫 ==================== */
+
+/* 卡片依序出現 */
+.card-stagger {
+  animation: slideInUp 0.4s ease-out backwards;
+}
+
+.card-stagger:nth-child(1) { animation-delay: 0.05s; }
+.card-stagger:nth-child(2) { animation-delay: 0.1s; }
+.card-stagger:nth-child(3) { animation-delay: 0.15s; }
+.card-stagger:nth-child(4) { animation-delay: 0.2s; }
+.card-stagger:nth-child(5) { animation-delay: 0.25s; }
+.card-stagger:nth-child(6) { animation-delay: 0.3s; }
+.card-stagger:nth-child(7) { animation-delay: 0.35s; }
+.card-stagger:nth-child(8) { animation-delay: 0.4s; }
+
+/* 卡片 hover 提升效果 */
+.card-lift {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card-lift:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
+}
+
+.card-lift:active {
+  transform: translateY(-4px);
+}
+
+/* ==================== 按鈕動畫 ==================== */
+
+/* 按鈕漣漪效果 */
+.btn-ripple {
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-ripple::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.5);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.btn-ripple:active::after {
+  width: 300px;
+  height: 300px;
+}
+
+/* 按鈕彈跳效果 */
+@keyframes bounce {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+.btn-bounce:active {
+  animation: bounce 0.3s ease-in-out;
+}
+
+/* 按鈕脈衝效果 */
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(200, 164, 138, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(200, 164, 138, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(200, 164, 138, 0);
+  }
+}
+
+.btn-pulse {
+  animation: pulse 2s infinite;
+}
+
+/* ==================== 載入動畫 ==================== */
+
+/* 旋轉載入 */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+/* 脈衝載入 */
+@keyframes pulse-simple {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.pulse {
+  animation: pulse-simple 1.5s ease-in-out infinite;
+}
+
+/* 點點載入 */
+@keyframes dot-pulse {
+  0%, 80%, 100% {
+    opacity: 0.3;
+    transform: scale(0.8);
+  }
+  40% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.dot-pulse {
+  display: inline-flex;
+  gap: 8px;
+}
+
+.dot-pulse span {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--primary-color);
+  animation: dot-pulse 1.4s infinite ease-in-out;
+}
+
+.dot-pulse span:nth-child(1) { animation-delay: 0s; }
+.dot-pulse span:nth-child(2) { animation-delay: 0.2s; }
+.dot-pulse span:nth-child(3) { animation-delay: 0.4s; }
+
+/* ==================== 數字滾動動畫 ==================== */
+
+@keyframes countUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.count-up {
+  animation: countUp 0.6s ease-out;
+}
+
+/* ==================== 表單輸入動畫 ==================== */
+
+/* 輸入框聚焦動畫 */
+.input-focus {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.input-focus:focus {
+  transform: scale(1.02);
+  box-shadow: 0 0 0 4px rgba(200, 164, 138, 0.1);
+}
+
+/* Label 浮動效果 */
+@keyframes labelFloat {
+  from {
+    transform: translateY(0);
+    font-size: 1em;
+  }
+  to {
+    transform: translateY(-24px);
+    font-size: 0.85em;
+  }
+}
+
+.label-float {
+  animation: labelFloat 0.3s ease-out forwards;
+}
+
+/* ==================== Toast 動畫 ==================== */
+
+@keyframes toastSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes toastSlideOut {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+}
+
+.toast-enter {
+  animation: toastSlideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.toast-exit {
+  animation: toastSlideOut 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ==================== Modal 動畫 ==================== */
+
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes modalSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(50px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.modal-backdrop {
+  animation: modalFadeIn 0.2s ease-out;
+}
+
+.modal-content {
+  animation: modalSlideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ==================== 下拉選單動畫 ==================== */
+
+@keyframes dropdownSlide {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.dropdown-enter {
+  animation: dropdownSlide 0.2s ease-out;
+}
+
+/* ==================== 進度條動畫 ==================== */
+
+@keyframes progressBar {
+  from {
+    width: 0;
+  }
+}
+
+.progress-bar-animated {
+  animation: progressBar 1s ease-out;
+}
+
+/* 進度條脈衝 */
+@keyframes progressPulse {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 40px 0;
+  }
+}
+
+.progress-pulse {
+  background-image: linear-gradient(
+    45deg,
+    rgba(255, 255, 255, 0.15) 25%,
+    transparent 25%,
+    transparent 50%,
+    rgba(255, 255, 255, 0.15) 50%,
+    rgba(255, 255, 255, 0.15) 75%,
+    transparent 75%,
+    transparent
+  );
+  background-size: 40px 40px;
+  animation: progressPulse 1s linear infinite;
+}
+
+/* ==================== 骨架屏動畫 ==================== */
+
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    #f0f0f0 25%,
+    #e0e0e0 50%,
+    #f0f0f0 75%
+  );
+  background-size: 1000px 100%;
+  animation: shimmer 2s infinite;
+}
+
+/* ==================== 徽章動畫 ==================== */
+
+@keyframes badgePop {
+  0% {
+    transform: scale(0);
+  }
+  50% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.badge-pop {
+  animation: badgePop 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ==================== 圖示動畫 ==================== */
+
+/* 搖晃 */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+  20%, 40%, 60%, 80% { transform: translateX(5px); }
+}
+
+.shake {
+  animation: shake 0.5s ease-in-out;
+}
+
+/* 心跳 */
+@keyframes heartbeat {
+  0%, 100% { transform: scale(1); }
+  10%, 30% { transform: scale(0.9); }
+  20%, 40% { transform: scale(1.1); }
+}
+
+.heartbeat {
+  animation: heartbeat 1.3s ease-in-out infinite;
+}
+
+/* 旋轉 */
+.rotate-icon {
+  transition: transform 0.3s ease-in-out;
+}
+
+.rotate-icon:hover {
+  transform: rotate(360deg);
+}
+
+/* ==================== 列表項目動畫 ==================== */
+
+.list-item-slide {
+  animation: slideInLeft 0.3s ease-out backwards;
+}
+
+.list-item-slide:nth-child(1) { animation-delay: 0.05s; }
+.list-item-slide:nth-child(2) { animation-delay: 0.1s; }
+.list-item-slide:nth-child(3) { animation-delay: 0.15s; }
+.list-item-slide:nth-child(4) { animation-delay: 0.2s; }
+.list-item-slide:nth-child(5) { animation-delay: 0.25s; }
+.list-item-slide:nth-child(6) { animation-delay: 0.3s; }
+.list-item-slide:nth-child(7) { animation-delay: 0.35s; }
+.list-item-slide:nth-child(8) { animation-delay: 0.4s; }
+.list-item-slide:nth-child(9) { animation-delay: 0.45s; }
+.list-item-slide:nth-child(10) { animation-delay: 0.5s; }
+
+/* ==================== 滾動視差效果 ==================== */
+
+.parallax-slow {
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.parallax-medium {
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.parallax-fast {
+  transition: transform 0.1s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ==================== 工具類別 ==================== */
+
+/* 基本動畫類別 */
+.animate-fade-in { animation: fadeIn 0.3s ease-out; }
+.animate-slide-up { animation: slideInUp 0.4s ease-out; }
+.animate-slide-down { animation: slideInDown 0.4s ease-out; }
+.animate-slide-left { animation: slideInLeft 0.4s ease-out; }
+.animate-slide-right { animation: slideInRight 0.4s ease-out; }
+.animate-scale-in { animation: scaleIn 0.3s ease-out; }
+
+/* 延遲類別 */
+.delay-100 { animation-delay: 0.1s; }
+.delay-200 { animation-delay: 0.2s; }
+.delay-300 { animation-delay: 0.3s; }
+.delay-400 { animation-delay: 0.4s; }
+.delay-500 { animation-delay: 0.5s; }
+
+/* 持續時間類別 */
+.duration-fast { animation-duration: 0.2s; }
+.duration-normal { animation-duration: 0.3s; }
+.duration-slow { animation-duration: 0.5s; }
+.duration-slower { animation-duration: 1s; }
+
+/* ==================== 減少動畫（無障礙） ==================== */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+

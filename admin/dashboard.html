@@ -6,6 +6,7 @@
     <title>管理後台 - NPHONE</title>
     <link rel="stylesheet" href="../css/styles.css">
     <link rel="stylesheet" href="../css/design-system.css">
+    <link rel="stylesheet" href="../css/animations.css">
 </head>
 <body class="ds-page">
     <!-- 導航列 -->
@@ -98,6 +99,7 @@
     <script src="../js/member.js"></script>
     <script src="../js/booking.js"></script>
     <script src="../js/admin.js"></script>
+    <script src="../js/animation-utils.js"></script>
     
     <script>
         window.addEventListener('DOMContentLoaded', async () => {
@@ -119,7 +121,7 @@
                 // 載入統計數據
                 const [members, bookings] = await Promise.all([
                     MemberAPI.getAll(1000, 0),
-                    BookingAPI.getAll(1000, 0)
+                    BookingAPI.getAllBookings(1000, 0)
                 ]);
 
                 // 總會員數
