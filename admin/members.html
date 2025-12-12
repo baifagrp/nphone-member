@@ -94,7 +94,8 @@
         async function loadMembers() {
             try {
                 UI.showLoading('載入中...');
-                allMembers = await MemberAPI.getAll(1000, 0);
+                const result = await MemberAPI.getAll(1000, 0);
+                allMembers = result.members || [];
                 displayMembers(allMembers);
                 UI.hideLoading();
             } catch (error) {
