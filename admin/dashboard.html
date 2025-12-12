@@ -3,94 +3,91 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>管理後台 - 首頁</title>
+    <title>管理後台 - NPHONE</title>
     <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/design-system.css">
 </head>
-<body>
+<body class="ds-page">
     <!-- 導航列 -->
     <nav class="navbar">
         <div class="container navbar-container">
-            <a href="dashboard.html" class="navbar-brand">NPHONE</a>
+            <a href="dashboard.html" class="navbar-brand">NPHONE 管理後台</a>
             <div class="navbar-menu">
-                <a href="dashboard.html" class="navbar-link">首頁</a>
+                <a href="dashboard.html" class="navbar-link active">儀表板</a>
                 <a href="members.html" class="navbar-link">會員管理</a>
+                <a href="services.html" class="navbar-link">服務管理</a>
                 <a href="bookings.html" class="navbar-link">預約管理</a>
-                <a href="services.html" class="navbar-link">服務項目</a>
                 <a href="checkout.html" class="navbar-link">結帳管理</a>
-                <a href="wallet-points.html" class="navbar-link">儲值金與積分</a>
                 <a href="business-hours.html" class="navbar-link">營業時間</a>
-                <button id="btn-admin-logout" class="btn btn-sm btn-secondary">登出</button>
+                <a href="wallet-points.html" class="navbar-link">儲值/積分</a>
+                <button id="btn-logout" class="btn btn-sm btn-secondary">登出</button>
             </div>
         </div>
     </nav>
 
     <!-- 主要內容 -->
     <div class="container" style="margin-top: 40px;">
-        <h1 style="font-size: 32px; font-weight: 700; margin-bottom: 32px;">儀表板</h1>
-        
+        <h1 class="ds-mb-lg" style="font-size: var(--font-size-3xl); font-weight: var(--font-weight-bold);">儀表板</h1>
+
         <!-- 統計卡片 -->
-        <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-label">總會員數</div>
-                <div class="stat-value" id="stat-total-members">0</div>
+        <div class="ds-grid ds-grid-4 ds-mb-xl">
+            <div class="ds-info-card">
+                <div class="ds-info-card-icon" style="background: rgba(200, 164, 138, 0.1);">👥</div>
+                <div class="ds-info-card-value" id="total-members">0</div>
+                <div class="ds-info-card-label">總會員數</div>
             </div>
-            
-            <div class="stat-card">
-                <div class="stat-label">LINE 綁定數</div>
-                <div class="stat-value" id="stat-line-binding">0</div>
+
+            <div class="ds-info-card">
+                <div class="ds-info-card-icon" style="background: rgba(102, 187, 106, 0.1); color: var(--success-color);">📅</div>
+                <div class="ds-info-card-value" id="total-bookings">0</div>
+                <div class="ds-info-card-label">總預約數</div>
             </div>
-            
-            <div class="stat-card">
-                <div class="stat-label">綁定率</div>
-                <div class="stat-value" id="stat-binding-rate">0%</div>
+
+            <div class="ds-info-card">
+                <div class="ds-info-card-icon" style="background: rgba(66, 165, 245, 0.1); color: var(--info-color);">⏰</div>
+                <div class="ds-info-card-value" id="today-bookings">0</div>
+                <div class="ds-info-card-label">今日預約</div>
             </div>
-        </div>
-        
-        <!-- 快速操作 -->
-        <div class="card">
-            <div class="card-header">快速操作</div>
-            <div class="card-body">
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
-                    <a href="members.html" class="btn btn-primary">
-                        查看所有會員
-                    </a>
-                    <a href="member-new.html" class="btn btn-success">
-                        新增會員
-                    </a>
-                    <a href="members.html" class="btn btn-outline">
-                        搜尋會員
-                    </a>
-                </div>
+
+            <div class="ds-info-card">
+                <div class="ds-info-card-icon" style="background: rgba(255, 167, 38, 0.1); color: var(--warning-color);">💰</div>
+                <div class="ds-info-card-value" id="total-revenue">NT$ 0</div>
+                <div class="ds-info-card-label">總營收</div>
             </div>
         </div>
-        
-        <!-- 最近加入的會員 -->
-        <div class="card" style="margin-top: 24px;">
-            <div class="card-header">最近加入的會員</div>
-            <div class="card-body" id="recent-members">
-                <!-- 將使用骨架屏載入 -->
+
+        <!-- 最近活動 -->
+        <div class="ds-grid ds-grid-2" style="gap: var(--spacing-lg);">
+            <!-- 最近預約 -->
+            <div class="ds-card">
+                <div class="ds-card-header">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div class="ds-card-title">最近預約</div>
+                        <a href="bookings.html" class="ds-btn ds-btn-sm ds-btn-text">查看全部 →</a>
+                    </div>
+                </div>
+                <div class="ds-card-body" id="recent-bookings">
+                    <div class="ds-text-center ds-p-lg"><div class="loading-spinner"></div></div>
+                </div>
             </div>
-        </div>
-        
-        <!-- 系統資訊 -->
-        <div class="card" style="margin-top: 24px;">
-            <div class="card-header">系統資訊</div>
-            <div class="card-body">
-                <div class="profile-info-row">
-                    <span class="profile-label">系統版本</span>
-                    <span class="profile-value">v3.0.0（第三階段）</span>
+
+            <!-- 最近加入會員 -->
+            <div class="ds-card">
+                <div class="ds-card-header">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div class="ds-card-title">最近加入會員</div>
+                        <a href="members.html" class="ds-btn ds-btn-sm ds-btn-text">查看全部 →</a>
+                    </div>
                 </div>
-                <div class="profile-info-row">
-                    <span class="profile-label">已啟用功能</span>
-                    <span class="profile-value">會員管理、LINE 登入、預約系統、結帳管理</span>
-                </div>
-                <div class="profile-info-row">
-                    <span class="profile-label">最近更新日期</span>
-                    <span class="profile-value">2025/12/12</span>
+                <div class="ds-card-body" id="recent-members">
+                    <div class="ds-text-center ds-p-lg"><div class="loading-spinner"></div></div>
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- Toast 容器 -->
+    <div id="toast-container" class="toast-container"></div>
 
     <!-- JavaScript -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -98,19 +95,120 @@
     <script src="../js/supabase-client.js"></script>
     <script src="../js/ui-utils.js"></script>
     <script src="../js/auth.js"></script>
+    <script src="../js/member.js"></script>
+    <script src="../js/booking.js"></script>
     <script src="../js/admin.js"></script>
     
     <script>
-        // 頁面載入時初始化
         window.addEventListener('DOMContentLoaded', async () => {
             try {
-                await Admin.init();
-                await Admin.loadDashboardStats();
+                if (!Auth.requireAdminLogin()) return;
+                
+                UI.showLoading('載入中...');
+                await loadDashboardData();
+                UI.hideLoading();
             } catch (error) {
-                CONFIG.error('初始化失敗', error);
+                UI.hideLoading();
+                CONFIG.error('載入失敗', error);
+                UI.error('載入儀表板失敗');
+            }
+        });
+
+        async function loadDashboardData() {
+            try {
+                // 載入統計數據
+                const [members, bookings] = await Promise.all([
+                    MemberAPI.getAll(1000, 0),
+                    BookingAPI.getAll(1000, 0)
+                ]);
+
+                // 總會員數
+                document.getElementById('total-members').textContent = members.length;
+
+                // 總預約數
+                document.getElementById('total-bookings').textContent = bookings.length;
+
+                // 今日預約
+                const today = new Date().toISOString().split('T')[0];
+                const todayBookings = bookings.filter(b => b.booking_date === today);
+                document.getElementById('today-bookings').textContent = todayBookings.length;
+
+                // 總營收（已付款的預約）
+                const revenue = bookings
+                    .filter(b => b.payment_status === 'paid')
+                    .reduce((sum, b) => sum + (parseFloat(b.paid_amount) || 0), 0);
+                document.getElementById('total-revenue').textContent = `NT$ ${Math.floor(revenue).toLocaleString()}`;
+
+                // 最近預約（前 5 筆）
+                displayRecentBookings(bookings.slice(0, 5));
+
+                // 最近會員（前 5 筆）
+                displayRecentMembers(members.slice(0, 5));
+
+            } catch (error) {
+                CONFIG.error('載入儀表板數據失敗', error);
+                throw error;
+            }
+        }
+
+        function displayRecentBookings(bookings) {
+            const container = document.getElementById('recent-bookings');
+            if (!bookings || bookings.length === 0) {
+                container.innerHTML = '<div class="ds-empty-state"><div class="ds-empty-title">尚無預約</div></div>';
+                return;
+            }
+
+            container.innerHTML = bookings.map(b => `
+                <div class="ds-list-item" style="margin-bottom: var(--spacing-sm);">
+                    <div class="ds-list-item-content">
+                        <div class="ds-list-item-title">${b.service_name || '未知服務'}</div>
+                        <div class="ds-list-item-subtitle">
+                            ${b.booking_date} ${b.booking_time?.substring(0, 5)}
+                        </div>
+                    </div>
+                    ${getStatusBadge(b.status)}
+                </div>
+            `).join('');
+        }
+
+        function displayRecentMembers(members) {
+            const container = document.getElementById('recent-members');
+            if (!members || members.length === 0) {
+                container.innerHTML = '<div class="ds-empty-state"><div class="ds-empty-title">尚無會員</div></div>';
+                return;
+            }
+
+            container.innerHTML = members.map(m => `
+                <div class="ds-list-item" style="margin-bottom: var(--spacing-sm); cursor: pointer;" onclick="location.href='member-detail.html?id=${m.id}'">
+                    <div style="width: 40px; height: 40px; border-radius: var(--radius-full); background: var(--primary-light); display: flex; align-items: center; justify-content: center; color: white; font-weight: var(--font-weight-semibold); margin-right: var(--spacing-md);">
+                        ${(m.name || '會員')[0]}
+                    </div>
+                    <div class="ds-list-item-content">
+                        <div class="ds-list-item-title">${m.name || '未命名'}</div>
+                        <div class="ds-list-item-subtitle">${m.phone || '未提供電話'}</div>
+                    </div>
+                    <div class="ds-list-item-arrow">›</div>
+                </div>
+            `).join('');
+        }
+
+        function getStatusBadge(status) {
+            const statusMap = {
+                'pending': { text: '待確認', class: 'ds-badge-warning' },
+                'confirmed': { text: '已確認', class: 'ds-badge-success' },
+                'completed': { text: '已完成', class: 'ds-badge-info' },
+                'cancelled': { text: '已取消', class: 'ds-badge-error' }
+            };
+            
+            const statusInfo = statusMap[status] || { text: status, class: 'ds-badge-primary' };
+            return `<span class="ds-badge ${statusInfo.class}">${statusInfo.text}</span>`;
+        }
+
+        document.getElementById('btn-logout').addEventListener('click', () => {
+            if (confirm('確定要登出嗎？')) {
+                Auth.adminLogout();
             }
         });
     </script>
 </body>
 </html>
-

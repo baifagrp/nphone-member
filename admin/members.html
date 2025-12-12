@@ -3,101 +3,171 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>會員管理</title>
+    <title>會員管理 - NPHONE</title>
     <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/design-system.css">
+    <link rel="stylesheet" href="../css/admin-enhancements.css">
 </head>
-<body>
+<body class="ds-page">
     <!-- 導航列 -->
     <nav class="navbar">
         <div class="container navbar-container">
-            <a href="dashboard.html" class="navbar-brand">NPHONE</a>
+            <a href="dashboard.html" class="navbar-brand">NPHONE 管理後台</a>
             <div class="navbar-menu">
-                <a href="dashboard.html" class="navbar-link">首頁</a>
-                <a href="members.html" class="navbar-link">會員管理</a>
+                <a href="dashboard.html" class="navbar-link">儀表板</a>
+                <a href="members.html" class="navbar-link active">會員管理</a>
+                <a href="services.html" class="navbar-link">服務管理</a>
                 <a href="bookings.html" class="navbar-link">預約管理</a>
-                <a href="services.html" class="navbar-link">服務項目</a>
                 <a href="checkout.html" class="navbar-link">結帳管理</a>
-                <a href="wallet-points.html" class="navbar-link">儲值金與積分</a>
                 <a href="business-hours.html" class="navbar-link">營業時間</a>
+                <a href="wallet-points.html" class="navbar-link">儲值/積分</a>
                 <button id="btn-admin-logout" class="btn btn-sm btn-secondary">登出</button>
             </div>
         </div>
     </nav>
 
-    <!-- 主要內容 -->
     <div class="container" style="margin-top: 40px;">
-        <div class="flex-between" style="margin-bottom: 24px;">
-            <h1 style="font-size: 32px; font-weight: 700;">會員列表</h1>
-            <a href="member-new.html" class="btn btn-success">+ 新增會員</a>
+        <div class="page-actions">
+            <h1 class="page-title">會員管理</h1>
+            <a href="member-new.html" class="ds-btn ds-btn-primary">+ 新增會員</a>
         </div>
         
-        <!-- 搜尋框 -->
-        <div class="card">
-            <div class="search-box">
-                <input 
-                    type="text" 
-                    id="search-members" 
-                    class="search-input" 
-                    placeholder="搜尋會員（姓名、電話、Email）"
-                >
-            </div>
+        <!-- 搜尋欄 -->
+        <div class="admin-search-bar">
+            <input 
+                type="text" 
+                id="search-members" 
+                class="admin-search-input" 
+                placeholder="搜尋會員姓名、電話..."
+            >
+            <button onclick="searchMembers()" class="ds-btn ds-btn-primary">搜尋</button>
         </div>
         
         <!-- 會員列表 -->
-        <div class="card">
-            <table class="table">
+        <div class="ds-card">
+            <table class="admin-table">
                 <thead>
                     <tr>
-                        <th width="60">#</th>
                         <th>姓名</th>
                         <th>電話</th>
                         <th>Email</th>
-                        <th width="120">LINE 綁定</th>
-                        <th width="120">加入日期</th>
+                        <th>LINE 綁定</th>
+                        <th>會員編號</th>
+                        <th>加入日期</th>
+                        <th style="text-align: center;">操作</th>
                     </tr>
                 </thead>
                 <tbody id="members-tbody">
                     <tr>
-                        <td colspan="6" style="text-align: center; padding: 40px;">
-                            <div class="loading-spinner" style="margin: 0 auto;"></div>
+                        <td colspan="7" style="text-align: center; padding: var(--spacing-2xl);">
+                            <div class="loading-spinner"></div>
                         </td>
                     </tr>
                 </tbody>
             </table>
-            
-            <!-- 分頁 -->
-            <div class="pagination">
-                <div class="pagination-info" id="pagination-info">
-                    載入中...
-                </div>
-                <div class="pagination-buttons">
-                    <button id="btn-prev-page" class="btn btn-sm btn-secondary">上一頁</button>
-                    <button id="btn-next-page" class="btn btn-sm btn-secondary">下一頁</button>
-                </div>
-            </div>
         </div>
     </div>
 
-    <!-- JavaScript -->
+    <div id="toast-container" class="toast-container"></div>
+
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="../js/config.js"></script>
     <script src="../js/supabase-client.js"></script>
     <script src="../js/ui-utils.js"></script>
     <script src="../js/auth.js"></script>
+    <script src="../js/member.js"></script>
     <script src="../js/admin.js"></script>
     
     <script>
-        // 頁面載入時初始化
+        let allMembers = [];
+
         window.addEventListener('DOMContentLoaded', async () => {
             try {
-                await Admin.init();
-                await Admin.loadMembers(1);
-                Admin.displayMemberList();
+                if (!Auth.requireAdminLogin()) return;
+                await loadMembers();
             } catch (error) {
                 CONFIG.error('初始化失敗', error);
+                UI.error('載入失敗');
+            }
+        });
+
+        async function loadMembers() {
+            try {
+                UI.showLoading('載入中...');
+                allMembers = await MemberAPI.getAll(1000, 0);
+                displayMembers(allMembers);
+                UI.hideLoading();
+            } catch (error) {
+                UI.hideLoading();
+                CONFIG.error('載入會員失敗', error);
+                UI.error('載入會員失敗');
+            }
+        }
+
+        function displayMembers(members) {
+            const tbody = document.getElementById('members-tbody');
+            if (!members || members.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="ds-text-center ds-p-xl"><div class="ds-empty-title">尚無會員</div></td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = members.map(m => `
+                <tr>
+                    <td><strong>${m.name || '未命名'}</strong></td>
+                    <td>${m.phone || '-'}</td>
+                    <td>${m.email || '-'}</td>
+                    <td><span class="ds-badge ${m.line_user_id ? 'ds-badge-success' : 'ds-badge-error'}">${m.line_user_id ? '已綁定' : '未綁定'}</span></td>
+                    <td>${m.member_code || '-'}</td>
+                    <td>${new Date(m.created_at).toLocaleDateString('zh-TW')}</td>
+                    <td>
+                        <div class="admin-actions" style="justify-content: center;">
+                            <a href="member-detail.html?id=${m.id}" class="admin-action-btn">查看</a>
+                            <a href="member-edit.html?id=${m.id}" class="admin-action-btn">編輯</a>
+                            <button onclick="deleteMember('${m.id}')" class="admin-action-btn danger">刪除</button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function searchMembers() {
+            const keyword = document.getElementById('search-members').value.toLowerCase().trim();
+            if (!keyword) {
+                displayMembers(allMembers);
+                return;
+            }
+
+            const filtered = allMembers.filter(m => 
+                (m.name && m.name.toLowerCase().includes(keyword)) ||
+                (m.phone && m.phone.includes(keyword)) ||
+                (m.email && m.email.toLowerCase().includes(keyword))
+            );
+            displayMembers(filtered);
+        }
+
+        async function deleteMember(id) {
+            if (!confirm('確定要刪除此會員嗎？此操作無法復原！')) return;
+            
+            try {
+                UI.showLoading('刪除中...');
+                await MemberAPI.delete(id);
+                UI.hideLoading();
+                UI.success('刪除成功');
+                await loadMembers();
+            } catch (error) {
+                UI.hideLoading();
+                CONFIG.error('刪除失敗', error);
+                UI.error('刪除失敗');
+            }
+        }
+
+        document.getElementById('search-members').addEventListener('input', searchMembers);
+        
+        document.getElementById('btn-admin-logout').addEventListener('click', () => {
+            if (confirm('確定要登出嗎？')) {
+                Auth.adminLogout();
             }
         });
     </script>
 </body>
 </html>
-
