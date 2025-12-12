@@ -56,6 +56,14 @@
                 <h2 class="profile-name" id="member-name">載入中...</h2>
                 <div id="line-status"></div>
             </div>
+
+            <!-- 會員編號條碼卡片 -->
+            <div id="member-code-card" class="card">
+                <div class="card-header" style="text-align: center;">會員條碼</div>
+                <div class="card-body" style="text-align: center; padding: 32px;">
+                    <svg id="barcode" style="max-width: 100%; height: auto;"></svg>
+                </div>
+            </div>
             
             <div class="card-body">
                 <div class="profile-info-row">
@@ -64,36 +72,13 @@
                 </div>
                 
                 <div class="profile-info-row">
-                    <span class="profile-label">Email</span>
-                    <span class="profile-value" id="member-email">-</span>
-                </div>
-                
-                <div class="profile-info-row">
                     <span class="profile-label">生日</span>
                     <span class="profile-value" id="member-birthday">-</span>
-                </div>
-                
-                <div class="profile-info-row">
-                    <span class="profile-label">性別</span>
-                    <span class="profile-value" id="member-gender">-</span>
-                </div>
-                
-                <div class="profile-info-row">
-                    <span class="profile-label">加入日期</span>
-                    <span class="profile-value" id="member-joined">-</span>
                 </div>
             </div>
             
             <div style="margin-top: 24px; text-align: center;">
                 <a href="edit.html" class="btn btn-primary">編輯個人資料</a>
-            </div>
-        </div>
-        
-        <!-- 會員編號條碼卡片 -->
-        <div id="member-code-card" class="card" style="margin-bottom: 24px; display: none;">
-            <div class="card-header" style="text-align: center;">會員條碼</div>
-            <div class="card-body" style="text-align: center; padding: 32px;">
-                <svg id="barcode" style="max-width: 100%; height: auto;"></svg>
             </div>
         </div>
 
