@@ -255,11 +255,17 @@
                 if (paymentMethod === 'wallet' && memberSelect.value) {
                     // 選擇儲值金付款，顯示餘額資訊
                     await loadMemberWalletInfo(memberSelect.value);
-                    document.getElementById('wallet-balance-hint').style.display = 'block';
+                    const walletHint = document.getElementById('wallet-balance-hint');
+                    if (walletHint) {
+                        walletHint.style.display = 'block';
+                    }
                     updateWalletPaymentInfo();
                 } else {
                     // 選擇其他付款方式，隱藏儲值金提示
-                    document.getElementById('wallet-balance-hint').style.display = 'none';
+                    const walletHint = document.getElementById('wallet-balance-hint');
+                    if (walletHint) {
+                        walletHint.style.display = 'none';
+                    }
                 }
             });
             
@@ -332,47 +338,6 @@
                 CONFIG.error('載入付款方式失敗', error);
                 showMessage('載入付款方式失敗', 'error');
             }
-        }
-        
-        // 載入會員儲值金資訊
-        async function loadMemberWalletInfo(lineUserId) {
-            try {
-                const wallet = await WalletPointsAPI.getMemberWallet(lineUserId);
-                const walletInfo = document.getElementById('member-wallet-info');
-                const balanceDisplay = document.getElementById('wallet-balance-display');
-                
-                if (wallet && wallet.balance > 0) {
-                    balanceDisplay.textContent = WalletPointsAPI.formatAmount(wallet.balance);
-                    walletInfo.style.display = 'block';
-                    
-                    // 設置儲值金金額的最大值
-                    const walletAmountInput = document.getElementById('wallet-payment-amount');
-                    walletAmountInput.setAttribute('max', wallet.balance);
-                } else {
-                    balanceDisplay.textContent = 'NT$ 0';
-                    walletInfo.style.display = 'none';
-                }
-            } catch (error) {
-                CONFIG.error('載入儲值金資訊失敗', error);
-                // 不顯示錯誤訊息，因為這不是關鍵功能
-            }
-        }
-        
-        // 更新剩餘需付金額
-        function updateRemainingAmount() {
-            const amountInput = document.getElementById('amount');
-            const discountInput = document.getElementById('discount-amount');
-            const walletAmountInput = document.getElementById('wallet-payment-amount');
-            const remainingDisplay = document.getElementById('remaining-amount-display');
-            
-            const amount = parseFloat(amountInput.value) || 0;
-            const discount = parseFloat(discountInput.value) || 0;
-            const walletAmount = parseFloat(walletAmountInput.value) || 0;
-            
-            const totalAmount = amount + discount;
-            const remaining = Math.max(0, totalAmount - walletAmount);
-            
-            remainingDisplay.textContent = `剩餘需付：NT$ ${remaining.toLocaleString('zh-TW', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
         }
         
         // 載入會員的預約
@@ -690,41 +655,76 @@
         async function loadMemberWalletInfo(lineUserId) {
             try {
                 const wallet = await WalletPointsAPI.getMemberWallet(lineUserId);
-                const walletInfo = document.getElementById('member-wallet-info');
                 const balanceDisplay = document.getElementById('wallet-balance-display');
                 
                 if (wallet && wallet.balance > 0) {
-                    balanceDisplay.textContent = WalletPointsAPI.formatAmount(wallet.balance);
-                    walletInfo.style.display = 'block';
-                    
-                    // 設置儲值金金額的最大值
-                    const walletAmountInput = document.getElementById('wallet-payment-amount');
-                    walletAmountInput.setAttribute('max', wallet.balance);
+                    if (balanceDisplay) {
+                        balanceDisplay.textContent = WalletPointsAPI.formatAmount(wallet.balance);
+                    }
+                    // 儲存到全局變數供其他函數使用
+                    window.currentMemberWallet = wallet;
                 } else {
-                    balanceDisplay.textContent = 'NT$ 0';
-                    walletInfo.style.display = 'none';
+                    if (balanceDisplay) {
+                        balanceDisplay.textContent = 'NT$ 0';
+                    }
+                    window.currentMemberWallet = { balance: 0 };
+                }
+                
+                // 如果當前選擇的是儲值金付款，更新提示資訊
+                const paymentMethod = document.getElementById('payment-method');
+                if (paymentMethod && paymentMethod.value === 'wallet') {
+                    updateWalletPaymentInfo();
                 }
             } catch (error) {
                 CONFIG.error('載入儲值金資訊失敗', error);
+                window.currentMemberWallet = { balance: 0 };
                 // 不顯示錯誤訊息，因為這不是關鍵功能
             }
         }
         
-        // 更新剩餘需付金額
-        function updateRemainingAmount() {
+        // 更新儲值金付款提示資訊
+        function updateWalletPaymentInfo() {
+            const paymentMethodSelect = document.getElementById('payment-method');
+            if (!paymentMethodSelect) return;
+            
+            const paymentMethod = paymentMethodSelect.value;
+            const walletHint = document.getElementById('wallet-balance-hint');
+            const walletInfo = document.getElementById('wallet-payment-info');
+            
+            if (!walletHint || !walletInfo) {
+                return; // 元素不存在，直接返回
+            }
+            
+            if (paymentMethod !== 'wallet') {
+                walletHint.style.display = 'none';
+                return;
+            }
+            
+            const wallet = window.currentMemberWallet || { balance: 0 };
             const amountInput = document.getElementById('amount');
             const discountInput = document.getElementById('discount-amount');
-            const walletAmountInput = document.getElementById('wallet-payment-amount');
-            const remainingDisplay = document.getElementById('remaining-amount-display');
+            
+            if (!amountInput || !discountInput) {
+                return;
+            }
             
             const amount = parseFloat(amountInput.value) || 0;
             const discount = parseFloat(discountInput.value) || 0;
-            const walletAmount = parseFloat(walletAmountInput.value) || 0;
-            
             const totalAmount = amount + discount;
-            const remaining = Math.max(0, totalAmount - walletAmount);
+            const walletBalance = wallet.balance || 0;
             
-            remainingDisplay.textContent = `剩餘需付：NT$ ${remaining.toLocaleString('zh-TW', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+            if (totalAmount > 0) {
+                if (walletBalance >= totalAmount) {
+                    walletInfo.textContent = `將使用儲值金支付全額 NT$ ${totalAmount.toLocaleString('zh-TW', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                    walletInfo.style.color = '#0277BD';
+                } else {
+                    walletInfo.textContent = `儲值金餘額不足，僅能支付 NT$ ${walletBalance.toLocaleString('zh-TW', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}，剩餘需使用其他方式付款`;
+                    walletInfo.style.color = '#FF3B30';
+                }
+            } else {
+                walletInfo.textContent = '請先輸入交易金額';
+                walletInfo.style.color = '#86868B';
+            }
         }
         
         // 提交交易
