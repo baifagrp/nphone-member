@@ -54,6 +54,33 @@
                 </div>
             </div>
             
+            <!-- 會員儲值金資訊 -->
+            <div id="member-wallet-info" class="form-group" style="margin-bottom: 24px; padding: 16px; background: #F0F9FF; border: 1px solid #B3E5FC; border-radius: 8px; display: none;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                    <span style="font-weight: 600; color: #0277BD;">儲值金餘額</span>
+                    <span id="wallet-balance-display" style="font-size: 18px; font-weight: 700; color: #0277BD;">NT$ 0</span>
+                </div>
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                    <input type="checkbox" id="use-wallet-payment" style="width: 18px; height: 18px; cursor: pointer;">
+                    <span style="font-weight: 500;">使用儲值金付款</span>
+                </label>
+                <div id="wallet-payment-amount-group" style="margin-top: 12px; display: none;">
+                    <label for="wallet-payment-amount" class="form-label">使用儲值金金額</label>
+                    <input 
+                        type="number" 
+                        id="wallet-payment-amount" 
+                        class="form-input" 
+                        step="0.01"
+                        min="0"
+                        placeholder="0"
+                        style="margin-top: 8px;"
+                    >
+                    <div style="margin-top: 8px; font-size: 13px; color: #666;">
+                        <span id="remaining-amount-display">剩餘需付：NT$ 0</span>
+                    </div>
+                </div>
+            </div>
+            
             <!-- 交易類型 -->
             <div class="form-group" style="margin-bottom: 24px;">
                 <label for="transaction-type" class="form-label">交易類型 <span style="color: #FF3B30;">*</span></label>
@@ -176,6 +203,7 @@
     <script src="../js/member.js"></script>
     <script src="../js/admin.js"></script>
     <script src="../js/booking.js"></script>
+    <script src="../js/wallet-points.js"></script>
     <script src="../js/checkout.js"></script>
     
     <script>
@@ -224,11 +252,32 @@
                 
                 if (memberId || lineUserId) {
                     await loadMemberBookings(memberId || lineUserId);
+                    // 載入會員儲值金資訊
+                    await loadMemberWalletInfo(lineUserId);
                 } else {
                     document.getElementById('booking-select').innerHTML = '<option value="">不關聯預約</option>';
                     document.getElementById('booking-preview').style.display = 'none';
+                    document.getElementById('member-wallet-info').style.display = 'none';
                 }
             });
+            
+            // 使用儲值金付款 checkbox
+            document.getElementById('use-wallet-payment').addEventListener('change', (e) => {
+                const walletAmountGroup = document.getElementById('wallet-payment-amount-group');
+                if (e.target.checked) {
+                    walletAmountGroup.style.display = 'block';
+                    updateRemainingAmount();
+                } else {
+                    walletAmountGroup.style.display = 'none';
+                    document.getElementById('wallet-payment-amount').value = '';
+                    updateRemainingAmount();
+                }
+            });
+            
+            // 儲值金金額輸入變化時更新剩餘金額
+            document.getElementById('wallet-payment-amount').addEventListener('input', updateRemainingAmount);
+            document.getElementById('amount').addEventListener('input', updateRemainingAmount);
+            document.getElementById('discount-amount').addEventListener('input', updateRemainingAmount);
             
             // 預約選擇變更
             document.getElementById('booking-select').addEventListener('change', (e) => {
@@ -295,6 +344,47 @@
                 CONFIG.error('載入付款方式失敗', error);
                 showMessage('載入付款方式失敗', 'error');
             }
+        }
+        
+        // 載入會員儲值金資訊
+        async function loadMemberWalletInfo(lineUserId) {
+            try {
+                const wallet = await WalletPointsAPI.getMemberWallet(lineUserId);
+                const walletInfo = document.getElementById('member-wallet-info');
+                const balanceDisplay = document.getElementById('wallet-balance-display');
+                
+                if (wallet && wallet.balance > 0) {
+                    balanceDisplay.textContent = WalletPointsAPI.formatAmount(wallet.balance);
+                    walletInfo.style.display = 'block';
+                    
+                    // 設置儲值金金額的最大值
+                    const walletAmountInput = document.getElementById('wallet-payment-amount');
+                    walletAmountInput.setAttribute('max', wallet.balance);
+                } else {
+                    balanceDisplay.textContent = 'NT$ 0';
+                    walletInfo.style.display = 'none';
+                }
+            } catch (error) {
+                CONFIG.error('載入儲值金資訊失敗', error);
+                // 不顯示錯誤訊息，因為這不是關鍵功能
+            }
+        }
+        
+        // 更新剩餘需付金額
+        function updateRemainingAmount() {
+            const amountInput = document.getElementById('amount');
+            const discountInput = document.getElementById('discount-amount');
+            const walletAmountInput = document.getElementById('wallet-payment-amount');
+            const remainingDisplay = document.getElementById('remaining-amount-display');
+            
+            const amount = parseFloat(amountInput.value) || 0;
+            const discount = parseFloat(discountInput.value) || 0;
+            const walletAmount = parseFloat(walletAmountInput.value) || 0;
+            
+            const totalAmount = amount + discount;
+            const remaining = Math.max(0, totalAmount - walletAmount);
+            
+            remainingDisplay.textContent = `剩餘需付：NT$ ${remaining.toLocaleString('zh-TW', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
         }
         
         // 載入會員的預約
@@ -595,6 +685,55 @@
             
             // 清空預約資料
             memberBookings = [];
+            
+            // 重置儲值金相關
+            document.getElementById('member-wallet-info').style.display = 'none';
+            document.getElementById('use-wallet-payment').checked = false;
+            document.getElementById('wallet-payment-amount-group').style.display = 'none';
+            document.getElementById('wallet-payment-amount').value = '';
+            document.getElementById('wallet-balance-display').textContent = 'NT$ 0';
+            document.getElementById('remaining-amount-display').textContent = '剩餘需付：NT$ 0';
+        }
+        
+        // 載入會員儲值金資訊
+        async function loadMemberWalletInfo(lineUserId) {
+            try {
+                const wallet = await WalletPointsAPI.getMemberWallet(lineUserId);
+                const walletInfo = document.getElementById('member-wallet-info');
+                const balanceDisplay = document.getElementById('wallet-balance-display');
+                
+                if (wallet && wallet.balance > 0) {
+                    balanceDisplay.textContent = WalletPointsAPI.formatAmount(wallet.balance);
+                    walletInfo.style.display = 'block';
+                    
+                    // 設置儲值金金額的最大值
+                    const walletAmountInput = document.getElementById('wallet-payment-amount');
+                    walletAmountInput.setAttribute('max', wallet.balance);
+                } else {
+                    balanceDisplay.textContent = 'NT$ 0';
+                    walletInfo.style.display = 'none';
+                }
+            } catch (error) {
+                CONFIG.error('載入儲值金資訊失敗', error);
+                // 不顯示錯誤訊息，因為這不是關鍵功能
+            }
+        }
+        
+        // 更新剩餘需付金額
+        function updateRemainingAmount() {
+            const amountInput = document.getElementById('amount');
+            const discountInput = document.getElementById('discount-amount');
+            const walletAmountInput = document.getElementById('wallet-payment-amount');
+            const remainingDisplay = document.getElementById('remaining-amount-display');
+            
+            const amount = parseFloat(amountInput.value) || 0;
+            const discount = parseFloat(discountInput.value) || 0;
+            const walletAmount = parseFloat(walletAmountInput.value) || 0;
+            
+            const totalAmount = amount + discount;
+            const remaining = Math.max(0, totalAmount - walletAmount);
+            
+            remainingDisplay.textContent = `剩餘需付：NT$ ${remaining.toLocaleString('zh-TW', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
         }
         
         // 提交交易
@@ -614,18 +753,36 @@
                 
                 // 驗證
                 if (!memberSelect.value) {
-                    showMessage('請選擇會員', 'error');
+                    UI.error('請選擇會員');
                     return;
                 }
                 
                 if (!amount || amount <= 0) {
-                    showMessage('請輸入有效的金額', 'error');
+                    UI.error('請輸入有效的金額');
                     return;
                 }
                 
                 if (!paymentMethod) {
-                    showMessage('請選擇付款方式', 'error');
+                    UI.error('請選擇付款方式');
                     return;
+                }
+                
+                // 檢查是否使用儲值金付款
+                const useWallet = document.getElementById('use-wallet-payment').checked;
+                let walletPaymentAmount = 0;
+                if (useWallet) {
+                    walletPaymentAmount = parseFloat(document.getElementById('wallet-payment-amount').value) || 0;
+                    if (walletPaymentAmount <= 0) {
+                        UI.error('請輸入有效的儲值金付款金額');
+                        return;
+                    }
+                    
+                    // 檢查儲值金餘額
+                    const wallet = await WalletPointsAPI.getMemberWallet(memberSelect.value);
+                    if (!wallet || wallet.balance < walletPaymentAmount) {
+                        UI.error('儲值金餘額不足');
+                        return;
+                    }
                 }
                 
                 // 計算總金額
@@ -635,47 +792,33 @@
                 const editId = form.getAttribute('data-edit-id');
                 const isEdit = !!editId;
                 
-                showMessage(isEdit ? '更新交易中...' : '建立交易中...', 'info');
-                
-                let transaction;
                 if (isEdit) {
-                    // 更新交易
-                    transaction = await CheckoutAPI.updateTransaction(editId, {
-                        transaction_type: transactionType,
-                        amount: transactionType === 'refund' ? -Math.abs(amount) : Math.abs(amount),
-                        total_amount: totalAmount,
-                        discount_amount: discountAmount,
-                        payment_method_code: paymentMethod,
-                        description: description || null,
-                        receipt_number: receiptNumber || null,
-                        reference_number: referenceNumber || null,
-                        notes: notes || null,
-                        admin_notes: adminNotes || null,
-                        updated_at: new Date().toISOString()
-                    });
-                    
-                    hideLoading();
-                    showMessage('交易更新成功！', 'success');
-                } else {
-                    // 建立新交易
-                    transaction = await CheckoutAPI.createTransaction({
-                        lineUserId: memberSelect.value,
-                        bookingId: bookingSelect.value || null,
-                        transactionType: transactionType,
-                        amount: amount,
-                        totalAmount: totalAmount,
-                        discountAmount: discountAmount,
-                        paymentMethodCode: paymentMethod,
-                        description: description || null,
-                        receiptNumber: receiptNumber || null,
-                        referenceNumber: referenceNumber || null,
-                        notes: notes || null,
-                        adminNotes: adminNotes || null,
-                    });
-                    
-                    hideLoading();
-                    showMessage('交易建立成功！', 'success');
+                    UI.warning('編輯交易時無法使用儲值金付款');
+                    return;
                 }
+                
+                UI.showLoading('建立交易中...');
+                
+                // 建立新交易
+                const transaction = await CheckoutAPI.createTransaction({
+                    lineUserId: memberSelect.value,
+                    bookingId: bookingSelect.value || null,
+                    transactionType: transactionType,
+                    amount: amount,
+                    totalAmount: totalAmount,
+                    discountAmount: discountAmount,
+                    paymentMethodCode: paymentMethod,
+                    description: description || null,
+                    receiptNumber: receiptNumber || null,
+                    referenceNumber: referenceNumber || null,
+                    notes: notes || null,
+                    adminNotes: adminNotes || null,
+                    useWalletPayment: useWallet,
+                    walletPaymentAmount: walletPaymentAmount,
+                });
+                
+                UI.hideLoading();
+                UI.success('交易建立成功！');
                 
                 // 重置表單並重新載入交易列表
                 resetForm();
@@ -683,8 +826,9 @@
                 await loadAllTransactions();
                 
             } catch (error) {
+                UI.hideLoading();
                 CONFIG.error('建立交易失敗', error);
-                showMessage(error.message || '建立交易失敗', 'error');
+                UI.error(error.message || '建立交易失敗');
             }
         }
         
