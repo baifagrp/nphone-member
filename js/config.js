@@ -53,6 +53,18 @@ const CONFIG = {
   LINE_MESSAGING_ACCESS_TOKEN: 'your_messaging_api_token',  // 選擇性，未來通知功能使用
   
   // =============================================
+  // EmailJS 設定（Email 驗證功能）
+  // =============================================
+  // 從 EmailJS Dashboard 取得
+  // 1. 註冊 EmailJS: https://www.emailjs.com/
+  // 2. 在 Email Services 中連接您的郵件服務（例如 Gmail）
+  // 3. 在 Email Templates 中創建驗證碼模板
+  // 4. 在 Account > General 中找到 Public Key
+  EMAILJS_SERVICE_ID: 'service_blp8qfq',      // 替換為您的 Service ID
+  EMAILJS_TEMPLATE_ID: 'template_friq9kv',    // 替換為您的 Template ID
+  EMAILJS_PUBLIC_KEY: '2wthB1ujHwbrjNfKC', // 替換為您的 Public Key
+  
+  // =============================================
   // 系統設定
   // =============================================
   // Session 儲存 key

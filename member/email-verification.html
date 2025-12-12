@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email 驗證 - NPHONE</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/design-system.css">
+    <link rel="stylesheet" href="../css/animations.css">
+    <style>
+        .verification-container {
+            max-width: 480px;
+            margin: 60px auto;
+            padding: 0 20px;
+        }
+        
+        .step-indicator {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 32px;
+        }
+        
+        .step-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--color-border);
+            transition: all 0.3s;
+        }
+        
+        .step-dot.active {
+            width: 24px;
+            border-radius: 5px;
+            background: var(--color-primary);
+        }
+        
+        .verification-code-input {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            margin: 24px 0;
+        }
+        
+        .code-digit {
+            width: 50px;
+            height: 60px;
+            font-size: 24px;
+            font-weight: 600;
+            text-align: center;
+            border: 2px solid var(--color-border);
+            border-radius: var(--radius);
+            transition: all 0.3s;
+        }
+        
+        .code-digit:focus {
+            outline: none;
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 3px rgba(200, 164, 138, 0.1);
+        }
+        
+        .countdown-timer {
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 14px;
+            margin-top: 16px;
+        }
+        
+        .countdown-timer.warning {
+            color: var(--color-error);
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body class="ds-page">
+    <div class="verification-container">
+        <!-- Logo -->
+        <div style="text-align: center; margin-bottom: 32px;">
+            <h1 style="font-size: 32px; font-weight: 700; color: var(--text-primary); margin-bottom: 8px;">
+                NPHONE
+            </h1>
+            <p style="color: var(--text-secondary); font-size: 14px;">會員註冊</p>
+        </div>
+        
+        <!-- 步驟指示器 -->
+        <div class="step-indicator">
+            <div class="step-dot" id="step-1"></div>
+            <div class="step-dot active" id="step-2"></div>
+            <div class="step-dot" id="step-3"></div>
+        </div>
+        
+        <!-- 步驟 1: 輸入 Email -->
+        <div id="step-email" class="ds-card" style="display: none;">
+            <div class="ds-card-body">
+                <h2 class="ds-card-title" style="text-align: center; margin-bottom: 8px;">
+                    輸入您的 Email
+                </h2>
+                <p style="text-align: center; color: var(--text-secondary); font-size: 14px; margin-bottom: 24px;">
+                    我們將發送驗證碼到您的信箱
+                </p>
+                
+                <div class="ds-form-group">
+                    <label for="email-input" class="ds-form-label">Email 地址</label>
+                    <input 
+                        type="email" 
+                        id="email-input" 
+                        class="ds-form-input" 
+                        placeholder="your@email.com"
+                        required
+                    >
+                    <div id="email-hint" class="ds-form-hint" style="display: none;"></div>
+                </div>
+                
+                <button id="btn-send-code" class="ds-btn ds-btn-primary" style="width: 100%;">
+                    發送驗證碼
+                </button>
+            </div>
+        </div>
+        
+        <!-- 步驟 2: 輸入驗證碼 -->
+        <div id="step-verification" class="ds-card">
+            <div class="ds-card-body">
+                <h2 class="ds-card-title" style="text-align: center; margin-bottom: 8px;">
+                    輸入驗證碼
+                </h2>
+                <p style="text-align: center; color: var(--text-secondary); font-size: 14px; margin-bottom: 24px;">
+                    我們已發送驗證碼到<br>
+                    <strong id="email-display"></strong>
+                </p>
+                
+                <!-- 驗證碼輸入框 -->
+                <div class="verification-code-input">
+                    <input type="text" class="code-digit" maxlength="1" data-index="0">
+                    <input type="text" class="code-digit" maxlength="1" data-index="1">
+                    <input type="text" class="code-digit" maxlength="1" data-index="2">
+                    <input type="text" class="code-digit" maxlength="1" data-index="3">
+                    <input type="text" class="code-digit" maxlength="1" data-index="4">
+                    <input type="text" class="code-digit" maxlength="1" data-index="5">
+                </div>
+                
+                <!-- 倒數計時 -->
+                <div class="countdown-timer" id="countdown-display">
+                    驗證碼將在 <strong>10:00</strong> 後過期
+                </div>
+                
+                <div style="margin-top: 24px; text-align: center;">
+                    <button id="btn-resend-code" class="ds-btn ds-btn-secondary" style="width: 100%;" disabled>
+                        重新發送驗證碼 (<span id="resend-countdown">60</span>)
+                    </button>
+                </div>
+                
+                <div style="margin-top: 16px; text-align: center;">
+                    <button id="btn-change-email" class="ds-link">
+                        修改 Email
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 步驟 3: 完成 -->
+        <div id="step-complete" class="ds-card" style="display: none;">
+            <div class="ds-card-body" style="text-align: center; padding: 48px 24px;">
+                <div style="font-size: 64px; margin-bottom: 16px;">✅</div>
+                <h2 class="ds-card-title" style="margin-bottom: 8px;">
+                    註冊成功！
+                </h2>
+                <p id="complete-message" style="color: var(--text-secondary); margin-bottom: 24px;">
+                    歡迎加入 NPHONE
+                </p>
+                
+                <button id="btn-go-home" class="ds-btn ds-btn-primary" style="width: 100%;">
+                    前往首頁
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- EmailJS SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../js/config.js"></script>
+    <script src="../js/supabase-client.js"></script>
+    <script src="../js/ui-utils.js"></script>
+    <script src="../js/email-verification.js"></script>
+    <script src="../js/animation-utils.js"></script>
+    
+    <script>
+        let currentEmail = '';
+        let lineUserId = '';
+        let lineDisplayName = '';
+        let linePictureUrl = '';
+        let verificationCountdown = 600; // 10 分鐘
+        let resendCountdown = 60; // 60 秒後可重新發送
+        let countdownInterval = null;
+        let resendInterval = null;
+        
+        // 頁面載入時初始化
+        window.addEventListener('DOMContentLoaded', () => {
+            // 從 URL 或 sessionStorage 獲取 LINE 資訊
+            const params = new URLSearchParams(window.location.search);
+            lineUserId = params.get('line_user_id') || sessionStorage.getItem('temp_line_user_id');
+            lineDisplayName = params.get('line_display_name') || sessionStorage.getItem('temp_line_display_name');
+            linePictureUrl = params.get('line_picture_url') || sessionStorage.getItem('temp_line_picture_url');
+            
+            if (!lineUserId) {
+                UI.error('缺少 LINE 登入資訊，請重新登入');
+                setTimeout(() => {
+                    window.location.href = '../index.html';
+                }, 2000);
+                return;
+            }
+            
+            // 初始化 EmailJS（請在 config.js 中設置）
+            if (typeof emailjs !== 'undefined' && CONFIG.EMAILJS_PUBLIC_KEY) {
+                emailjs.init(CONFIG.EMAILJS_PUBLIC_KEY);
+            }
+            
+            // 綁定事件
+            setupEventListeners();
+            
+            // 顯示 Email 輸入步驟
+            showStep('email');
+        });
+        
+        function setupEventListeners() {
+            // 發送驗證碼
+            document.getElementById('btn-send-code').addEventListener('click', sendVerificationCode);
+            
+            // Email 輸入時檢查
+            document.getElementById('email-input').addEventListener('input', (e) => {
+                const email = e.target.value;
+                const isValid = EmailVerificationAPI.isValidEmail(email);
+                const hintEl = document.getElementById('email-hint');
+                
+                if (email && !isValid) {
+                    hintEl.textContent = '請輸入有效的 Email 地址';
+                    hintEl.style.display = 'block';
+                    hintEl.style.color = 'var(--color-error)';
+                } else {
+                    hintEl.style.display = 'none';
+                }
+            });
+            
+            // 驗證碼輸入自動跳轉
+            document.querySelectorAll('.code-digit').forEach((input, index) => {
+                input.addEventListener('input', (e) => {
+                    if (e.target.value.length === 1) {
+                        // 自動跳到下一個
+                        const nextInput = document.querySelector(`.code-digit[data-index="${index + 1}"]`);
+                        if (nextInput) {
+                            nextInput.focus();
+                        } else {
+                            // 最後一個，自動驗證
+                            verifyCode();
+                        }
+                    }
+                });
+                
+                input.addEventListener('keydown', (e) => {
+                    if (e.key === 'Backspace' && e.target.value === '') {
+                        // 刪除鍵跳到上一個
+                        const prevInput = document.querySelector(`.code-digit[data-index="${index - 1}"]`);
+                        if (prevInput) {
+                            prevInput.focus();
+                        }
+                    }
+                });
+                
+                // 只允許數字
+                input.addEventListener('keypress', (e) => {
+                    if (!/[0-9]/.test(e.key)) {
+                        e.preventDefault();
+                    }
+                });
+            });
+            
+            // 重新發送驗證碼
+            document.getElementById('btn-resend-code').addEventListener('click', resendCode);
+            
+            // 修改 Email
+            document.getElementById('btn-change-email').addEventListener('click', () => {
+                showStep('email');
+                document.getElementById('email-input').value = currentEmail;
+            });
+            
+            // 前往首頁
+            document.getElementById('btn-go-home').addEventListener('click', () => {
+                window.location.href = 'profile.html';
+            });
+        }
+        
+        function showStep(step) {
+            document.getElementById('step-email').style.display = 'none';
+            document.getElementById('step-verification').style.display = 'none';
+            document.getElementById('step-complete').style.display = 'none';
+            
+            document.getElementById('step-1').classList.remove('active');
+            document.getElementById('step-2').classList.remove('active');
+            document.getElementById('step-3').classList.remove('active');
+            
+            if (step === 'email') {
+                document.getElementById('step-email').style.display = 'block';
+                document.getElementById('step-1').classList.add('active');
+            } else if (step === 'verification') {
+                document.getElementById('step-verification').style.display = 'block';
+                document.getElementById('step-2').classList.add('active');
+                document.getElementById('email-display').textContent = currentEmail;
+                startCountdown();
+                startResendCountdown();
+            } else if (step === 'complete') {
+                document.getElementById('step-complete').style.display = 'block';
+                document.getElementById('step-3').classList.add('active');
+                stopCountdown();
+            }
+        }
+        
+        async function sendVerificationCode() {
+            const email = document.getElementById('email-input').value.trim();
+            
+            if (!email) {
+                UI.warning('請輸入 Email');
+                return;
+            }
+            
+            if (!EmailVerificationAPI.isValidEmail(email)) {
+                UI.error('Email 格式不正確');
+                return;
+            }
+            
+            try {
+                UI.showLoading('發送驗證碼中...');
+                
+                currentEmail = email;
+                await EmailVerificationAPI.sendVerificationCode(email, lineUserId);
+                
+                UI.hideLoading();
+                UI.success('驗證碼已發送！');
+                
+                showStep('verification');
+                
+                // 聚焦第一個輸入框
+                document.querySelector('.code-digit[data-index="0"]').focus();
+                
+            } catch (error) {
+                UI.hideLoading();
+                UI.error(error.message || '發送驗證碼失敗');
+            }
+        }
+        
+        async function verifyCode() {
+            const digits = Array.from(document.querySelectorAll('.code-digit'));
+            const code = digits.map(d => d.value).join('');
+            
+            if (code.length !== 6) {
+                return;
+            }
+            
+            try {
+                UI.showLoading('驗證中...');
+                
+                const result = await EmailVerificationAPI.verifyCode(currentEmail, code);
+                
+                if (result.success) {
+                    // 完成註冊
+                    const registrationResult = await EmailVerificationAPI.completeRegistration(
+                        currentEmail,
+                        lineUserId,
+                        lineDisplayName,
+                        linePictureUrl
+                    );
+                    
+                    UI.hideLoading();
+                    
+                    // 顯示完成訊息
+                    const messageEl = document.getElementById('complete-message');
+                    if (registrationResult.is_new_member) {
+                        messageEl.textContent = '歡迎加入 NPHONE！';
+                    } else {
+                        messageEl.textContent = '已綁定到您的現有會員帳號！';
+                    }
+                    
+                    showStep('complete');
+                    
+                    UI.success(registrationResult.message);
+                }
+                
+            } catch (error) {
+                UI.hideLoading();
+                UI.error(error.message || '驗證失敗');
+                
+                // 清空輸入
+                document.querySelectorAll('.code-digit').forEach(d => d.value = '');
+                document.querySelector('.code-digit[data-index="0"]').focus();
+            }
+        }
+        
+        async function resendCode() {
+            if (resendCountdown > 0) return;
+            
+            await sendVerificationCode();
+        }
+        
+        function startCountdown() {
+            verificationCountdown = 600; // 10 分鐘
+            updateCountdownDisplay();
+            
+            if (countdownInterval) clearInterval(countdownInterval);
+            
+            countdownInterval = setInterval(() => {
+                verificationCountdown--;
+                updateCountdownDisplay();
+                
+                if (verificationCountdown <= 0) {
+                    stopCountdown();
+                    UI.error('驗證碼已過期，請重新獲取');
+                }
+            }, 1000);
+        }
+        
+        function stopCountdown() {
+            if (countdownInterval) {
+                clearInterval(countdownInterval);
+                countdownInterval = null;
+            }
+            if (resendInterval) {
+                clearInterval(resendInterval);
+                resendInterval = null;
+            }
+        }
+        
+        function updateCountdownDisplay() {
+            const display = document.getElementById('countdown-display');
+            const formatted = EmailVerificationAPI.formatCountdown(verificationCountdown);
+            display.innerHTML = `驗證碼將在 <strong>${formatted}</strong> 後過期`;
+            
+            if (verificationCountdown < 60) {
+                display.classList.add('warning');
+            } else {
+                display.classList.remove('warning');
+            }
+        }
+        
+        function startResendCountdown() {
+            resendCountdown = 60;
+            updateResendButton();
+            
+            if (resendInterval) clearInterval(resendInterval);
+            
+            resendInterval = setInterval(() => {
+                resendCountdown--;
+                updateResendButton();
+                
+                if (resendCountdown <= 0) {
+                    clearInterval(resendInterval);
+                    resendInterval = null;
+                }
+            }, 1000);
+        }
+        
+        function updateResendButton() {
+            const btn = document.getElementById('btn-resend-code');
+            const countdown = document.getElementById('resend-countdown');
+            
+            if (resendCountdown > 0) {
+                btn.disabled = true;
+                countdown.textContent = resendCountdown;
+            } else {
+                btn.disabled = false;
+                btn.innerHTML = '重新發送驗證碼';
+            }
+        }
+    </script>
+</body>
+</html>
+
