@@ -1,0 +1,626 @@
+/**
+ * =============================================
+ * NPHONE 設計系統
+ * =============================================
+ * 參考夯客 (Hotcake) 預約系統的設計風格
+ * 主色調：玫瑰金/粉橘色，簡潔現代的扁平化設計
+ */
+
+/* =============================================
+   CSS 變數定義
+   ============================================= */
+:root {
+  /* 主色系 - 玫瑰金 */
+  --primary-color: #C8A48A;
+  --primary-light: #E0C5B0;
+  --primary-dark: #A88870;
+  --primary-gradient: linear-gradient(135deg, #D4AF94 0%, #C8A48A 100%);
+  
+  /* 中性色 */
+  --white: #FFFFFF;
+  --gray-50: #FAFAFA;
+  --gray-100: #F5F5F5;
+  --gray-200: #EEEEEE;
+  --gray-300: #E0E0E0;
+  --gray-400: #BDBDBD;
+  --gray-500: #9E9E9E;
+  --gray-600: #757575;
+  --gray-700: #616161;
+  --gray-800: #424242;
+  --gray-900: #212121;
+  
+  /* 語義色 */
+  --success-color: #66BB6A;
+  --success-light: #81C784;
+  --warning-color: #FFA726;
+  --warning-light: #FFB74D;
+  --error-color: #EF5350;
+  --error-light: #E57373;
+  --info-color: #42A5F5;
+  --info-light: #64B5F6;
+  
+  /* 文字顏色 */
+  --text-primary: #212121;
+  --text-secondary: #757575;
+  --text-disabled: #BDBDBD;
+  --text-hint: #9E9E9E;
+  --text-on-primary: #FFFFFF;
+  
+  /* 間距 */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  --spacing-2xl: 48px;
+  
+  /* 圓角 */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-full: 9999px;
+  
+  /* 陰影 */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  
+  /* 動畫 */
+  --transition-fast: 150ms ease;
+  --transition-normal: 250ms ease;
+  --transition-slow: 350ms ease;
+  
+  /* 字體 */
+  --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+  --font-size-xs: 12px;
+  --font-size-sm: 14px;
+  --font-size-base: 16px;
+  --font-size-lg: 18px;
+  --font-size-xl: 20px;
+  --font-size-2xl: 24px;
+  --font-size-3xl: 30px;
+  --font-size-4xl: 36px;
+  
+  /* 行高 */
+  --line-height-tight: 1.25;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.75;
+  
+  /* 字重 */
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+}
+
+/* =============================================
+   基礎重置
+   ============================================= */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-family);
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-normal);
+  color: var(--text-primary);
+  background-color: var(--gray-50);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* =============================================
+   容器
+   ============================================= */
+.ds-container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 var(--spacing-md);
+}
+
+.ds-page {
+  min-height: 100vh;
+  background-color: var(--gray-50);
+  padding-bottom: var(--spacing-2xl);
+}
+
+/* =============================================
+   卡片元件
+   ============================================= */
+.ds-card {
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: var(--spacing-lg);
+  transition: box-shadow var(--transition-normal);
+}
+
+.ds-card:hover {
+  box-shadow: var(--shadow-md);
+}
+
+.ds-card-header {
+  margin-bottom: var(--spacing-md);
+}
+
+.ds-card-title {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-xs);
+}
+
+.ds-card-subtitle {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+}
+
+.ds-card-body {
+  font-size: var(--font-size-base);
+  color: var(--text-primary);
+}
+
+.ds-card-footer {
+  margin-top: var(--spacing-md);
+  padding-top: var(--spacing-md);
+  border-top: 1px solid var(--gray-200);
+}
+
+/* =============================================
+   資訊卡片（會員首頁用）
+   ============================================= */
+.ds-info-card {
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  transition: all var(--transition-normal);
+  cursor: pointer;
+  text-decoration: none;
+  color: inherit;
+}
+
+.ds-info-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.ds-info-card-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-md);
+  background: var(--gray-100);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: var(--spacing-md);
+  font-size: 24px;
+  color: var(--primary-color);
+}
+
+.ds-info-card-value {
+  font-size: var(--font-size-3xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--primary-color);
+  margin-bottom: var(--spacing-xs);
+  line-height: var(--line-height-tight);
+}
+
+.ds-info-card-label {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  font-weight: var(--font-weight-medium);
+}
+
+/* =============================================
+   按鈕元件
+   ============================================= */
+.ds-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px 24px;
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
+  border-radius: var(--radius-full);
+  border: none;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  text-decoration: none;
+  white-space: nowrap;
+  user-select: none;
+  line-height: 1;
+}
+
+.ds-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* 主要按鈕 */
+.ds-btn-primary {
+  background: var(--primary-gradient);
+  color: var(--text-on-primary);
+  box-shadow: 0 2px 8px rgba(200, 164, 138, 0.3);
+}
+
+.ds-btn-primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(200, 164, 138, 0.4);
+}
+
+.ds-btn-primary:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+/* 次要按鈕 */
+.ds-btn-secondary {
+  background: var(--white);
+  color: var(--primary-color);
+  border: 2px solid var(--primary-color);
+}
+
+.ds-btn-secondary:hover:not(:disabled) {
+  background: var(--gray-50);
+}
+
+/* 文字按鈕 */
+.ds-btn-text {
+  background: transparent;
+  color: var(--primary-color);
+  padding: 8px 16px;
+}
+
+.ds-btn-text:hover:not(:disabled) {
+  background: var(--gray-100);
+}
+
+/* 大尺寸按鈕 */
+.ds-btn-lg {
+  padding: 16px 32px;
+  font-size: var(--font-size-lg);
+  width: 100%;
+}
+
+/* 小尺寸按鈕 */
+.ds-btn-sm {
+  padding: 10px 16px;
+  font-size: var(--font-size-sm);
+}
+
+/* =============================================
+   表單元件
+   ============================================= */
+.ds-form-group {
+  margin-bottom: var(--spacing-lg);
+}
+
+.ds-form-label {
+  display: block;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-sm);
+}
+
+.ds-form-label-required::after {
+  content: '*';
+  color: var(--error-color);
+  margin-left: 4px;
+}
+
+.ds-form-input {
+  width: 100%;
+  padding: 14px 16px;
+  font-size: var(--font-size-base);
+  color: var(--text-primary);
+  background: var(--white);
+  border: 1px solid var(--gray-300);
+  border-radius: var(--radius-md);
+  transition: all var(--transition-fast);
+  font-family: var(--font-family);
+}
+
+.ds-form-input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(200, 164, 138, 0.1);
+}
+
+.ds-form-input::placeholder {
+  color: var(--text-hint);
+}
+
+.ds-form-input:disabled {
+  background: var(--gray-100);
+  color: var(--text-disabled);
+  cursor: not-allowed;
+}
+
+/* 錯誤狀態 */
+.ds-form-input.error {
+  border-color: var(--error-color);
+}
+
+.ds-form-input.error:focus {
+  box-shadow: 0 0 0 3px rgba(239, 83, 80, 0.1);
+}
+
+.ds-form-error {
+  display: block;
+  font-size: var(--font-size-sm);
+  color: var(--error-color);
+  margin-top: var(--spacing-xs);
+}
+
+/* =============================================
+   標籤元件
+   ============================================= */
+.ds-tabs {
+  display: flex;
+  gap: var(--spacing-sm);
+  border-bottom: 1px solid var(--gray-200);
+  margin-bottom: var(--spacing-lg);
+}
+
+.ds-tab {
+  padding: 12px 20px;
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-secondary);
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+}
+
+.ds-tab:hover {
+  color: var(--text-primary);
+}
+
+.ds-tab.active {
+  color: var(--primary-color);
+  border-bottom-color: var(--primary-color);
+}
+
+/* =============================================
+   徽章元件
+   ============================================= */
+.ds-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  border-radius: var(--radius-full);
+  white-space: nowrap;
+}
+
+.ds-badge-success {
+  background: rgba(102, 187, 106, 0.1);
+  color: var(--success-color);
+}
+
+.ds-badge-warning {
+  background: rgba(255, 167, 38, 0.1);
+  color: var(--warning-color);
+}
+
+.ds-badge-error {
+  background: rgba(239, 83, 80, 0.1);
+  color: var(--error-color);
+}
+
+.ds-badge-info {
+  background: rgba(66, 165, 245, 0.1);
+  color: var(--info-color);
+}
+
+.ds-badge-primary {
+  background: rgba(200, 164, 138, 0.1);
+  color: var(--primary-color);
+}
+
+/* =============================================
+   網格系統
+   ============================================= */
+.ds-grid {
+  display: grid;
+  gap: var(--spacing-md);
+}
+
+.ds-grid-2 {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.ds-grid-3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.ds-grid-4 {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+@media (max-width: 768px) {
+  .ds-grid-2,
+  .ds-grid-3,
+  .ds-grid-4 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .ds-grid-2,
+  .ds-grid-3,
+  .ds-grid-4 {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* =============================================
+   列表元件
+   ============================================= */
+.ds-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.ds-list-item {
+  display: flex;
+  align-items: center;
+  padding: var(--spacing-md);
+  background: var(--white);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--spacing-sm);
+  transition: all var(--transition-fast);
+  cursor: pointer;
+  text-decoration: none;
+  color: inherit;
+}
+
+.ds-list-item:hover {
+  background: var(--gray-50);
+  transform: translateX(4px);
+}
+
+.ds-list-item-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  background: var(--gray-100);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: var(--spacing-md);
+  color: var(--primary-color);
+  flex-shrink: 0;
+}
+
+.ds-list-item-content {
+  flex: 1;
+}
+
+.ds-list-item-title {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-primary);
+  margin-bottom: 2px;
+}
+
+.ds-list-item-subtitle {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+}
+
+.ds-list-item-arrow {
+  color: var(--text-hint);
+  margin-left: var(--spacing-sm);
+  flex-shrink: 0;
+}
+
+/* =============================================
+   工具類
+   ============================================= */
+.ds-text-center {
+  text-align: center;
+}
+
+.ds-text-right {
+  text-align: right;
+}
+
+.ds-mt-sm { margin-top: var(--spacing-sm); }
+.ds-mt-md { margin-top: var(--spacing-md); }
+.ds-mt-lg { margin-top: var(--spacing-lg); }
+.ds-mt-xl { margin-top: var(--spacing-xl); }
+
+.ds-mb-sm { margin-bottom: var(--spacing-sm); }
+.ds-mb-md { margin-bottom: var(--spacing-md); }
+.ds-mb-lg { margin-bottom: var(--spacing-lg); }
+.ds-mb-xl { margin-bottom: var(--spacing-xl); }
+
+.ds-p-sm { padding: var(--spacing-sm); }
+.ds-p-md { padding: var(--spacing-md); }
+.ds-p-lg { padding: var(--spacing-lg); }
+.ds-p-xl { padding: var(--spacing-xl); }
+
+.ds-flex {
+  display: flex;
+}
+
+.ds-flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ds-flex-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.ds-gap-sm { gap: var(--spacing-sm); }
+.ds-gap-md { gap: var(--spacing-md); }
+.ds-gap-lg { gap: var(--spacing-lg); }
+
+/* =============================================
+   頁面頭部
+   ============================================= */
+.ds-page-header {
+  background: var(--white);
+  padding: var(--spacing-lg) var(--spacing-md);
+  box-shadow: var(--shadow-sm);
+  margin-bottom: var(--spacing-lg);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.ds-page-title {
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-primary);
+  text-align: center;
+  margin: 0;
+}
+
+/* =============================================
+   空狀態
+   ============================================= */
+.ds-empty-state {
+  text-align: center;
+  padding: var(--spacing-2xl) var(--spacing-md);
+}
+
+.ds-empty-icon {
+  font-size: 64px;
+  color: var(--gray-400);
+  margin-bottom: var(--spacing-md);
+}
+
+.ds-empty-title {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-secondary);
+  margin-bottom: var(--spacing-sm);
+}
+
+.ds-empty-description {
+  font-size: var(--font-size-sm);
+  color: var(--text-hint);
+}
+
