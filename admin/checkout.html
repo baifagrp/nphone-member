@@ -214,11 +214,16 @@
             
             // 會員選擇變更
             document.getElementById('member-select').addEventListener('change', async (e) => {
-                const memberId = e.target.value;
-                if (memberId) {
-                    await loadMemberBookings(memberId);
+                const memberSelect = e.target;
+                const selectedOption = memberSelect.options[memberSelect.selectedIndex];
+                const memberId = selectedOption.getAttribute('data-member-id'); // 使用 data-member-id 獲取 UUID
+                const lineUserId = e.target.value; // value 是 line_user_id
+                
+                if (memberId || lineUserId) {
+                    await loadMemberBookings(memberId || lineUserId);
                 } else {
                     document.getElementById('booking-select').innerHTML = '<option value="">不關聯預約</option>';
+                    document.getElementById('booking-preview').style.display = 'none';
                 }
             });
             
@@ -293,32 +298,87 @@
         async function loadMemberBookings(memberId) {
             try {
                 const member = allMembers.find(m => m.id === memberId || m.line_user_id === memberId);
-                if (!member) return;
+                if (!member) {
+                    CONFIG.error('找不到會員資料', { memberId, allMembers });
+                    return;
+                }
                 
-                const bookings = await BookingAPI.getMyBookings(member.line_user_id, 100);
+                // 使用管理員 API 獲取該會員的所有預約（因為管理員應該能看到所有預約）
+                const client = getSupabase();
+                const { data: bookingsData, error } = await client
+                    .from('bookings')
+                    .select('*')
+                    .eq('member_id', member.id)
+                    .order('booking_date', { ascending: false })
+                    .order('booking_time', { ascending: false })
+                    .limit(100);
                 
-                // 只顯示未付款或部分付款的預約
-                memberBookings = bookings.filter(b => 
-                    b.status !== 'cancelled' && 
-                    (b.payment_status === 'unpaid' || b.payment_status === 'partial')
+                if (error) {
+                    CONFIG.error('查詢預約失敗', error);
+                    // 如果管理員查詢失敗，嘗試使用會員 API
+                    const bookings = await BookingAPI.getMyBookings(member.line_user_id, 100);
+                    memberBookings = bookings || [];
+                } else {
+                    // 確保有 payment_status 和 paid_amount（如果資料庫中沒有，設為預設值）
+                    memberBookings = (bookingsData || []).map(b => ({
+                        ...b,
+                        payment_status: b.payment_status || 'unpaid',
+                        paid_amount: b.paid_amount || 0
+                    }));
+                }
+                
+                // 過濾：只顯示未取消的預約，且顯示所有付款狀態（讓管理員可以選擇）
+                // 但也可以選擇只顯示未付款或部分付款的預約
+                memberBookings = memberBookings.filter(b => 
+                    b.status !== 'cancelled'
                 );
                 
                 const bookingSelect = document.getElementById('booking-select');
-                bookingSelect.innerHTML = '<option value="">不關聯預約</option>' +
-                    memberBookings.map(booking => `
-                        <option value="${booking.id}">${booking.service_name} - ${booking.booking_date} ${booking.booking_time} (NT$ ${booking.service_price.toLocaleString()})</option>
-                    `).join('');
+                if (memberBookings.length === 0) {
+                    bookingSelect.innerHTML = '<option value="">該會員尚無可關聯的預約</option>';
+                } else {
+                    bookingSelect.innerHTML = '<option value="">不關聯預約</option>' +
+                        memberBookings.map(booking => {
+                            const paymentStatusText = booking.payment_status === 'unpaid' ? '未付款' :
+                                                      booking.payment_status === 'partial' ? '部分付款' :
+                                                      booking.payment_status === 'paid' ? '已付款' :
+                                                      booking.payment_status === 'refunded' ? '已退款' : '未知';
+                            return `
+                                <option value="${booking.id}">${booking.service_name} - ${booking.booking_date} ${booking.booking_time} (NT$ ${booking.service_price.toLocaleString()}) [${paymentStatusText}]</option>
+                            `;
+                        }).join('');
+                }
+                
+                CONFIG.log('載入預約成功', { 
+                    memberId: member.id, 
+                    memberName: member.name,
+                    bookingsCount: memberBookings.length 
+                });
                 
             } catch (error) {
                 CONFIG.error('載入預約失敗', error);
-                showMessage('載入預約失敗', 'error');
+                showMessage('載入預約失敗：' + (error.message || '未知錯誤'), 'error');
+                document.getElementById('booking-select').innerHTML = '<option value="">載入預約失敗</option>';
             }
         }
         
         // 顯示預約預覽
         function displayBookingPreview(bookingId) {
             const booking = memberBookings.find(b => b.id === bookingId);
-            if (!booking) return;
+            if (!booking) {
+                CONFIG.error('找不到預約資料', { bookingId, memberBookings });
+                return;
+            }
+            
+            // 確保有預設值
+            const paymentStatus = booking.payment_status || 'unpaid';
+            const paidAmount = booking.paid_amount || 0;
+            const servicePrice = booking.service_price || 0;
+            
+            const paymentStatusText = paymentStatus === 'unpaid' ? '未付款' :
+                                      paymentStatus === 'partial' ? '部分付款' :
+                                      paymentStatus === 'paid' ? '已付款' :
+                                      paymentStatus === 'refunded' ? '已退款' : '未知';
             
             const preview = document.getElementById('booking-preview');
             preview.style.display = 'block';
@@ -326,33 +386,35 @@
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px;">
                     <div>
                         <div style="color: #86868B; font-size: 12px;">服務</div>
-                        <div style="font-weight: 600;">${booking.service_name}</div>
+                        <div style="font-weight: 600;">${booking.service_name || '未知'}</div>
                     </div>
                     <div>
                         <div style="color: #86868B; font-size: 12px;">日期時間</div>
-                        <div style="font-weight: 600;">${booking.booking_date} ${booking.booking_time}</div>
+                        <div style="font-weight: 600;">${booking.booking_date || ''} ${booking.booking_time || ''}</div>
                     </div>
                     <div>
                         <div style="color: #86868B; font-size: 12px;">金額</div>
-                        <div style="font-weight: 600;">NT$ ${booking.service_price.toLocaleString()}</div>
+                        <div style="font-weight: 600;">NT$ ${servicePrice.toLocaleString()}</div>
                     </div>
                     <div>
                         <div style="color: #86868B; font-size: 12px;">付款狀態</div>
-                        <div style="font-weight: 600;">${booking.payment_status === 'unpaid' ? '未付款' : '部分付款'}</div>
+                        <div style="font-weight: 600;">${paymentStatusText}</div>
                     </div>
                 </div>
-                ${booking.paid_amount > 0 ? `
+                ${paidAmount > 0 ? `
                     <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #D2D2D7;">
                         <div style="color: #86868B; font-size: 12px;">已付金額</div>
-                        <div style="font-weight: 600; color: #34C759;">NT$ ${booking.paid_amount.toLocaleString()}</div>
+                        <div style="font-weight: 600; color: #34C759;">NT$ ${paidAmount.toLocaleString()}</div>
                     </div>
                 ` : ''}
             `;
             
-            // 自動填入金額（如果沒有填寫）
-            if (!document.getElementById('amount').value) {
-                const remaining = booking.service_price - (booking.paid_amount || 0);
-                document.getElementById('amount').value = remaining.toFixed(2);
+            // 自動填入金額（如果沒有填寫且不是已付款）
+            if (!document.getElementById('amount').value && paymentStatus !== 'paid') {
+                const remaining = servicePrice - paidAmount;
+                if (remaining > 0) {
+                    document.getElementById('amount').value = remaining.toFixed(2);
+                }
             }
         }
         
