@@ -3,102 +3,161 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>編輯個人資料</title>
+    <title>編輯個人資料 - NPHONE</title>
     <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/design-system.css">
 </head>
-<body>
-    <!-- 導航列 -->
-    <nav class="navbar">
-        <div class="container navbar-container">
-            <a href="../index.html" class="navbar-brand">NPHONE</a>
-            <div class="navbar-menu">
-                <a href="profile.html" class="navbar-link">個人資料</a>
-                <button id="btn-logout" class="btn btn-sm btn-secondary">登出</button>
-            </div>
-        </div>
-    </nav>
-
-    <!-- 主要內容 -->
-    <div class="container-sm" style="margin-top: 40px;">
-        <div class="card">
-            <div class="card-header">編輯個人資料</div>
-            
-            <div class="card-body">
-                <form id="form-edit-profile">
-                    <!-- 姓名 -->
-                    <div class="form-group">
-                        <label for="edit-name" class="form-label required">姓名</label>
-                        <input 
-                            type="text" 
-                            id="edit-name" 
-                            class="form-input" 
-                            required
-                            minlength="2"
-                            maxlength="50"
-                            placeholder="請輸入姓名"
-                        >
-                    </div>
-                    
-                    <!-- 電話 -->
-                    <div class="form-group">
-                        <label for="edit-phone" class="form-label">電話</label>
-                        <input 
-                            type="tel" 
-                            id="edit-phone" 
-                            class="form-input" 
-                            pattern="09\d{8}"
-                            placeholder="例如：0912345678"
-                        >
-                        <div class="form-help">台灣手機號碼格式：09 開頭 + 8 位數字</div>
-                    </div>
-                    
-                    <!-- Email -->
-                    <div class="form-group">
-                        <label for="edit-email" class="form-label">Email</label>
-                        <input 
-                            type="email" 
-                            id="edit-email" 
-                            class="form-input" 
-                            placeholder="example@email.com"
-                        >
-                    </div>
-                    
-                    <!-- 生日 -->
-                    <div class="form-group">
-                        <label for="edit-birthday" class="form-label">生日</label>
-                        <input 
-                            type="date" 
-                            id="edit-birthday" 
-                            class="form-input"
-                        >
-                    </div>
-                    
-                    <!-- 性別 -->
-                    <div class="form-group">
-                        <label for="edit-gender" class="form-label">性別</label>
-                        <select id="edit-gender" class="form-select">
-                            <option value="">請選擇</option>
-                            <option value="male">男性</option>
-                            <option value="female">女性</option>
-                            <option value="other">其他</option>
-                            <option value="prefer_not_to_say">不願透露</option>
-                        </select>
-                    </div>
-                    
-                    <!-- 按鈕 -->
-                    <div class="flex flex-gap" style="margin-top: 32px;">
-                        <button type="submit" class="btn btn-primary" style="flex: 1;">儲存</button>
-                        <button type="button" id="btn-cancel-edit" class="btn btn-secondary" style="flex: 1;">取消</button>
-                    </div>
-                </form>
-            </div>
+<body class="ds-page">
+    <!-- 頁面頭部 -->
+    <div class="ds-page-header">
+        <div style="display: flex; align-items: center; justify-content: space-between; max-width: 1200px; margin: 0 auto; padding: 0 var(--spacing-md);">
+            <button onclick="history.back()" class="ds-btn ds-btn-text" style="padding: 8px;">
+                ← 返回
+            </button>
+            <h1 class="ds-page-title" style="margin: 0;">編輯個人資料</h1>
+            <div style="width: 60px;"></div>
         </div>
     </div>
+
+    <!-- 主要內容 -->
+    <div class="ds-container">
+        <div class="ds-card">
+            <form id="form-edit-profile">
+                <!-- 姓名 -->
+                <div class="ds-form-group">
+                    <label for="edit-name" class="ds-form-label ds-form-label-required">姓名</label>
+                    <input 
+                        type="text" 
+                        id="edit-name" 
+                        class="ds-form-input" 
+                        required
+                        minlength="2"
+                        maxlength="50"
+                        placeholder="請輸入姓名"
+                    >
+                </div>
+                
+                <!-- 電話 -->
+                <div class="ds-form-group">
+                    <label for="edit-phone" class="ds-form-label">電話</label>
+                    <input 
+                        type="tel" 
+                        id="edit-phone" 
+                        class="ds-form-input" 
+                        pattern="09\d{8}"
+                        placeholder="例如：0912345678"
+                        maxlength="10"
+                    >
+                    <span class="ds-form-hint" style="display: block; margin-top: var(--spacing-xs); font-size: var(--font-size-sm); color: var(--text-hint);">
+                        格式：09 開頭的 10 位數字
+                    </span>
+                </div>
+                
+                <!-- Email -->
+                <div class="ds-form-group">
+                    <label for="edit-email" class="ds-form-label">Email</label>
+                    <input 
+                        type="email" 
+                        id="edit-email" 
+                        class="ds-form-input" 
+                        placeholder="example@email.com"
+                    >
+                </div>
+                
+                <!-- 生日 -->
+                <div class="ds-form-group">
+                    <label for="edit-birthday" class="ds-form-label">生日</label>
+                    <input 
+                        type="date" 
+                        id="edit-birthday" 
+                        class="ds-form-input"
+                    >
+                </div>
+                
+                <!-- 性別 -->
+                <div class="ds-form-group">
+                    <label class="ds-form-label">性別</label>
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--spacing-sm);">
+                        <label class="gender-option">
+                            <input type="radio" name="gender" value="male">
+                            <span>男性</span>
+                        </label>
+                        <label class="gender-option">
+                            <input type="radio" name="gender" value="female">
+                            <span>女性</span>
+                        </label>
+                        <label class="gender-option">
+                            <input type="radio" name="gender" value="other">
+                            <span>其他</span>
+                        </label>
+                        <label class="gender-option">
+                            <input type="radio" name="gender" value="prefer_not_to_say">
+                            <span>不願透露</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- 按鈕 -->
+                <div style="display: flex; gap: var(--spacing-md); margin-top: var(--spacing-xl);">
+                    <button type="button" onclick="history.back()" class="ds-btn ds-btn-secondary" style="flex: 1;">
+                        取消
+                    </button>
+                    <button type="submit" class="ds-btn ds-btn-primary" style="flex: 1;">
+                        儲存
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 載入 Toast 容器 -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- CSS 樣式 -->
+    <style>
+        .gender-option {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 14px;
+            border: 2px solid var(--gray-300);
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            background: var(--white);
+        }
+
+        .gender-option:hover {
+            border-color: var(--primary-color);
+            background: rgba(200, 164, 138, 0.05);
+        }
+
+        .gender-option input[type="radio"] {
+            display: none;
+        }
+
+        .gender-option input[type="radio"]:checked + span {
+            font-weight: var(--font-weight-semibold);
+        }
+
+        .gender-option:has(input[type="radio"]:checked) {
+            border-color: var(--primary-color);
+            background: rgba(200, 164, 138, 0.1);
+            box-shadow: 0 0 0 3px rgba(200, 164, 138, 0.1);
+        }
+
+        .gender-option span {
+            font-size: var(--font-size-base);
+            color: var(--text-primary);
+            user-select: none;
+        }
+    </style>
 
     <!-- JavaScript -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="../js/config.js"></script>
     <script src="../js/supabase-client.js"></script>
+    <script src="../js/ui-utils.js"></script>
     <script src="../js/auth.js"></script>
     <script src="../js/member.js"></script>
     
@@ -106,20 +165,93 @@
         // 頁面載入時初始化
         window.addEventListener('DOMContentLoaded', async () => {
             try {
+                // 檢查登入狀態
+                if (!Auth.requireMemberLogin()) {
+                    return;
+                }
+
                 await Member.init();
-                Member.loadEditForm();
+                
+                // 載入當前資料
+                loadCurrentData();
+
+                // 設置表單提交
+                setupForm();
             } catch (error) {
                 CONFIG.error('初始化失敗', error);
-                alert('載入失敗，請重新登入');
-                Auth.memberLogout();
+                UI.error('載入失敗');
             }
         });
-        
-        // 取消按鈕事件
-        document.getElementById('btn-cancel-edit').addEventListener('click', () => {
-            window.location.href = 'profile.html';
-        });
+
+        // 載入當前資料
+        function loadCurrentData() {
+            const member = Member.currentMember;
+            if (!member) return;
+
+            document.getElementById('edit-name').value = member.name || '';
+            document.getElementById('edit-phone').value = member.phone || '';
+            document.getElementById('edit-email').value = member.email || '';
+            document.getElementById('edit-birthday').value = member.birthday || '';
+            
+            if (member.gender) {
+                const genderRadio = document.querySelector(`input[name="gender"][value="${member.gender}"]`);
+                if (genderRadio) {
+                    genderRadio.checked = true;
+                }
+            }
+        }
+
+        // 設置表單提交
+        function setupForm() {
+            const form = document.getElementById('form-edit-profile');
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                
+                try {
+                    UI.showLoading('儲存中...');
+
+                    const formData = {
+                        name: document.getElementById('edit-name').value.trim(),
+                        phone: document.getElementById('edit-phone').value.trim() || null,
+                        email: document.getElementById('edit-email').value.trim() || null,
+                        birthday: document.getElementById('edit-birthday').value || null,
+                        gender: document.querySelector('input[name="gender"]:checked')?.value || null
+                    };
+
+                    // 驗證姓名
+                    if (!formData.name || formData.name.length < 2) {
+                        throw new Error('姓名至少需要 2 個字元');
+                    }
+
+                    // 驗證電話
+                    if (formData.phone && !/^09\d{8}$/.test(formData.phone)) {
+                        throw new Error('電話號碼格式錯誤');
+                    }
+
+                    // 驗證 Email
+                    if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+                        throw new Error('Email 格式錯誤');
+                    }
+
+                    // 更新資料
+                    const session = Auth.getMemberSession();
+                    await Member.update(session.lineUserId, formData);
+
+                    UI.hideLoading();
+                    UI.success('儲存成功！');
+
+                    // 延遲後返回
+                    setTimeout(() => {
+                        window.location.href = 'profile.html';
+                    }, 1000);
+
+                } catch (error) {
+                    UI.hideLoading();
+                    CONFIG.error('儲存失敗', error);
+                    UI.error(error.message || '儲存失敗');
+                }
+            });
+        }
     </script>
 </body>
 </html>
-
