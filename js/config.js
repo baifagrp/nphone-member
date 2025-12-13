@@ -80,7 +80,7 @@ const CONFIG = {
   EMAILJS_PUBLIC_KEY: '2wthB1ujHwbrjNfKC', // 替換為您的 Public Key
   
   // 店家通知 Email（接收預約通知）
-  SHOP_NOTIFICATION_EMAIL: 'nphone.khjg@icloud.com',  // 替換為店家 Email
+  SHOP_NOTIFICATION_EMAIL: 'ucwusir@gmail.com',  // 替換為店家 Email
   
   // =============================================
   // 系統設定
