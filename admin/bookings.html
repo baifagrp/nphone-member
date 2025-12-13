@@ -8,6 +8,106 @@
     <link rel="stylesheet" href="../css/design-system.css">
     <link rel="stylesheet" href="../css/admin-enhancements.css">
     <link rel="stylesheet" href="../css/animations.css">
+    <style>
+        /* 模態框樣式 */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+            padding: var(--spacing-lg);
+        }
+
+        .modal-content {
+            background-color: var(--surface);
+            border-radius: var(--radius-lg);
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: var(--shadow-2xl);
+            animation: modalSlideIn 0.3s ease-out;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--spacing-lg);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .modal-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 28px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 0;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: var(--radius-md);
+            transition: all 0.2s;
+        }
+
+        .modal-close:hover {
+            background-color: var(--surface-secondary);
+            color: var(--text-primary);
+        }
+
+        .modal-body {
+            padding: var(--spacing-lg);
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: var(--spacing-sm);
+            padding: var(--spacing-lg);
+            border-top: 1px solid var(--border);
+        }
+
+        .admin-action-btn.success {
+            color: #4CAF50;
+        }
+
+        .admin-action-btn.success:hover {
+            background-color: rgba(76, 175, 80, 0.1);
+        }
+
+        .admin-action-btn.info {
+            color: #2196F3;
+        }
+
+        .admin-action-btn.info:hover {
+            background-color: rgba(33, 150, 243, 0.1);
+        }
+    </style>
 </head>
 <body class="ds-page">
     <!-- 導航列 -->
@@ -126,6 +226,22 @@
         </div>
     </div>
 
+    <!-- 預約詳情模態框 -->
+    <div id="booking-detail-modal" class="modal" style="display: none;">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h2 class="modal-title">預約詳情</h2>
+                <button class="modal-close" onclick="closeBookingDetail()">&times;</button>
+            </div>
+            <div class="modal-body" id="booking-detail-content">
+                <div class="loading-spinner"></div>
+            </div>
+            <div class="modal-footer">
+                <button onclick="closeBookingDetail()" class="ds-btn ds-btn-secondary">關閉</button>
+            </div>
+        </div>
+    </div>
+
     <div id="toast-container" class="toast-container"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -134,6 +250,7 @@
     <script src="../js/ui-utils.js"></script>
     <script src="../js/auth.js"></script>
     <script src="../js/booking.js"></script>
+    <script src="../js/notification.js"></script>
     <script src="../js/animation-utils.js"></script>
     
     <script>
@@ -201,7 +318,9 @@
                     <td>${getStatusBadge(b.status)}</td>
                     <td>
                         <div class="admin-actions" style="justify-content: center;">
-                            <button onclick="viewBooking('${b.id}')" class="admin-action-btn">查看</button>
+                            ${b.status === 'pending' ? `<button onclick="confirmBooking('${b.id}')" class="admin-action-btn success">確認</button>` : ''}
+                            ${b.status === 'confirmed' ? `<button onclick="completeBooking('${b.id}')" class="admin-action-btn info">完成</button>` : ''}
+                            <button onclick="viewBookingDetail('${b.id}')" class="admin-action-btn">查看</button>
                             <button onclick="deleteBooking('${b.id}')" class="admin-action-btn danger">刪除</button>
                         </div>
                     </td>
@@ -261,10 +380,277 @@
             displayBookings(filtered);
         }
 
-        function viewBooking(id) {
-            const booking = allBookings.find(b => b.id === id);
-            if (booking) {
-                alert(`預約詳情：\n\n會員：${booking.member_name}\n服務：${booking.service_name}\n日期：${booking.booking_date}\n時間：${booking.booking_time}\n狀態：${booking.status}`);
+        // 確認預約
+        async function confirmBooking(id) {
+            if (!confirm('確定要確認此預約嗎？確認後將發送通知給會員。')) return;
+            
+            try {
+                UI.showLoading('確認中...');
+                
+                // 更新預約狀態
+                await BookingAPI.updateBookingStatus(id, 'confirmed');
+                
+                // 取得預約詳情並發送通知
+                const booking = allBookings.find(b => b.id === id);
+                if (booking && booking.line_user_id) {
+                    try {
+                        CONFIG.log('📤 發送預約確認通知', { lineUserId: booking.line_user_id, bookingId: id });
+                        
+                        // 非同步發送通知
+                        NotificationAPI.sendBookingConfirmed(booking.line_user_id, {
+                            id: booking.id,
+                            member_name: booking.member_name,
+                            service_name: booking.service_name,
+                            booking_date: booking.booking_date,
+                            booking_time: booking.booking_time
+                        }).then(() => {
+                            CONFIG.log('✅ 預約確認通知已發送');
+                        }).catch(error => {
+                            CONFIG.error('❌ 預約確認通知發送失敗', error);
+                        });
+                    } catch (notificationError) {
+                        CONFIG.error('❌ 準備通知資料失敗', notificationError);
+                    }
+                }
+                
+                UI.hideLoading();
+                UI.success('預約已確認，已發送通知給會員');
+                await loadBookings();
+            } catch (error) {
+                UI.hideLoading();
+                CONFIG.error('確認失敗', error);
+                UI.error('確認失敗');
+            }
+        }
+
+        // 完成預約
+        async function completeBooking(id) {
+            if (!confirm('確定要將此預約標記為已完成嗎？')) return;
+            
+            try {
+                UI.showLoading('更新中...');
+                await BookingAPI.updateBookingStatus(id, 'completed');
+                UI.hideLoading();
+                UI.success('預約已完成');
+                await loadBookings();
+            } catch (error) {
+                UI.hideLoading();
+                CONFIG.error('更新失敗', error);
+                UI.error('更新失敗');
+            }
+        }
+
+        // 查看預約詳情
+        async function viewBookingDetail(id) {
+            try {
+                const modal = document.getElementById('booking-detail-modal');
+                const content = document.getElementById('booking-detail-content');
+                modal.style.display = 'flex';
+                content.innerHTML = '<div class="loading-spinner"></div>';
+                
+                // 取得預約詳情
+                const booking = allBookings.find(b => b.id === id);
+                if (!booking) {
+                    throw new Error('找不到預約資料');
+                }
+                
+                // 取得會員詳細資料
+                const { data: member } = await getSupabase()
+                    .from('members')
+                    .select('*')
+                    .eq('id', booking.member_id)
+                    .single();
+                
+                // 顯示詳細資料
+                content.innerHTML = `
+                    <div style="display: grid; gap: var(--spacing-lg);">
+                        <!-- 會員資訊 -->
+                        <div class="ds-card">
+                            <div class="ds-card-header">
+                                <div class="ds-card-title">會員資訊</div>
+                                <a href="member-detail.html?id=${booking.member_id}" class="ds-btn ds-btn-sm ds-btn-primary" target="_blank">
+                                    查看會員詳情 →
+                                </a>
+                            </div>
+                            <div class="ds-card-body">
+                                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--spacing-md);">
+                                    <div>
+                                        <label class="ds-form-label">姓名</label>
+                                        <div style="font-weight: 500;">${member?.name || '未提供'}</div>
+                                    </div>
+                                    <div>
+                                        <label class="ds-form-label">電話</label>
+                                        <div style="font-weight: 500;">${member?.phone || '未提供'}</div>
+                                    </div>
+                                    <div>
+                                        <label class="ds-form-label">Email</label>
+                                        <div style="font-weight: 500;">${member?.email || '未提供'}</div>
+                                    </div>
+                                    <div>
+                                        <label class="ds-form-label">生日</label>
+                                        <div style="font-weight: 500;">${member?.birthday || '未提供'}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 預約資訊 -->
+                        <div class="ds-card">
+                            <div class="ds-card-header">
+                                <div class="ds-card-title">預約資訊</div>
+                            </div>
+                            <div class="ds-card-body">
+                                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--spacing-md);">
+                                    <div>
+                                        <label class="ds-form-label">服務項目</label>
+                                        <div style="font-weight: 500;">${booking.service_name}</div>
+                                        ${booking.service_option_name ? `<div style="color: var(--text-secondary); font-size: 14px;">${booking.service_option_name}</div>` : ''}
+                                    </div>
+                                    <div>
+                                        <label class="ds-form-label">預約時間</label>
+                                        <div style="font-weight: 500;">
+                                            ${new Date(booking.booking_date).toLocaleDateString('zh-TW')}
+                                            ${booking.booking_time?.substring(0, 5)}
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label class="ds-form-label">預約狀態</label>
+                                        <div>${getStatusBadge(booking.status)}</div>
+                                    </div>
+                                    <div>
+                                        <label class="ds-form-label">付款狀態</label>
+                                        <div>${getPaymentBadge(booking.payment_status)}</div>
+                                    </div>
+                                    ${booking.notes ? `
+                                    <div style="grid-column: 1 / -1;">
+                                        <label class="ds-form-label">備註</label>
+                                        <div style="padding: var(--spacing-sm); background: var(--surface-secondary); border-radius: var(--radius-md);">
+                                            ${booking.notes}
+                                        </div>
+                                    </div>
+                                    ` : ''}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 系統資訊 -->
+                        <div class="ds-card">
+                            <div class="ds-card-header">
+                                <div class="ds-card-title">系統資訊</div>
+                            </div>
+                            <div class="ds-card-body">
+                                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--spacing-md);">
+                                    <div>
+                                        <label class="ds-form-label">預約 ID</label>
+                                        <div style="font-family: monospace; font-size: 12px; color: var(--text-secondary);">
+                                            ${booking.id}
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label class="ds-form-label">建立時間</label>
+                                        <div style="font-size: 14px;">
+                                            ${new Date(booking.created_at).toLocaleString('zh-TW')}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 操作按鈕 -->
+                        <div style="display: flex; gap: var(--spacing-sm); justify-content: flex-end;">
+                            ${booking.status === 'pending' ? `
+                                <button onclick="confirmBookingFromDetail('${booking.id}')" class="ds-btn ds-btn-success">
+                                    確認預約
+                                </button>
+                            ` : ''}
+                            ${booking.status === 'confirmed' ? `
+                                <button onclick="completeBookingFromDetail('${booking.id}')" class="ds-btn ds-btn-info">
+                                    標記完成
+                                </button>
+                            ` : ''}
+                            ${booking.status === 'pending' || booking.status === 'confirmed' ? `
+                                <button onclick="cancelBookingFromDetail('${booking.id}')" class="ds-btn ds-btn-warning">
+                                    取消預約
+                                </button>
+                            ` : ''}
+                            <button onclick="deleteBookingFromDetail('${booking.id}')" class="ds-btn ds-btn-danger">
+                                刪除預約
+                            </button>
+                        </div>
+                    </div>
+                `;
+            } catch (error) {
+                CONFIG.error('載入預約詳情失敗', error);
+                content.innerHTML = `
+                    <div class="ds-text-center ds-p-xl">
+                        <div style="color: var(--error); margin-bottom: var(--spacing-md);">❌</div>
+                        <div class="ds-empty-title">載入失敗</div>
+                        <div class="ds-empty-description">${error.message}</div>
+                    </div>
+                `;
+            }
+        }
+
+        // 關閉預約詳情
+        function closeBookingDetail() {
+            document.getElementById('booking-detail-modal').style.display = 'none';
+        }
+
+        // 點擊模態框背景關閉
+        document.addEventListener('click', (e) => {
+            const modal = document.getElementById('booking-detail-modal');
+            if (e.target === modal) {
+                closeBookingDetail();
+            }
+        });
+
+        // 從詳情頁確認預約
+        async function confirmBookingFromDetail(id) {
+            const success = await confirmBooking(id);
+            if (success !== false) {
+                closeBookingDetail();
+            }
+        }
+
+        // 從詳情頁完成預約
+        async function completeBookingFromDetail(id) {
+            await completeBooking(id);
+            closeBookingDetail();
+        }
+
+        // 從詳情頁取消預約
+        async function cancelBookingFromDetail(id) {
+            if (!confirm('確定要取消此預約嗎？')) return;
+            
+            try {
+                UI.showLoading('取消中...');
+                await BookingAPI.updateBookingStatus(id, 'cancelled');
+                UI.hideLoading();
+                UI.success('預約已取消');
+                closeBookingDetail();
+                await loadBookings();
+            } catch (error) {
+                UI.hideLoading();
+                CONFIG.error('取消失敗', error);
+                UI.error('取消失敗');
+            }
+        }
+
+        // 從詳情頁刪除預約
+        async function deleteBookingFromDetail(id) {
+            if (!confirm('確定要刪除此預約嗎？此操作無法復原！')) return;
+            
+            try {
+                UI.showLoading('刪除中...');
+                await BookingAPI.deleteBooking(id);
+                UI.hideLoading();
+                UI.success('刪除成功');
+                closeBookingDetail();
+                await loadBookings();
+            } catch (error) {
+                UI.hideLoading();
+                CONFIG.error('刪除失敗', error);
+                UI.error('刪除失敗');
             }
         }
 

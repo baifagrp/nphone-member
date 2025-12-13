@@ -50,6 +50,7 @@ COMMENT ON COLUMN public.notification_settings.booking_reminder_hours IS '預約
 CREATE INDEX IF NOT EXISTS idx_notification_settings_member ON public.notification_settings(member_id);
 
 -- 更新時間觸發器
+DROP TRIGGER IF EXISTS update_notification_settings_updated_at ON public.notification_settings;
 CREATE TRIGGER update_notification_settings_updated_at
     BEFORE UPDATE ON public.notification_settings
     FOR EACH ROW
@@ -64,6 +65,8 @@ CREATE TABLE IF NOT EXISTS public.notification_logs (
     
     -- 通知類型
     notification_type TEXT NOT NULL CHECK (notification_type IN (
+        'booking_created',       -- 預約建立成功
+        'booking_confirmed',     -- 預約已確認
         'booking_reminder',      -- 預約提醒
         'birthday_greeting',     -- 生日祝福
         'wallet_change',         -- 儲值金變動

@@ -177,15 +177,68 @@ const NotificationAPI = {
     },
     
     /**
-     * 發送預約提醒
+     * 發送預約成功通知（建立預約時）
+     * @param {string} lineUserId - LINE 使用者 ID
+     * @param {Object} booking - 預約資訊
+     * @returns {Promise<Object>} 發送結果
+     */
+    async sendBookingCreated(lineUserId, booking) {
+        const message = `✅ 預約已成功建立！\n\n` +
+            `親愛的 ${booking.member_name || '顧客'} 您好，\n\n` +
+            `您的預約已成功提交，目前狀態為【待確認】\n\n` +
+            `📱 服務項目：${booking.service_name}\n` +
+            `${booking.service_option_name ? `    選項：${booking.service_option_name}\n` : ''}` +
+            `📅 預約日期：${booking.booking_date}\n` +
+            `⏰ 預約時間：${booking.booking_time}\n` +
+            `${booking.notes ? `📝 備註：${booking.notes}\n` : ''}` +
+            `\n` +
+            `⏳ 我們將盡快為您確認預約，請稍候。\n` +
+            `如有任何問題，歡迎隨時聯繫我們！\n\n` +
+            `NPHONE 感謝您的預約 ❤️`;
+        
+        return await this.sendLineMessage({
+            lineUserId,
+            message,
+            notificationType: 'booking_created',
+            relatedBookingId: booking.id
+        });
+    },
+    
+    /**
+     * 發送預約確認通知（管理員確認後）
+     * @param {string} lineUserId - LINE 使用者 ID
+     * @param {Object} booking - 預約資訊
+     * @returns {Promise<Object>} 發送結果
+     */
+    async sendBookingConfirmed(lineUserId, booking) {
+        const message = `✅ 預約已確認！\n\n` +
+            `親愛的 ${booking.member_name || '顧客'} 您好，\n\n` +
+            `您的預約已經確認囉！\n\n` +
+            `📱 服務項目：${booking.service_name}\n` +
+            `📅 預約日期：${booking.booking_date}\n` +
+            `⏰ 預約時間：${booking.booking_time}\n` +
+            `\n` +
+            `請準時到店，期待您的光臨！😊\n\n` +
+            `NPHONE`;
+        
+        return await this.sendLineMessage({
+            lineUserId,
+            message,
+            notificationType: 'booking_confirmed',
+            relatedBookingId: booking.id
+        });
+    },
+    
+    /**
+     * 發送預約提醒（預約前一天/當天）
      * @param {string} lineUserId - LINE 使用者 ID
      * @param {Object} booking - 預約資訊
      * @returns {Promise<Object>} 發送結果
      */
     async sendBookingReminder(lineUserId, booking) {
-        const message = `【預約提醒】\n\n` +
+        const message = `⏰ 預約提醒\n\n` +
             `親愛的 ${booking.member_name} 您好，\n\n` +
-            `您有一個即將到來的預約：\n` +
+            `提醒您即將到來的預約：\n` +
             `📅 日期：${booking.booking_date}\n` +
             `⏰ 時間：${booking.booking_time}\n` +
             `📱 服務：${booking.service_name}\n\n` +
