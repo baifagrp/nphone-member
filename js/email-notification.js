@@ -68,12 +68,11 @@ const EmailNotificationAPI = {
                 params: templateParams
             });
             
-            // 發送郵件
+            // 發送郵件（Public Key 已在 init() 中設置，不需要再傳遞）
             const response = await emailjs.send(
                 CONFIG.EMAILJS_SERVICE_ID,
                 CONFIG.EMAILJS_BOOKING_TEMPLATE_ID,
-                templateParams,
-                CONFIG.EMAILJS_PUBLIC_KEY  // ⚠️ 需要傳入 Public Key
+                templateParams
             );
             
             CONFIG.log('✅ 預約通知 Email 發送成功', response);

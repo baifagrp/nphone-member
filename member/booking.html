@@ -209,6 +209,12 @@
                     return;
                 }
                 
+                // 初始化 EmailJS（提前初始化，避免發送時才初始化）
+                if (typeof EmailNotificationAPI !== 'undefined') {
+                    EmailNotificationAPI.init();
+                    CONFIG.log('✅ EmailJS 已初始化');
+                }
+                
                 // 設定日期選擇器的最小日期為今天
                 const today = new Date().toISOString().split('T')[0];
                 document.getElementById('booking-date').setAttribute('min', today);
@@ -724,15 +730,17 @@
                 try {
                     CONFIG.log('📧 發送 Email 通知給店家');
                     
-                    // 初始化 EmailJS
-                    EmailNotificationAPI.init();
-                    
+                    // EmailJS 已在頁面載入時初始化
                     EmailNotificationAPI.sendBookingNotificationToShop(notificationData)
                         .then(() => {
                             CONFIG.log('✅ Email 通知已發送給店家');
                         })
                         .catch(error => {
                             CONFIG.error('❌ Email 通知發送失敗', error);
+                            // 提供更詳細的錯誤訊息
+                            if (error.text) {
+                                CONFIG.error('錯誤詳情:', error.text);
+                            }
                         });
                 } catch (error) {
                     CONFIG.error('❌ 準備 Email 通知失敗', error);

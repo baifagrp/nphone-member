@@ -76,11 +76,11 @@ const CONFIG = {
   // 4. 在 Account > General 中找到 Public Key
   EMAILJS_SERVICE_ID: 'service_blp8qfq',      // 替換為您的 Service ID
   EMAILJS_TEMPLATE_ID: 'template_friq9kv',    // 替換為您的 Email 驗證模板 ID
-  EMAILJS_BOOKING_TEMPLATE_ID: 'template_booking_notification',  // 預約通知模板 ID
+  EMAILJS_BOOKING_TEMPLATE_ID: 'template_fjsbjqn',  // 預約通知模板 ID
   EMAILJS_PUBLIC_KEY: '2wthB1ujHwbrjNfKC', // 替換為您的 Public Key
   
   // 店家通知 Email（接收預約通知）
-  SHOP_NOTIFICATION_EMAIL: 'shop@nphone.com',  // 替換為店家 Email
+  SHOP_NOTIFICATION_EMAIL: 'nphone.khjg@icloud.com',  // 替換為店家 Email
   
   // =============================================
   // 系統設定
