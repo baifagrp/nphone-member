@@ -38,6 +38,7 @@ const EmailNotificationAPI = {
             
             // 準備郵件參數
             const templateParams = {
+                // 收件人（必須在 EmailJS 模板中設置為 {{to_email}}）
                 to_email: CONFIG.SHOP_NOTIFICATION_EMAIL,
                 shop_name: CONFIG.UI.shopName || 'NPHONE',
                 
@@ -61,13 +62,18 @@ const EmailNotificationAPI = {
                 admin_url: `${CONFIG.APP_BASE_URL}/admin/bookings.html`
             };
             
-            CONFIG.log('📤 發送 Email 參數', templateParams);
+            CONFIG.log('📤 發送 Email 參數', {
+                service: CONFIG.EMAILJS_SERVICE_ID,
+                template: CONFIG.EMAILJS_BOOKING_TEMPLATE_ID,
+                params: templateParams
+            });
             
             // 發送郵件
             const response = await emailjs.send(
                 CONFIG.EMAILJS_SERVICE_ID,
                 CONFIG.EMAILJS_BOOKING_TEMPLATE_ID,
-                templateParams
+                templateParams,
+                CONFIG.EMAILJS_PUBLIC_KEY  // ⚠️ 需要傳入 Public Key
             );
             
             CONFIG.log('✅ 預約通知 Email 發送成功', response);
