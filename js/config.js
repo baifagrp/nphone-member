@@ -31,9 +31,23 @@ const CONFIG = {
   LINE_STATE: 'random_state_string_' + Math.random().toString(36).substring(7),  // 自動生成
   
   // =============================================
+  // LINE LIFF 設定
+  // =============================================
+  // 從 LINE Developers Console > LIFF 取得
+  // 格式：1234567890-abcdefgh
+  LIFF_ID: '2008674758-uH75pBkr',  // 替換為您的 LIFF ID
+  
+  // =============================================
   // Supabase Edge Function URL
   // =============================================
   // 部署 Edge Function 後，從 Supabase 取得此 URL
+  EDGE_FUNCTIONS: {
+    LINE_CALLBACK: 'https://czjdqxfhuhtwzxhrczir.supabase.co/functions/v1/line-login-callback',
+    CREATE_BOOKING: 'https://czjdqxfhuhtwzxhrczir.supabase.co/functions/v1/create-booking',
+    SEND_LINE_MESSAGE: 'https://czjdqxfhuhtwzxhrczir.supabase.co/functions/v1/send-line-message',  // ✨ LINE 訊息推播
+  },
+  
+  // ⚠️ 向下兼容（舊版本使用，建議改用 EDGE_FUNCTIONS）
   LINE_CALLBACK_FUNCTION_URL: 'https://czjdqxfhuhtwzxhrczir.supabase.co/functions/v1/line-login-callback',
   CREATE_BOOKING_FUNCTION_URL: 'https://czjdqxfhuhtwzxhrczir.supabase.co/functions/v1/create-booking',
   

@@ -22,7 +22,8 @@ const EmailVerificationAPI = {
             
             if (codeError) throw codeError;
             
-            CONFIG.log('驗證碼已生成', { email, code });
+            // ⚠️ 安全性：不應在 console 顯示驗證碼
+            CONFIG.log('驗證碼已生成並發送', { email });
             
             // 2. 使用 EmailJS 發送驗證碼
             // 注意：需要在 HTML 中引入 EmailJS SDK

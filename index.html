@@ -26,8 +26,14 @@
                 </button>
             </div>
             
+            <!-- 環境提示 -->
+            <div id="environment-hint" style="margin-top: 20px; padding: 12px; background: #F5F5F7; border-radius: 12px; font-size: 13px; color: #666; display: none;">
+                <span id="env-icon"></span>
+                <span id="env-text"></span>
+            </div>
+            
             <!-- 說明文字 -->
-            <div style="margin-top: 60px; color: #86868B; font-size: 14px;">
+            <div style="margin-top: 40px; color: #86868B; font-size: 14px;">
                 <p>第一次使用？登入後自動建立會員帳號</p>
                 <p style="margin-top: 8px;">您的個人資料將受到保護</p>
             </div>
@@ -42,23 +48,132 @@
     </div>
 
     <!-- JavaScript -->
+    <!-- ⭐ LINE LIFF SDK（必須第一個載入）-->
+    <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/config.js"></script>
     <script src="js/supabase-client.js"></script>
+    
+    <!-- ⭐ LIFF Client -->
+    <script src="js/liff-client.js"></script>
+    
     <script src="js/auth.js"></script>
     <script src="js/member.js"></script>
     
     <script>
-        // 頁面載入時檢查登入狀態
-        window.addEventListener('DOMContentLoaded', () => {
+        // 頁面載入時初始化
+        window.addEventListener('DOMContentLoaded', async () => {
+            try {
+                // 設定店家名稱
+                document.querySelector('.hero-title').textContent = CONFIG.UI.shopName;
+                
+                // ⭐ 初始化 LIFF
+                const liffReady = await LiffClient.init();
+                
+                if (liffReady && LiffClient.isInClient) {
+                    // LIFF 環境
+                    console.log('🎯 在 LINE 中開啟');
+                    handleLiffEnvironment();
+                } else {
+                    // 一般網頁環境
+                    console.log('🌐 在一般瀏覽器中開啟');
+                    handleWebEnvironment();
+                }
+            } catch (error) {
+                console.error('初始化失敗:', error);
+                // 降級到一般網頁模式
+                handleWebEnvironment();
+            }
+        });
+        
+        // 處理 LIFF 環境
+        async function handleLiffEnvironment() {
+            // 顯示環境提示
+            showEnvironmentHint('liff');
+            
+            if (LiffClient.isLoggedIn()) {
+                // LIFF 已登入，取得用戶資訊
+                try {
+                    const profile = await LiffClient.getProfile();
+                    console.log('✅ LIFF 已登入:', profile.displayName);
+                    
+                    // 檢查是否為註冊會員
+                    const member = await MemberAPI.getByLineId(profile.userId);
+                    
+                    if (member) {
+                        // 已註冊會員，儲存 session 並導向會員中心
+                        Auth.saveMemberSession(member, profile.userId, LiffClient.getAccessToken());
+                        window.location.href = '/member/profile.html';
+                    } else {
+                        // 未註冊會員，導向註冊流程
+                        sessionStorage.setItem('temp_line_user_id', profile.userId);
+                        sessionStorage.setItem('temp_line_display_name', profile.displayName);
+                        sessionStorage.setItem('temp_line_picture_url', profile.pictureUrl || '');
+                        window.location.href = '/member/email-verification.html';
+                    }
+                } catch (error) {
+                    console.error('處理 LIFF 登入失敗:', error);
+                }
+            } else {
+                // LIFF 未登入，設定登入按鈕
+                setupLiffLoginButton();
+            }
+        }
+        
+        // 處理一般網頁環境
+        function handleWebEnvironment() {
+            // 顯示環境提示
+            showEnvironmentHint('web');
+            
             // 如果已登入，直接導向會員中心
             if (Auth.isMemberLoggedIn()) {
                 window.location.href = '/member/profile.html';
+                return;
             }
             
-            // 設定店家名稱
-            document.querySelector('.hero-title').textContent = CONFIG.UI.shopName;
-        });
+            // 設定一般 LINE Login 按鈕
+            setupWebLoginButton();
+        }
+        
+        // 顯示環境提示
+        function showEnvironmentHint(type) {
+            const hintEl = document.getElementById('environment-hint');
+            const iconEl = document.getElementById('env-icon');
+            const textEl = document.getElementById('env-text');
+            
+            if (type === 'liff') {
+                iconEl.textContent = '📱 ';
+                textEl.textContent = '您正在 LINE 中使用（自動登入）';
+                hintEl.style.background = '#E8F5E9';
+                hintEl.style.color = '#2E7D32';
+            } else {
+                iconEl.textContent = '🌐 ';
+                textEl.textContent = '一般瀏覽器模式';
+                hintEl.style.background = '#F5F5F7';
+                hintEl.style.color = '#666';
+            }
+            
+            hintEl.style.display = 'block';
+        }
+        
+        // 設定 LIFF 登入按鈕
+        function setupLiffLoginButton() {
+            const loginBtn = document.getElementById('btn-line-login');
+            loginBtn.addEventListener('click', () => {
+                console.log('🔐 執行 LIFF 登入');
+                LiffClient.login();
+            });
+        }
+        
+        // 設定一般網頁登入按鈕
+        function setupWebLoginButton() {
+            const loginBtn = document.getElementById('btn-line-login');
+            loginBtn.addEventListener('click', () => {
+                console.log('🔐 執行 LINE Login (OAuth)');
+                Auth.lineLogin();
+            });
+        }
     </script>
 </body>
 </html>

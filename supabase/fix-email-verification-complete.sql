@@ -18,6 +18,7 @@ AS $$
 DECLARE
     v_existing_member RECORD;
     v_new_member RECORD;
+    v_email_owner RECORD;
     v_result JSONB;
 BEGIN
     -- 驗證參數
@@ -35,17 +36,30 @@ BEGIN
         RAISE EXCEPTION 'Email 尚未驗證，請先完成驗證';
     END IF;
     
-    -- 查找現有會員
-    SELECT * INTO v_existing_member
+    -- ⭐ 檢查此 email 是否已被其他會員使用
+    SELECT * INTO v_email_owner
     FROM public.members
     WHERE email = p_email
+      AND email NOT LIKE '%@nphone.temp'  -- 排除臨時 email
+      AND line_user_id != p_line_user_id  -- 排除自己
+    LIMIT 1;
+    
+    IF v_email_owner.id IS NOT NULL THEN
+        RAISE EXCEPTION '此 Email 已被其他會員使用，請使用其他 Email';
+    END IF;
+    
+    -- ⭐ 關鍵修正：先查找使用此 LINE User ID 的會員（可能有臨時 email）
+    SELECT * INTO v_existing_member
+    FROM public.members
+    WHERE line_user_id = p_line_user_id
     LIMIT 1;
     
     IF v_existing_member.id IS NOT NULL THEN
-        -- 找到現有會員，更新 LINE 綁定資訊
+        -- 找到 LINE User ID 對應的會員，更新其 email
+        -- 這個會員可能是剛才 LINE Login 時創建的（使用臨時 email）
         UPDATE public.members
         SET 
-            line_user_id = p_line_user_id,
+            email = p_email,  -- ⭐ 更新為真實 email
             name = COALESCE(p_line_display_name, name),
             avatar_url = COALESCE(p_line_picture_url, avatar_url),
             email_verified = TRUE,

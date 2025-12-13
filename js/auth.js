@@ -47,7 +47,8 @@ const Auth = {
         throw new Error('未收到授權碼');
       }
       
-      CONFIG.log('收到 LINE 授權碼', code);
+      // ⚠️ 安全性：不應在 console 顯示授權碼
+      CONFIG.log('收到 LINE 授權碼');
       
       // 呼叫 Supabase Edge Function 處理 OAuth
       // 注意：需要加上 apikey header 才能通過 Supabase 認證

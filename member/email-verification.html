@@ -285,9 +285,20 @@
                 document.getElementById('email-input').value = currentEmail;
             });
             
-            // 前往首頁
-            document.getElementById('btn-go-home').addEventListener('click', () => {
-                window.location.href = 'profile.html';
+            // 前往首頁（檢查是否需要補充資料）
+            document.getElementById('btn-go-home').addEventListener('click', async () => {
+                // 檢查是否需要補充資料
+                const session = Auth.getMemberSession();
+                if (session && session.member) {
+                    // 檢查是否有電話號碼（必填資料）
+                    if (!session.member.phone) {
+                        window.location.href = 'setup.html';
+                    } else {
+                        window.location.href = 'profile.html';
+                    }
+                } else {
+                    window.location.href = 'profile.html';
+                }
             });
         }
         
@@ -373,12 +384,30 @@
                     
                     UI.hideLoading();
                     
+                    // 更新 session 中的會員資料
+                    if (registrationResult.member) {
+                        const session = Auth.getMemberSession();
+                        if (session) {
+                            session.member = registrationResult.member;
+                            localStorage.setItem(CONFIG.SESSION_KEY, JSON.stringify(session));
+                        }
+                    }
+                    
                     // 顯示完成訊息
                     const messageEl = document.getElementById('complete-message');
+                    const btnGoHome = document.getElementById('btn-go-home');
+                    
                     if (registrationResult.is_new_member) {
                         messageEl.textContent = '歡迎加入 NPHONE！';
                     } else {
                         messageEl.textContent = '已綁定到您的現有會員帳號！';
+                    }
+                    
+                    // 檢查是否需要補充資料
+                    const needsProfile = !registrationResult.member.phone;
+                    if (needsProfile) {
+                        btnGoHome.textContent = '繼續填寫資料';
+                        messageEl.textContent += '\n接下來請完成基本資料設定';
                     }
                     
                     showStep('complete');
