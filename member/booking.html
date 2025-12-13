@@ -162,6 +162,7 @@
 
     <!-- JavaScript -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
     <script src="../js/config.js"></script>
     <script src="../js/supabase-client.js"></script>
     <script src="../js/ui-utils.js"></script>
@@ -169,6 +170,7 @@
     <script src="../js/member.js"></script>
     <script src="../js/booking.js"></script>
     <script src="../js/notification.js"></script>
+    <script src="../js/email-notification.js"></script>
     <script src="../js/animation-utils.js"></script>
     
     <script>
@@ -686,36 +688,54 @@
                 
                 CONFIG.log('✅ 預約建立成功', booking);
                 
-                // 發送預約成功通知
+                const member = Member.currentMember;
+                const service = availableServices.find(s => s.id === serviceIdStr);
+                
+                // 準備通知資料
+                const notificationData = {
+                    id: booking.id || booking.booking_id,
+                    booking_id: booking.id || booking.booking_id,
+                    member_name: member?.name || '顧客',
+                    member_phone: member?.phone || '未提供',
+                    member_email: member?.email || '未提供',
+                    service_name: service?.name || '服務',
+                    service_option_name: selectedServiceOption?.name || null,
+                    booking_date: bookingDate,
+                    booking_time: bookingTime,
+                    notes: notes
+                };
+                
+                // 1. 發送 LINE 通知給顧客
                 try {
-                    const member = Member.currentMember;
-                    const service = availableServices.find(s => s.id === serviceIdStr);
+                    CONFIG.log('📤 發送 LINE 通知給顧客', { lineUserId: session.lineUserId });
                     
-                    // 準備通知資料
-                    const notificationData = {
-                        id: booking.id || booking.booking_id,
-                        member_name: member?.name || '顧客',
-                        service_name: service?.name || '服務',
-                        service_option_name: selectedServiceOption?.name || null,
-                        booking_date: bookingDate,
-                        booking_time: bookingTime,
-                        notes: notes
-                    };
-                    
-                    CONFIG.log('📤 發送預約成功通知', { lineUserId: session.lineUserId, notificationData });
-                    
-                    // 非同步發送通知（不阻塞用戶）
                     NotificationAPI.sendBookingCreated(session.lineUserId, notificationData)
                         .then(() => {
-                            CONFIG.log('✅ 預約成功通知已發送');
+                            CONFIG.log('✅ LINE 通知已發送給顧客');
                         })
                         .catch(error => {
-                            // 通知發送失敗不影響預約流程
-                            CONFIG.error('❌ 預約成功通知發送失敗', error);
+                            CONFIG.error('❌ LINE 通知發送失敗', error);
                         });
-                } catch (notificationError) {
-                    // 通知發送失敗不影響預約流程
-                    CONFIG.error('❌ 準備通知資料失敗', notificationError);
+                } catch (error) {
+                    CONFIG.error('❌ 準備 LINE 通知失敗', error);
+                }
+                
+                // 2. 發送 Email 通知給店家
+                try {
+                    CONFIG.log('📧 發送 Email 通知給店家');
+                    
+                    // 初始化 EmailJS
+                    EmailNotificationAPI.init();
+                    
+                    EmailNotificationAPI.sendBookingNotificationToShop(notificationData)
+                        .then(() => {
+                            CONFIG.log('✅ Email 通知已發送給店家');
+                        })
+                        .catch(error => {
+                            CONFIG.error('❌ Email 通知發送失敗', error);
+                        });
+                } catch (error) {
+                    CONFIG.error('❌ 準備 Email 通知失敗', error);
                 }
                 
                 UI.hideLoading();

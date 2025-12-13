@@ -161,6 +161,10 @@
                     const selectedDate = document.getElementById('booking-date').value;
                     if (selectedDate) {
                         await loadAvailableTimeSlots(selectedDate);
+                    } else {
+                        // 提示需要選擇日期
+                        document.getElementById('booking-time').innerHTML = '<option value="">請先選擇日期</option>';
+                        showMessage('請選擇預約日期後，系統會自動載入可用時間段', 'info');
                     }
                 } else {
                     document.getElementById('service-options-container').style.display = 'none';
@@ -281,31 +285,48 @@
         
         // 載入可用時間段
         async function loadAvailableTimeSlots(date) {
+            const timeSelect = document.getElementById('booking-time');
+            
             try {
                 // 需要先選擇服務才能載入時間段（因為需要服務時長）
                 if (!selectedService) {
-                    document.getElementById('booking-time').innerHTML = '<option value="">請先選擇服務</option>';
+                    timeSelect.innerHTML = '<option value="">請先選擇服務</option>';
+                    CONFIG.log('⚠️ 尚未選擇服務，無法載入時間段');
                     return;
                 }
+                
+                CONFIG.log('📅 載入可用時間段', { date, service: selectedService.name, duration: selectedService.duration });
+                
+                // 顯示載入中
+                timeSelect.innerHTML = '<option value="">載入中...</option>';
+                timeSelect.disabled = true;
                 
                 const serviceDuration = selectedService.duration || 60;
                 const timeSlots = await BookingAPI.getAvailableTimeSlots(date, serviceDuration);
                 availableTimeSlots = timeSlots;
                 
-                const timeSelect = document.getElementById('booking-time');
+                CONFIG.log('✅ 成功載入時間段', { count: timeSlots?.length || 0, slots: timeSlots });
+                
+                // 啟用選單
+                timeSelect.disabled = false;
+                
                 if (!timeSlots || timeSlots.length === 0) {
                     timeSelect.innerHTML = '<option value="">當日無可用時間</option>';
+                    showMessage('該日期無可用時間段，請選擇其他日期', 'warning');
                 } else {
                     timeSelect.innerHTML = '<option value="">請選擇時間</option>' +
-                        timeSlots.map(slot => `
-                            <option value="${slot.time_slot || slot}">${slot.time_slot || slot}</option>
-                        `).join('');
+                        timeSlots.map(slot => {
+                            const timeValue = slot.time_slot || slot;
+                            return `<option value="${timeValue}">${timeValue}</option>`;
+                        }).join('');
+                    showMessage(`已載入 ${timeSlots.length} 個可用時間段`, 'success');
                 }
                 
             } catch (error) {
-                CONFIG.error('載入可用時間失敗', error);
+                CONFIG.error('❌ 載入可用時間失敗', error);
+                timeSelect.disabled = false;
+                timeSelect.innerHTML = '<option value="">載入失敗，請重試</option>';
                 showMessage('載入可用時間失敗：' + (error.message || '未知錯誤'), 'error');
-                document.getElementById('booking-time').innerHTML = '<option value="">載入失敗</option>';
             }
         }
         
