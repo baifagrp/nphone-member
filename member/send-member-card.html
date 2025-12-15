@@ -84,23 +84,25 @@
             `;
         }
 
-        // 生成會員條碼 SVG
-        function generateBarcodeSVG(memberCode) {
-            const canvas = document.createElement('canvas');
-            JsBarcode(canvas, memberCode, {
-                format: "CODE128",
-                width: 3,
-                height: 80,
-                displayValue: true,
-                fontSize: 16,
-                margin: 10
+        // 生成會員條碼 URL（使用外部 API 避免 Base64 太大）
+        function generateBarcodeURL(memberCode) {
+            // 使用免費的條碼生成 API
+            // API: https://bwipjs-api.metafloor.com/
+            const barcodeParams = new URLSearchParams({
+                bcid: 'code128',           // 條碼類型
+                text: memberCode,          // 條碼內容
+                scale: 3,                  // 縮放比例
+                height: 15,                // 高度（單位：模組）
+                includetext: true,         // 顯示文字
+                textxalign: 'center',      // 文字對齊
+                backgroundcolor: 'FFFFFF', // 背景色（白色）
+                barcolor: '000000'         // 條碼顏色（黑色）
             });
             
-            // 轉換為 Base64
-            return canvas.toDataURL('image/png');
+            return `https://bwipjs-api.metafloor.com/?${barcodeParams.toString()}`;
         }
 
-        // 創建會員卡 Flex Message
+        // 創建會員卡 Flex Message（使用外部條碼 API）
         function createMemberCardFlexMessage(memberData, barcodeImageUrl) {
             return {
                 type: 'flex',
@@ -204,7 +206,7 @@
                                 type: 'separator',
                                 margin: 'xl'
                             },
-                            // 條碼
+                            // 會員條碼（使用外部 API 生成）
                             {
                                 type: 'box',
                                 layout: 'vertical',
@@ -223,8 +225,9 @@
                                         url: barcodeImageUrl,
                                         size: 'full',
                                         aspectMode: 'fit',
-                                        aspectRatio: '3:1',
-                                        margin: 'md'
+                                        aspectRatio: '4:1',
+                                        margin: 'md',
+                                        backgroundColor: '#FFFFFF'
                                     },
                                     {
                                         type: 'text',
@@ -426,12 +429,15 @@
                 memberData.wallet_balance = memberData.wallets?.[0]?.balance || 0;
                 memberData.points_balance = memberData.points?.[0]?.balance || 0;
                 
-                // 4. 生成條碼
-                updateStatus('📊', '生成條碼...', '正在製作您的會員卡');
+                // 4. 生成條碼 URL
+                updateStatus('📊', '生成條碼...', '正在製作您的會員條碼');
                 
-                const barcodeImageUrl = generateBarcodeSVG(memberData.member_code);
+                const barcodeImageUrl = generateBarcodeURL(memberData.member_code);
+                CONFIG.log('條碼 URL', barcodeImageUrl);
                 
                 // 5. 創建 Flex Message
+                updateStatus('🎨', '製作會員卡...', '正在生成會員卡訊息');
+                
                 const flexMessage = createMemberCardFlexMessage(memberData, barcodeImageUrl);
                 
                 CONFIG.log('Flex Message', flexMessage);
