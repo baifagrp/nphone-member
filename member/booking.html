@@ -694,8 +694,28 @@
                 
                 CONFIG.log('✅ 預約建立成功', booking);
                 
-                const member = Member.currentMember;
+                // 取得完整的會員資料
+                let member = Member.currentMember;
                 const service = availableServices.find(s => s.id === serviceIdStr);
+                
+                // 如果 Member.currentMember 沒有完整資料，重新獲取
+                if (!member || !member.name || !member.phone) {
+                    try {
+                        CONFIG.log('🔄 重新獲取會員資料', { lineUserId: session.lineUserId });
+                        member = await MemberAPI.getByLineId(session.lineUserId);
+                        CONFIG.log('✅ 會員資料已更新', member);
+                    } catch (error) {
+                        CONFIG.error('❌ 獲取會員資料失敗', error);
+                    }
+                }
+                
+                CONFIG.log('📋 準備通知資料', { 
+                    member: {
+                        name: member?.name,
+                        phone: member?.phone,
+                        email: member?.email
+                    }
+                });
                 
                 // 準備通知資料
                 const notificationData = {

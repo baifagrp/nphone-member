@@ -44,6 +44,21 @@ serve(async (req) => {
     
     console.log('📤 準備發送訊息', { lineUserId, type: notificationType });
     
+    // 判斷訊息類型：Flex Message 或純文字
+    let messagePayload;
+    if (typeof message === 'object' && message.type === 'flex') {
+      // Flex Message
+      console.log('📊 發送 Flex Message');
+      messagePayload = message;
+    } else {
+      // 純文字訊息
+      console.log('📝 發送純文字訊息');
+      messagePayload = {
+        type: 'text',
+        text: message
+      };
+    }
+    
     // 發送 LINE 訊息
     const lineResponse = await fetch('https://api.line.me/v2/bot/message/push', {
       method: 'POST',
@@ -53,10 +68,7 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         to: lineUserId,
-        messages: [{
-          type: 'text',
-          text: message
-        }]
+        messages: [messagePayload]
       }),
     });
     
@@ -81,13 +93,17 @@ serve(async (req) => {
       .single();
     
     if (member) {
-      // 記錄通知
+      // 記錄通知（Flex Message 使用 altText 作為訊息內容）
+      const messageText = typeof message === 'object' && message.altText 
+        ? message.altText 
+        : (typeof message === 'string' ? message : 'Flex Message');
+      
       await supabase
         .from('notification_logs')
         .insert({
           member_id: member.id,
           notification_type: notificationType || 'system',
-          message: message,
+          message: messageText,
           related_booking_id: relatedBookingId || null,
           related_transaction_id: relatedTransactionId || null,
           status: 'sent',

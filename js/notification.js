@@ -177,28 +177,287 @@ const NotificationAPI = {
     },
     
     /**
-     * 發送預約成功通知（建立預約時）
+     * 發送預約成功通知（建立預約時）- Flex Message 格式
      * @param {string} lineUserId - LINE 使用者 ID
      * @param {Object} booking - 預約資訊
      * @returns {Promise<Object>} 發送結果
      */
     async sendBookingCreated(lineUserId, booking) {
-        const message = `✅ 預約已成功建立！\n\n` +
-            `親愛的 ${booking.member_name || '顧客'} 您好，\n\n` +
-            `您的預約已成功提交，目前狀態為【待確認】\n\n` +
-            `📱 服務項目：${booking.service_name}\n` +
-            `${booking.service_option_name ? `    選項：${booking.service_option_name}\n` : ''}` +
-            `📅 預約日期：${booking.booking_date}\n` +
-            `⏰ 預約時間：${booking.booking_time}\n` +
-            `${booking.notes ? `📝 備註：${booking.notes}\n` : ''}` +
-            `\n` +
-            `⏳ 我們將盡快為您確認預約，請稍候。\n` +
-            `如有任何問題，歡迎隨時聯繫我們！\n\n` +
-            `NPHONE 感謝您的預約 ❤️`;
+        // 建立 Flex Message
+        const flexMessage = {
+            type: 'flex',
+            altText: '✅ 預約已成功建立！',
+            contents: {
+                type: 'bubble',
+                size: 'mega',
+                header: {
+                    type: 'box',
+                    layout: 'vertical',
+                    contents: [
+                        {
+                            type: 'box',
+                            layout: 'vertical',
+                            contents: [
+                                {
+                                    type: 'text',
+                                    text: '預約成功！',
+                                    color: '#ffffff',
+                                    size: 'xl',
+                                    weight: 'bold'
+                                },
+                                {
+                                    type: 'text',
+                                    text: 'NPHONE',
+                                    color: '#ffffff99',
+                                    size: 'sm',
+                                    margin: 'sm'
+                                }
+                            ]
+                        }
+                    ],
+                    paddingAll: '20px',
+                    backgroundColor: '#667eea',
+                    spacing: 'md',
+                    paddingTop: '22px'
+                },
+                body: {
+                    type: 'box',
+                    layout: 'vertical',
+                    contents: [
+                        // 成功訊息
+                        {
+                            type: 'text',
+                            text: `親愛的 ${booking.member_name || '顧客'} 您好，`,
+                            wrap: true,
+                            color: '#666666',
+                            size: 'sm'
+                        },
+                        {
+                            type: 'text',
+                            text: '您的預約已成功提交！',
+                            wrap: true,
+                            margin: 'md',
+                            size: 'md',
+                            weight: 'bold',
+                            color: '#333333'
+                        },
+                        // 分隔線
+                        {
+                            type: 'separator',
+                            margin: 'xl'
+                        },
+                        // 預約資訊標題
+                        {
+                            type: 'box',
+                            layout: 'vertical',
+                            margin: 'xl',
+                            spacing: 'sm',
+                            contents: [
+                                {
+                                    type: 'text',
+                                    text: '📋 預約資訊',
+                                    size: 'md',
+                                    weight: 'bold',
+                                    color: '#333333'
+                                }
+                            ]
+                        },
+                        // 服務項目
+                        {
+                            type: 'box',
+                            layout: 'horizontal',
+                            margin: 'lg',
+                            spacing: 'sm',
+                            contents: [
+                                {
+                                    type: 'text',
+                                    text: '服務項目',
+                                    size: 'sm',
+                                    color: '#999999',
+                                    flex: 0,
+                                    wrap: true
+                                },
+                                {
+                                    type: 'text',
+                                    text: booking.service_name || '未知服務',
+                                    size: 'sm',
+                                    color: '#333333',
+                                    align: 'end',
+                                    weight: 'bold',
+                                    wrap: true
+                                }
+                            ]
+                        },
+                        // 服務選項（如果有）
+                        ...(booking.service_option_name ? [{
+                            type: 'box',
+                            layout: 'horizontal',
+                            margin: 'md',
+                            spacing: 'sm',
+                            contents: [
+                                {
+                                    type: 'text',
+                                    text: '選項',
+                                    size: 'sm',
+                                    color: '#999999',
+                                    flex: 0
+                                },
+                                {
+                                    type: 'text',
+                                    text: booking.service_option_name,
+                                    size: 'sm',
+                                    color: '#666666',
+                                    align: 'end',
+                                    wrap: true
+                                }
+                            ]
+                        }] : []),
+                        // 預約日期
+                        {
+                            type: 'box',
+                            layout: 'horizontal',
+                            margin: 'md',
+                            spacing: 'sm',
+                            contents: [
+                                {
+                                    type: 'text',
+                                    text: '預約日期',
+                                    size: 'sm',
+                                    color: '#999999',
+                                    flex: 0
+                                },
+                                {
+                                    type: 'text',
+                                    text: booking.booking_date || '未知',
+                                    size: 'sm',
+                                    color: '#333333',
+                                    align: 'end',
+                                    weight: 'bold'
+                                }
+                            ]
+                        },
+                        // 預約時間
+                        {
+                            type: 'box',
+                            layout: 'horizontal',
+                            margin: 'md',
+                            spacing: 'sm',
+                            contents: [
+                                {
+                                    type: 'text',
+                                    text: '預約時間',
+                                    size: 'sm',
+                                    color: '#999999',
+                                    flex: 0
+                                },
+                                {
+                                    type: 'text',
+                                    text: booking.booking_time?.substring(0, 5) || '未知',
+                                    size: 'sm',
+                                    color: '#333333',
+                                    align: 'end',
+                                    weight: 'bold'
+                                }
+                            ]
+                        },
+                        // 備註（如果有）
+                        ...(booking.notes ? [{
+                            type: 'box',
+                            layout: 'vertical',
+                            margin: 'lg',
+                            spacing: 'sm',
+                            contents: [
+                                {
+                                    type: 'text',
+                                    text: '備註',
+                                    size: 'sm',
+                                    color: '#999999'
+                                },
+                                {
+                                    type: 'text',
+                                    text: booking.notes,
+                                    size: 'sm',
+                                    color: '#666666',
+                                    wrap: true,
+                                    margin: 'xs'
+                                }
+                            ]
+                        }] : []),
+                        // 狀態提示
+                        {
+                            type: 'box',
+                            layout: 'vertical',
+                            margin: 'xl',
+                            spacing: 'sm',
+                            contents: [
+                                {
+                                    type: 'box',
+                                    layout: 'horizontal',
+                                    contents: [
+                                        {
+                                            type: 'text',
+                                            text: '⏳',
+                                            size: 'sm',
+                                            flex: 0
+                                        },
+                                        {
+                                            type: 'text',
+                                            text: '待確認',
+                                            size: 'sm',
+                                            color: '#FFA500',
+                                            weight: 'bold',
+                                            margin: 'sm',
+                                            flex: 0
+                                        }
+                                    ]
+                                },
+                                {
+                                    type: 'text',
+                                    text: '我們將盡快為您確認預約，請稍候。',
+                                    size: 'xs',
+                                    color: '#999999',
+                                    wrap: true,
+                                    margin: 'sm'
+                                }
+                            ]
+                        }
+                    ]
+                },
+                footer: {
+                    type: 'box',
+                    layout: 'vertical',
+                    spacing: 'sm',
+                    contents: [
+                        {
+                            type: 'text',
+                            text: '如有任何問題，歡迎隨時聯繫我們！',
+                            size: 'xs',
+                            color: '#999999',
+                            align: 'center',
+                            wrap: true
+                        },
+                        {
+                            type: 'separator',
+                            margin: 'md'
+                        },
+                        {
+                            type: 'text',
+                            text: 'NPHONE 感謝您的預約 ❤️',
+                            size: 'xs',
+                            color: '#667eea',
+                            align: 'center',
+                            margin: 'md',
+                            weight: 'bold'
+                        }
+                    ],
+                    flex: 0
+                }
+            }
+        };
         
         return await this.sendLineMessage({
             lineUserId,
-            message,
+            message: flexMessage,
             notificationType: 'booking_created',
             relatedBookingId: booking.id
         });
