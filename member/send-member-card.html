@@ -348,20 +348,35 @@
                     return;
                 }
                 
-                // 驗證 Access Token
+                // 驗證 Access Token 和權限
                 try {
                     const accessToken = liff.getAccessToken();
                     if (!accessToken) {
                         CONFIG.log('Access Token 不存在，重新登入');
-                        liff.logout();
-                        liff.login();
+                        await liff.logout();
+                        window.location.reload();
+                        return;
+                    }
+                    
+                    // 檢查是否有必要的權限
+                    // 如果是首次使用或權限更新，強制重新授權
+                    const needReauth = sessionStorage.getItem('liff_need_reauth');
+                    if (needReauth === 'true') {
+                        CONFIG.log('檢測到需要重新授權');
+                        sessionStorage.removeItem('liff_need_reauth');
+                        await liff.logout();
+                        setTimeout(() => {
+                            liff.login();
+                        }, 500);
                         return;
                     }
                 } catch (error) {
                     CONFIG.error('Access Token 驗證失敗', error);
                     // Token 失效，重新登入
-                    liff.logout();
-                    liff.login();
+                    await liff.logout();
+                    setTimeout(() => {
+                        liff.login();
+                    }, 500);
                     return;
                 }
                 
@@ -427,21 +442,25 @@
             } catch (error) {
                 CONFIG.error('發送會員卡失敗', error);
                 
-                // 檢查是否為 Token 失效錯誤
+                // 檢查是否為權限或 Token 相關錯誤
                 if (error.message && (
                     error.message.includes('access token revoked') ||
                     error.message.includes('access token expired') ||
-                    error.message.includes('permission is not in LIFF app scope')
+                    error.message.includes('permission is not in LIFF app scope') ||
+                    error.message.includes("doesn't grant required permissions")
                 )) {
-                    updateStatus('🔄', '授權已更新', '需要重新授權，請稍候...');
+                    updateStatus('🔐', '需要授權', '請授予「發送訊息」權限');
+                    
+                    // 標記需要重新授權
+                    sessionStorage.setItem('liff_need_reauth', 'true');
                     
                     // 清除舊的登入狀態並重新登入
-                    setTimeout(() => {
-                        liff.logout();
+                    setTimeout(async () => {
+                        await liff.logout();
                         setTimeout(() => {
                             liff.login();
                         }, 500);
-                    }, 1500);
+                    }, 2000);
                 } else {
                     updateStatus('❌', '發送失敗', error.message || '請稍後再試');
                     
