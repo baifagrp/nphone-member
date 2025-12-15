@@ -247,7 +247,7 @@
         // 發送會員卡按鈕
         document.getElementById('btn-send-card').addEventListener('click', () => {
             const liffUrl = `https://liff.line.me/${CONFIG.LIFF_SEND_CARD_ID}`;
-            
+            window.location.href = liffUrl;
             // // 判斷是否在 LINE 環境中
             // if (typeof liff !== 'undefined' && liff.isInClient()) {
             //     // 在 LINE 內，直接開啟 LIFF URL
