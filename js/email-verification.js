@@ -106,30 +106,34 @@ const EmailVerificationAPI = {
     /**
      * 完成註冊（綁定 LINE 或創建新會員）
      * @param {string} email - Email 地址
-     * @param {string} lineUserId - LINE User ID
-     * @param {string} lineDisplayName - LINE 顯示名稱
-     * @param {string} linePictureUrl - LINE 頭像 URL
+     * @param {string} lineUserId - LINE User ID（可選，網頁註冊時為 null）
+     * @param {string} lineDisplayName - LINE 顯示名稱（可選）
+     * @param {string} linePictureUrl - LINE 頭像 URL（可選）
      * @returns {Promise<Object>} 註冊結果
      */
-    async completeRegistration(email, lineUserId, lineDisplayName = null, linePictureUrl = null) {
+    async completeRegistration(email, lineUserId = null, lineDisplayName = null, linePictureUrl = null) {
         try {
             const client = getSupabase();
             
-            const { data, error } = await client.rpc('complete_registration', {
+            // 準備參數（lineUserId 可能是 null）
+            const params = {
                 p_email: email,
-                p_line_user_id: lineUserId,
-                p_line_display_name: lineDisplayName,
-                p_line_picture_url: linePictureUrl
-            });
+                p_line_user_id: lineUserId
+            };
+            
+            // 只有在有 LINE 資料時才傳遞
+            if (lineDisplayName) {
+                params.p_line_display_name = lineDisplayName;
+            }
+            if (linePictureUrl) {
+                params.p_line_picture_url = linePictureUrl;
+            }
+            
+            const { data, error } = await client.rpc('complete_registration', params);
             
             if (error) throw error;
             
             CONFIG.log('註冊完成', data);
-            
-            // 儲存會員資訊到 sessionStorage
-            if (data.member) {
-                sessionStorage.setItem('member', JSON.stringify(data.member));
-            }
             
             return data;
             
@@ -142,7 +146,7 @@ const EmailVerificationAPI = {
     /**
      * 檢查 Email 是否已存在
      * @param {string} email - Email 地址
-     * @returns {Promise<Object>} 檢查結果
+     * @returns {Promise<boolean>} 是否存在
      */
     async checkEmailExists(email) {
         try {
@@ -154,10 +158,68 @@ const EmailVerificationAPI = {
             
             if (error) throw error;
             
-            return data;
+            CONFIG.log('Email 存在檢查', { email, exists: data });
+            
+            return data; // 直接返回 boolean
             
         } catch (error) {
             CONFIG.error('檢查 Email 失敗', error);
+            throw error;
+        }
+    },
+    
+    /**
+     * Email 登入
+     * @param {string} email - Email 地址
+     * @returns {Promise<Object>} 登入結果
+     */
+    async emailLogin(email) {
+        try {
+            const client = getSupabase();
+            
+            const { data, error } = await client.rpc('email_login', {
+                p_email: email
+            });
+            
+            if (error) throw error;
+            
+            CONFIG.log('Email 登入成功', data);
+            
+            return data;
+            
+        } catch (error) {
+            CONFIG.error('Email 登入失敗', error);
+            throw error;
+        }
+    },
+    
+    /**
+     * 關聯 LINE 帳號到現有 Email 會員
+     * @param {string} email - Email 地址
+     * @param {string} lineUserId - LINE User ID
+     * @param {string} lineDisplayName - LINE 顯示名稱
+     * @param {string} linePictureUrl - LINE 頭像 URL
+     * @returns {Promise<Object>} 關聯結果
+     */
+    async linkLineAccount(email, lineUserId, lineDisplayName = null, linePictureUrl = null) {
+        try {
+            const client = getSupabase();
+            
+            const { data, error } = await client.rpc('link_line_account', {
+                p_email: email,
+                p_line_user_id: lineUserId,
+                p_line_display_name: lineDisplayName,
+                p_line_picture_url: linePictureUrl
+            });
+            
+            if (error) throw error;
+            
+            CONFIG.log('LINE 帳號關聯成功', data);
+            
+            return data;
+            
+        } catch (error) {
+            CONFIG.error('LINE 帳號關聯失敗', error);
             throw error;
         }
     },

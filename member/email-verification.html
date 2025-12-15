@@ -355,9 +355,24 @@
             }
             
             try {
-                UI.showLoading('發送驗證碼中...');
+                UI.showLoading('檢查 Email...');
                 
+                // 1. 檢查 Email 是否已存在
+                const emailExists = await EmailVerificationAPI.checkEmailExists(email);
                 currentEmail = email;
+                
+                if (emailExists) {
+                    CONFIG.log('📧 Email 已註冊，執行登入流程');
+                    UI.hideLoading();
+                    UI.info('此 Email 已註冊，請輸入驗證碼登入');
+                } else {
+                    CONFIG.log('📧 Email 未註冊，執行註冊流程');
+                    UI.hideLoading();
+                    UI.info('此 Email 尚未註冊，請輸入驗證碼完成註冊');
+                }
+                
+                // 2. 發送驗證碼（無論登入或註冊都需要）
+                UI.showLoading('發送驗證碼中...');
                 await EmailVerificationAPI.sendVerificationCode(email, lineUserId);
                 
                 UI.hideLoading();
@@ -370,6 +385,7 @@
                 
             } catch (error) {
                 UI.hideLoading();
+                CONFIG.error('❌ 發送驗證碼失敗', error);
                 UI.error(error.message || '發送驗證碼失敗');
             }
         }
@@ -385,52 +401,89 @@
             try {
                 UI.showLoading('驗證中...');
                 
+                // 1. 驗證驗證碼
                 const result = await EmailVerificationAPI.verifyCode(currentEmail, code);
                 
                 if (result.success) {
-                    // 完成註冊
-                    const registrationResult = await EmailVerificationAPI.completeRegistration(
-                        currentEmail,
-                        lineUserId,
-                        lineDisplayName,
-                        linePictureUrl
-                    );
+                    // 2. 檢查 Email 是否已註冊
+                    const emailExists = await EmailVerificationAPI.checkEmailExists(currentEmail);
+                    
+                    let finalResult;
+                    const isLiffMode = sessionStorage.getItem('liff_mode') === 'true' || !!lineUserId;
+                    
+                    if (emailExists) {
+                        // === Email 已存在 → 登入流程 ===
+                        CONFIG.log('📧 Email 已存在，執行登入流程');
+                        
+                        if (isLiffMode && lineUserId) {
+                            // LIFF + 已存在 Email → 關聯 LINE
+                            CONFIG.log('🔗 關聯 LINE 帳號到現有會員');
+                            finalResult = await EmailVerificationAPI.linkLineAccount(
+                                currentEmail,
+                                lineUserId,
+                                lineDisplayName,
+                                linePictureUrl
+                            );
+                        } else {
+                            // 網頁 + 已存在 Email → 純登入
+                            CONFIG.log('🔐 Email 登入');
+                            finalResult = await EmailVerificationAPI.emailLogin(currentEmail);
+                        }
+                        
+                    } else {
+                        // === Email 未存在 → 註冊流程 ===
+                        CONFIG.log('📝 Email 未註冊，執行註冊流程');
+                        
+                        finalResult = await EmailVerificationAPI.completeRegistration(
+                            currentEmail,
+                            lineUserId || null,  // 可能有 LINE user id，也可能沒有
+                            lineDisplayName || null,
+                            linePictureUrl || null
+                        );
+                    }
                     
                     UI.hideLoading();
                     
-                    // 更新 session 中的會員資料
-                    if (registrationResult.member) {
-                        const session = Auth.getMemberSession();
-                        if (session) {
-                            session.member = registrationResult.member;
-                            localStorage.setItem(CONFIG.SESSION_KEY, JSON.stringify(session));
-                        }
+                    // 3. 儲存 Session
+                    if (finalResult.member) {
+                        // 使用 Auth.js 的標準方法儲存 session
+                        Auth.saveMemberSession(
+                            finalResult.member, 
+                            finalResult.member.line_user_id || null, 
+                            null
+                        );
                     }
                     
-                    // 顯示完成訊息
+                    // 4. 顯示完成訊息
                     const messageEl = document.getElementById('complete-message');
                     const btnGoHome = document.getElementById('btn-go-home');
+                    const completeTitle = document.querySelector('#step-complete .ds-card-title');
                     
-                    if (registrationResult.is_new_member) {
-                        messageEl.textContent = '歡迎加入 NPHONE！';
+                    if (emailExists) {
+                        // 登入成功
+                        completeTitle.textContent = '登入成功！';
+                        messageEl.textContent = '歡迎回來 NPHONE';
                     } else {
-                        messageEl.textContent = '已綁定到您的現有會員帳號！';
+                        // 註冊成功
+                        completeTitle.textContent = '註冊成功！';
+                        messageEl.textContent = '歡迎加入 NPHONE';
                     }
                     
-                    // 檢查是否需要補充資料
-                    const needsProfile = !registrationResult.member.phone;
+                    // 5. 檢查是否需要補充資料
+                    const needsProfile = !finalResult.member.phone;
                     if (needsProfile) {
                         btnGoHome.textContent = '繼續填寫資料';
-                        messageEl.textContent += '\n接下來請完成基本資料設定';
+                    } else {
+                        btnGoHome.textContent = '前往首頁';
                     }
                     
                     showStep('complete');
-                    
-                    UI.success(registrationResult.message);
+                    UI.success(finalResult.message || '驗證成功！');
                 }
                 
             } catch (error) {
                 UI.hideLoading();
+                CONFIG.error('❌ 驗證失敗', error);
                 UI.error(error.message || '驗證失敗');
                 
                 // 清空輸入
