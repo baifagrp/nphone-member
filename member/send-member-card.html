@@ -354,10 +354,14 @@
                 
                 CONFIG.log('LIFF Profile', profile);
                 
-                // 從資料庫取得完整會員資訊
+                // 從資料庫取得完整會員資訊（包含儲值金和積分）
                 const { data: memberData, error: memberError } = await getSupabase()
                     .from('members')
-                    .select('*')
+                    .select(`
+                        *,
+                        wallets:wallets!member_id (balance),
+                        points:points!member_id (balance)
+                    `)
                     .eq('line_user_id', lineUserId)
                     .single();
                 
@@ -372,23 +376,12 @@
                     throw new Error('您還沒有會員編號，請聯繫商家設定');
                 }
                 
-                // 3. 取得儲值金和積分
+                // 3. 處理儲值金和積分資料
                 updateStatus('💰', '載入餘額資訊...', '正在取得儲值金與積分');
                 
-                const { data: walletData } = await getSupabase()
-                    .from('wallets')
-                    .select('balance')
-                    .eq('member_id', memberData.id)
-                    .single();
-                
-                const { data: pointsData } = await getSupabase()
-                    .from('points')
-                    .select('balance')
-                    .eq('member_id', memberData.id)
-                    .single();
-                
-                memberData.wallet_balance = walletData?.balance || 0;
-                memberData.points_balance = pointsData?.balance || 0;
+                // 從關聯查詢中提取餘額
+                memberData.wallet_balance = memberData.wallets?.[0]?.balance || 0;
+                memberData.points_balance = memberData.points?.[0]?.balance || 0;
                 
                 // 4. 生成條碼
                 updateStatus('📊', '生成條碼...', '正在製作您的會員卡');

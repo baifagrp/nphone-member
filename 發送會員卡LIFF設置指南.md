@@ -69,8 +69,8 @@ https://your-domain.com/member/send-member-card.html
 **Scope（權限範圍）：**
 - ✅ `profile` - 取得用戶基本資料
 - ✅ `openid` - OpenID Connect 認證
+- ✅ `chat_message.write` - **必須勾選！用於發送訊息**
 - ❌ `email` - 不需要（不是有效的 LIFF scope）
-- ❌ `chat_message.write` - 不需要
 
 **Bot link feature（機器人連結功能）：**
 - ○ On (Normal)
@@ -149,7 +149,7 @@ LIFF_SEND_CARD_ID: '2008674758-xYz12AbC',  // 發送會員卡 LIFF ID
 | **LIFF app name** | 發送會員卡 |
 | **Size** | Full |
 | **Endpoint URL** | `https://your-domain.com/member/send-member-card.html` |
-| **Scope** | `profile`, `openid` |
+| **Scope** | `profile`, `openid`, `chat_message.write` ⭐ |
 | **Bot link feature** | Off |
 | **Scan QR** | 不勾選 |
 | **Module mode** | 不勾選 |
