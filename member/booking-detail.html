@@ -181,11 +181,11 @@
         async function loadBookingDetail(bookingId) {
             try {
                 const memberData = Member.currentMember;
-                if (!memberData?.line_user_id) {
+                if (!memberData?.id) {
                     throw new Error('無法取得會員資料');
                 }
 
-                CONFIG.log('📋 載入預約詳情', { bookingId });
+                CONFIG.log('📋 載入預約詳情', { bookingId, memberId: memberData.id });
 
                 // 取得預約資料
                 const { data, error } = await getSupabase()
@@ -203,7 +203,7 @@
                         )
                     `)
                     .eq('id', bookingId)
-                    .eq('line_user_id', memberData.line_user_id)
+                    .eq('member_id', memberData.id)
                     .single();
 
                 if (error) throw error;
