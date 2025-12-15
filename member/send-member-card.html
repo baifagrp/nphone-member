@@ -341,7 +341,26 @@
                 
                 await liff.init({ liffId: CONFIG.LIFF_SEND_CARD_ID });
                 
+                // 檢查登入狀態
                 if (!liff.isLoggedIn()) {
+                    CONFIG.log('用戶未登入，導向登入頁面');
+                    liff.login();
+                    return;
+                }
+                
+                // 驗證 Access Token
+                try {
+                    const accessToken = liff.getAccessToken();
+                    if (!accessToken) {
+                        CONFIG.log('Access Token 不存在，重新登入');
+                        liff.logout();
+                        liff.login();
+                        return;
+                    }
+                } catch (error) {
+                    CONFIG.error('Access Token 驗證失敗', error);
+                    // Token 失效，重新登入
+                    liff.logout();
                     liff.login();
                     return;
                 }
@@ -407,11 +426,29 @@
                 
             } catch (error) {
                 CONFIG.error('發送會員卡失敗', error);
-                updateStatus('❌', '發送失敗', error.message || '請稍後再試');
                 
-                setTimeout(() => {
-                    liff.closeWindow();
-                }, 3000);
+                // 檢查是否為 Token 失效錯誤
+                if (error.message && (
+                    error.message.includes('access token revoked') ||
+                    error.message.includes('access token expired') ||
+                    error.message.includes('permission is not in LIFF app scope')
+                )) {
+                    updateStatus('🔄', '授權已更新', '需要重新授權，請稍候...');
+                    
+                    // 清除舊的登入狀態並重新登入
+                    setTimeout(() => {
+                        liff.logout();
+                        setTimeout(() => {
+                            liff.login();
+                        }, 500);
+                    }, 1500);
+                } else {
+                    updateStatus('❌', '發送失敗', error.message || '請稍後再試');
+                    
+                    setTimeout(() => {
+                        liff.closeWindow();
+                    }, 3000);
+                }
             }
         }
 
