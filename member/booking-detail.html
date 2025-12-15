@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>預約詳情 - NPHONE</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/design-system.css">
+    <link rel="stylesheet" href="../css/animations.css">
+</head>
+<body class="ds-page">
+    <!-- 頁面頭部 -->
+    <div class="ds-page-header">
+        <div style="display: flex; align-items: center; justify-content: space-between; max-width: 1200px; margin: 0 auto; padding: 0 var(--spacing-md);">
+            <button onclick="history.back()" class="ds-btn ds-btn-text" style="padding: 8px;">← 返回</button>
+            <h1 class="ds-page-title" style="margin: 0;">預約詳情</h1>
+            <div style="width: 60px;"></div>
+        </div>
+    </div>
+
+    <!-- 主要內容 -->
+    <div class="ds-container">
+        <!-- 載入中 -->
+        <div id="loading-container" class="ds-card ds-text-center" style="padding: var(--spacing-2xl);">
+            <div class="loading-spinner"></div>
+            <div style="margin-top: var(--spacing-md); color: var(--text-secondary);">載入中...</div>
+        </div>
+
+        <!-- 預約詳情內容 -->
+        <div id="booking-detail-container" style="display: none;">
+            <!-- 狀態卡片 -->
+            <div class="ds-card ds-mb-lg">
+                <div style="text-align: center; padding: var(--spacing-xl) 0;">
+                    <div id="status-icon" style="font-size: 48px; margin-bottom: var(--spacing-md);">⏳</div>
+                    <div id="status-text" class="ds-badge ds-badge-warning" style="font-size: var(--font-size-lg);">待確認</div>
+                    <div id="status-description" style="margin-top: var(--spacing-sm); color: var(--text-secondary); font-size: var(--font-size-sm);">
+                        我們將盡快為您確認預約
+                    </div>
+                </div>
+            </div>
+
+            <!-- 預約資訊卡片 -->
+            <div class="ds-card ds-mb-lg">
+                <div class="ds-card-header">
+                    <div class="ds-card-title">📋 預約資訊</div>
+                </div>
+                <div class="ds-card-body">
+                    <div style="display: grid; gap: var(--spacing-lg);">
+                        <!-- 服務項目 -->
+                        <div>
+                            <div style="color: var(--text-secondary); font-size: var(--font-size-sm); margin-bottom: 4px;">
+                                服務項目
+                            </div>
+                            <div id="service-name" style="font-size: var(--font-size-lg); font-weight: var(--font-weight-semibold); color: var(--text-primary);">
+                                螢幕貼膜
+                            </div>
+                            <div id="service-option" style="color: var(--text-secondary); font-size: var(--font-size-sm); margin-top: 4px;"></div>
+                        </div>
+
+                        <!-- 預約時間 -->
+                        <div>
+                            <div style="color: var(--text-secondary); font-size: var(--font-size-sm); margin-bottom: 4px;">
+                                預約時間
+                            </div>
+                            <div style="display: flex; gap: var(--spacing-md);">
+                                <div>
+                                    <div style="font-size: var(--font-size-lg); font-weight: var(--font-weight-semibold); color: var(--text-primary);">
+                                        📅 <span id="booking-date">2025-12-14</span>
+                                    </div>
+                                    <div style="font-size: var(--font-size-md); color: var(--text-secondary); margin-top: 4px;">
+                                        🕐 <span id="booking-time">09:00</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 備註 -->
+                        <div id="notes-container" style="display: none;">
+                            <div style="color: var(--text-secondary); font-size: var(--font-size-sm); margin-bottom: 4px;">
+                                備註
+                            </div>
+                            <div id="booking-notes" style="padding: var(--spacing-md); background: var(--surface-secondary); border-radius: var(--radius-md); color: var(--text-primary);">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 付款資訊卡片 -->
+            <div class="ds-card ds-mb-lg">
+                <div class="ds-card-header">
+                    <div class="ds-card-title">💳 付款資訊</div>
+                </div>
+                <div class="ds-card-body">
+                    <div style="display: grid; gap: var(--spacing-md);">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span style="color: var(--text-secondary);">付款狀態</span>
+                            <span id="payment-status" class="ds-badge ds-badge-error">未付款</span>
+                        </div>
+                        <div id="payment-method-container" style="display: none;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span style="color: var(--text-secondary);">付款方式</span>
+                                <span id="payment-method" style="font-weight: var(--font-weight-semibold);">現金</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 系統資訊卡片 -->
+            <div class="ds-card ds-mb-lg">
+                <div class="ds-card-header">
+                    <div class="ds-card-title">⚙️ 系統資訊</div>
+                </div>
+                <div class="ds-card-body">
+                    <div style="display: grid; gap: var(--spacing-sm);">
+                        <div style="display: flex; justify-content: space-between;">
+                            <span style="color: var(--text-secondary); font-size: var(--font-size-sm);">預約編號</span>
+                            <span id="booking-id" style="font-family: monospace; font-size: var(--font-size-xs); color: var(--text-secondary);"></span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span style="color: var(--text-secondary); font-size: var(--font-size-sm);">建立時間</span>
+                            <span id="created-at" style="font-size: var(--font-size-sm); color: var(--text-secondary);"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 操作按鈕 -->
+            <div id="action-buttons" style="display: flex; gap: var(--spacing-md); margin-bottom: var(--spacing-2xl);">
+                <button id="btn-cancel" class="ds-btn ds-btn-error" style="flex: 1; display: none;">
+                    取消預約
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast 容器 -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../js/config.js"></script>
+    <script src="../js/supabase-client.js"></script>
+    <script src="../js/ui-utils.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/member.js"></script>
+    <script src="../js/booking.js"></script>
+    
+    <script>
+        let currentBooking = null;
+
+        // 頁面載入時初始化
+        window.addEventListener('DOMContentLoaded', async () => {
+            try {
+                // 檢查登入狀態
+                if (!Auth.requireMemberLogin()) {
+                    return;
+                }
+
+                // 取得預約 ID
+                const urlParams = new URLSearchParams(window.location.search);
+                const bookingId = urlParams.get('id');
+
+                if (!bookingId) {
+                    UI.error('無效的預約 ID');
+                    setTimeout(() => history.back(), 1500);
+                    return;
+                }
+
+                await Member.init();
+                await loadBookingDetail(bookingId);
+
+            } catch (error) {
+                CONFIG.error('初始化失敗', error);
+                UI.error('載入預約詳情失敗');
+            }
+        });
+
+        // 載入預約詳情
+        async function loadBookingDetail(bookingId) {
+            try {
+                const memberData = Member.currentMember;
+                if (!memberData?.line_user_id) {
+                    throw new Error('無法取得會員資料');
+                }
+
+                CONFIG.log('📋 載入預約詳情', { bookingId });
+
+                // 取得預約資料
+                const { data, error } = await getSupabase()
+                    .from('bookings')
+                    .select(`
+                        *,
+                        services (
+                            name,
+                            description,
+                            duration,
+                            price
+                        ),
+                        service_options (
+                            name
+                        )
+                    `)
+                    .eq('id', bookingId)
+                    .eq('line_user_id', memberData.line_user_id)
+                    .single();
+
+                if (error) throw error;
+                if (!data) {
+                    UI.error('找不到此預約');
+                    setTimeout(() => history.back(), 1500);
+                    return;
+                }
+
+                currentBooking = data;
+                CONFIG.log('✅ 預約詳情載入成功', data);
+
+                displayBookingDetail(data);
+
+            } catch (error) {
+                CONFIG.error('❌ 載入預約詳情失敗', error);
+                UI.error('載入失敗：' + (error.message || '未知錯誤'));
+                
+                // 隱藏載入中，顯示錯誤
+                document.getElementById('loading-container').style.display = 'none';
+            }
+        }
+
+        // 顯示預約詳情
+        function displayBookingDetail(booking) {
+            // 隱藏載入中，顯示內容
+            document.getElementById('loading-container').style.display = 'none';
+            document.getElementById('booking-detail-container').style.display = 'block';
+
+            // 狀態資訊
+            const statusConfig = getStatusConfig(booking.status);
+            document.getElementById('status-icon').textContent = statusConfig.icon;
+            document.getElementById('status-text').textContent = statusConfig.text;
+            document.getElementById('status-text').className = `ds-badge ${statusConfig.badgeClass}`;
+            document.getElementById('status-description').textContent = statusConfig.description;
+
+            // 服務資訊
+            document.getElementById('service-name').textContent = booking.services?.name || '未知服務';
+            if (booking.service_options?.name) {
+                document.getElementById('service-option').textContent = booking.service_options.name;
+                document.getElementById('service-option').style.display = 'block';
+            }
+
+            // 預約時間
+            document.getElementById('booking-date').textContent = formatDate(booking.booking_date);
+            document.getElementById('booking-time').textContent = booking.booking_time?.substring(0, 5) || '未知';
+
+            // 備註
+            if (booking.notes) {
+                document.getElementById('booking-notes').textContent = booking.notes;
+                document.getElementById('notes-container').style.display = 'block';
+            }
+
+            // 付款狀態
+            const paymentStatusConfig = getPaymentStatusConfig(booking.payment_status);
+            document.getElementById('payment-status').textContent = paymentStatusConfig.text;
+            document.getElementById('payment-status').className = `ds-badge ${paymentStatusConfig.badgeClass}`;
+
+            // 付款方式
+            if (booking.payment_method) {
+                document.getElementById('payment-method').textContent = booking.payment_method;
+                document.getElementById('payment-method-container').style.display = 'block';
+            }
+
+            // 系統資訊
+            document.getElementById('booking-id').textContent = booking.id;
+            document.getElementById('created-at').textContent = new Date(booking.created_at).toLocaleString('zh-TW');
+
+            // 操作按鈕
+            if (booking.status === 'pending' || booking.status === 'confirmed') {
+                document.getElementById('btn-cancel').style.display = 'block';
+                document.getElementById('btn-cancel').addEventListener('click', () => cancelBooking(booking.id));
+            }
+        }
+
+        // 取得狀態配置
+        function getStatusConfig(status) {
+            const configs = {
+                'pending': {
+                    icon: '⏳',
+                    text: '待確認',
+                    badgeClass: 'ds-badge-warning',
+                    description: '我們將盡快為您確認預約'
+                },
+                'confirmed': {
+                    icon: '✅',
+                    text: '已確認',
+                    badgeClass: 'ds-badge-success',
+                    description: '請準時到店，期待您的光臨'
+                },
+                'completed': {
+                    icon: '✓',
+                    text: '已完成',
+                    badgeClass: 'ds-badge-info',
+                    description: '感謝您的光臨'
+                },
+                'cancelled': {
+                    icon: '✕',
+                    text: '已取消',
+                    badgeClass: 'ds-badge-default',
+                    description: '此預約已取消'
+                }
+            };
+            return configs[status] || configs['pending'];
+        }
+
+        // 取得付款狀態配置
+        function getPaymentStatusConfig(status) {
+            const configs = {
+                'unpaid': {
+                    text: '未付款',
+                    badgeClass: 'ds-badge-error'
+                },
+                'paid': {
+                    text: '已付款',
+                    badgeClass: 'ds-badge-success'
+                },
+                'partial': {
+                    text: '部分付款',
+                    badgeClass: 'ds-badge-warning'
+                },
+                'refunded': {
+                    text: '已退款',
+                    badgeClass: 'ds-badge-info'
+                }
+            };
+            return configs[status] || configs['unpaid'];
+        }
+
+        // 格式化日期
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            const year = date.getFullYear();
+            const month = date.getMonth() + 1;
+            const day = date.getDate();
+            const weekdays = ['日', '一', '二', '三', '四', '五', '六'];
+            const weekday = weekdays[date.getDay()];
+            return `${year}年${month}月${day}日 (週${weekday})`;
+        }
+
+        // 取消預約
+        async function cancelBooking(bookingId) {
+            if (!confirm('確定要取消此預約嗎？\n取消後將無法恢復。')) {
+                return;
+            }
+
+            try {
+                UI.showLoading('取消中...');
+
+                const { error } = await getSupabase()
+                    .from('bookings')
+                    .update({ status: 'cancelled' })
+                    .eq('id', bookingId);
+
+                if (error) throw error;
+
+                UI.hideLoading();
+                UI.success('預約已取消');
+
+                // 重新載入資料
+                setTimeout(() => {
+                    loadBookingDetail(bookingId);
+                }, 1000);
+
+            } catch (error) {
+                UI.hideLoading();
+                CONFIG.error('❌ 取消預約失敗', error);
+                UI.error('取消失敗：' + (error.message || '未知錯誤'));
+            }
+        }
+    </script>
+</body>
+</html>
+
