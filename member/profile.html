@@ -248,16 +248,6 @@
         document.getElementById('btn-send-card').addEventListener('click', () => {
             const liffUrl = `https://liff.line.me/${CONFIG.LIFF_SEND_CARD_ID}`;
             window.location.href = liffUrl;
-            // // 判斷是否在 LINE 環境中
-            // if (typeof liff !== 'undefined' && liff.isInClient()) {
-            //     // 在 LINE 內，直接開啟 LIFF URL
-            //     window.location.href = liffUrl;
-            // } else {
-            //     // 在外部瀏覽器，提示用戶在 LINE 中開啟
-            //     UI.info('請在 LINE 中開啟此功能');
-            //     // 也可以選擇開啟 LINE 分享連結
-            //     // window.open(`https://line.me/R/msg/text/?${encodeURIComponent('點擊連結發送會員卡: ' + liffUrl)}`);
-            // }
         });
         
         // 登出按鈕

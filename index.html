@@ -98,18 +98,23 @@
                     const profile = await LiffClient.getProfile();
                     console.log('✅ LIFF 已登入:', profile.displayName);
                     
-                    // 檢查是否為註冊會員
-                    const member = await MemberAPI.getByLineId(profile.userId);
+                    // 檢查是否為已註冊會員（通過 LINE user id）
+                    const memberByLine = await MemberAPI.getByLineId(profile.userId);
                     
-                    if (member) {
-                        // 已註冊會員，儲存 session 並導向會員中心
-                        Auth.saveMemberSession(member, profile.userId, LiffClient.getAccessToken());
+                    if (memberByLine) {
+                        // 情況 1：已註冊且有 LINE 資料 → 直接登入
+                        console.log('✅ 已註冊會員（有 LINE 資料）');
+                        Auth.saveMemberSession(memberByLine, profile.userId, LiffClient.getAccessToken());
                         window.location.href = '/member/profile.html';
                     } else {
-                        // 未註冊會員，導向註冊流程
+                        // 未找到 LINE user id 對應的會員
+                        // 可能是：1) 完全未註冊 2) 已註冊但無 LINE 資料
+                        // 導向 Email 驗證/註冊流程
+                        console.log('🔄 未找到 LINE 資料，導向 Email 註冊/驗證');
                         sessionStorage.setItem('temp_line_user_id', profile.userId);
                         sessionStorage.setItem('temp_line_display_name', profile.displayName);
                         sessionStorage.setItem('temp_line_picture_url', profile.pictureUrl || '');
+                        sessionStorage.setItem('liff_mode', 'true'); // 標記為 LIFF 模式
                         window.location.href = '/member/email-verification.html';
                     }
                 } catch (error) {
@@ -132,8 +137,8 @@
                 return;
             }
             
-            // 設定一般 LINE Login 按鈕
-            setupWebLoginButton();
+            // 設定 Email 登入/註冊按鈕
+            setupEmailLoginButton();
         }
         
         // 顯示環境提示
@@ -166,7 +171,26 @@
             });
         }
         
-        // 設定一般網頁登入按鈕
+        // 設定 Email 登入按鈕
+        function setupEmailLoginButton() {
+            const loginBtn = document.getElementById('btn-line-login');
+            // 修改按鈕文字為 Email 登入
+            loginBtn.innerHTML = `
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" style="margin-right: 8px;">
+                    <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z" fill="white"/>
+                </svg>
+                Email 登入 / 註冊
+            `;
+            loginBtn.addEventListener('click', () => {
+                console.log('📧 導向 Email 登入/註冊');
+                // 導向 Email 登入/註冊頁面
+                sessionStorage.removeItem('liff_mode'); // 標記為網頁模式
+                sessionStorage.removeItem('temp_line_user_id'); // 清除 LINE 資料
+                window.location.href = '/member/email-verification.html';
+            });
+        }
+        
+        // 設定一般網頁登入按鈕（保留舊版，可能用於其他地方）
         function setupWebLoginButton() {
             const loginBtn = document.getElementById('btn-line-login');
             loginBtn.addEventListener('click', () => {

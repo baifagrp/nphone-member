@@ -204,15 +204,29 @@
             lineDisplayName = params.get('line_display_name') || sessionStorage.getItem('temp_line_display_name');
             linePictureUrl = params.get('line_picture_url') || sessionStorage.getItem('temp_line_picture_url');
             
-            if (!lineUserId) {
-                UI.error('缺少 LINE 登入資訊，請重新登入');
-                setTimeout(() => {
-                    window.location.href = '../index.html';
-                }, 2000);
-                return;
+            // 判斷是 LIFF 模式還是網頁模式
+            const isLiffMode = sessionStorage.getItem('liff_mode') === 'true' || !!lineUserId;
+            
+            if (isLiffMode) {
+                CONFIG.log('📱 LIFF 模式：LINE 登入 + Email 驗證');
+                // LIFF 模式需要 LINE user id
+                if (!lineUserId) {
+                    UI.error('缺少 LINE 登入資訊，請重新登入');
+                    setTimeout(() => {
+                        window.location.href = '../index.html';
+                    }, 2000);
+                    return;
+                }
+                // 更新頁面標題
+                document.querySelector('body > div > div:nth-child(1) > p').textContent = 'LINE 帳號綁定';
+            } else {
+                CONFIG.log('🌐 網頁模式：Email 登入/註冊');
+                // 網頁模式不需要 LINE user id
+                // 更新頁面標題
+                document.querySelector('body > div > div:nth-child(1) > p').textContent = 'Email 登入/註冊';
             }
             
-            // 初始化 EmailJS（請在 config.js 中設置）
+            // 初始化 EmailJS
             if (typeof emailjs !== 'undefined' && CONFIG.EMAILJS_PUBLIC_KEY) {
                 emailjs.init(CONFIG.EMAILJS_PUBLIC_KEY);
             }
