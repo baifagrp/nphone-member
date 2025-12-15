@@ -380,13 +380,22 @@
                     return;
                 }
                 
-                // 2. 取得會員資訊
+                // 2. 取得會員資訊和檢查權限
                 updateStatus('👤', '載入會員資訊...', '正在取得您的資料');
                 
                 const profile = await liff.getProfile();
                 const lineUserId = profile.userId;
                 
                 CONFIG.log('LIFF Profile', profile);
+                
+                // 檢查可用的權限
+                const context = liff.getContext();
+                CONFIG.log('LIFF Context', context);
+                
+                // 檢查是否在 LINE 內部瀏覽器
+                if (!liff.isInClient()) {
+                    throw new Error('請在 LINE 應用程式中開啟此功能');
+                }
                 
                 // 從資料庫取得完整會員資訊（包含儲值金和積分）
                 const { data: memberData, error: memberError } = await getSupabase()
