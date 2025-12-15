@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>發送會員卡 - NPHONE</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/design-system.css">
+    <style>
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 20px;
+        }
+        
+        .loading-container {
+            text-align: center;
+            color: white;
+        }
+        
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 6px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .loading-text {
+            font-size: 18px;
+            font-weight: 500;
+            margin-bottom: 10px;
+        }
+        
+        .loading-detail {
+            font-size: 14px;
+            opacity: 0.8;
+        }
+        
+        .success-icon {
+            font-size: 60px;
+            margin-bottom: 20px;
+        }
+        
+        .error-icon {
+            font-size: 60px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="loading-container" id="status">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">正在準備您的會員卡...</div>
+        <div class="loading-detail">請稍候</div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../js/config.js"></script>
+    <script src="../js/supabase-client.js"></script>
+    <script src="../js/member.js"></script>
+    
+    <script>
+        // 更新狀態顯示
+        function updateStatus(icon, text, detail) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.innerHTML = `
+                <div class="success-icon">${icon}</div>
+                <div class="loading-text">${text}</div>
+                <div class="loading-detail">${detail}</div>
+            `;
+        }
+
+        // 生成會員條碼 SVG
+        function generateBarcodeSVG(memberCode) {
+            const canvas = document.createElement('canvas');
+            JsBarcode(canvas, memberCode, {
+                format: "CODE128",
+                width: 3,
+                height: 80,
+                displayValue: true,
+                fontSize: 16,
+                margin: 10
+            });
+            
+            // 轉換為 Base64
+            return canvas.toDataURL('image/png');
+        }
+
+        // 創建會員卡 Flex Message
+        function createMemberCardFlexMessage(memberData, barcodeImageUrl) {
+            return {
+                type: 'flex',
+                altText: '🎫 我的 NPHONE 會員卡',
+                contents: {
+                    type: 'bubble',
+                    size: 'mega',
+                    header: {
+                        type: 'box',
+                        layout: 'vertical',
+                        contents: [
+                            {
+                                type: 'box',
+                                layout: 'vertical',
+                                contents: [
+                                    {
+                                        type: 'text',
+                                        text: 'NPHONE',
+                                        color: '#ffffff',
+                                        size: 'xl',
+                                        weight: 'bold',
+                                        align: 'center'
+                                    },
+                                    {
+                                        type: 'text',
+                                        text: '會員卡',
+                                        color: '#ffffff99',
+                                        size: 'sm',
+                                        align: 'center',
+                                        margin: 'sm'
+                                    }
+                                ]
+                            }
+                        ],
+                        paddingAll: '20px',
+                        backgroundColor: '#667eea',
+                        spacing: 'md',
+                        paddingTop: '22px'
+                    },
+                    body: {
+                        type: 'box',
+                        layout: 'vertical',
+                        contents: [
+                            // 會員資訊
+                            {
+                                type: 'box',
+                                layout: 'vertical',
+                                margin: 'lg',
+                                spacing: 'sm',
+                                contents: [
+                                    {
+                                        type: 'box',
+                                        layout: 'horizontal',
+                                        contents: [
+                                            {
+                                                type: 'text',
+                                                text: '會員姓名',
+                                                size: 'sm',
+                                                color: '#999999',
+                                                flex: 0,
+                                                wrap: true
+                                            },
+                                            {
+                                                type: 'text',
+                                                text: memberData.name || '未設定',
+                                                size: 'sm',
+                                                color: '#333333',
+                                                align: 'end',
+                                                weight: 'bold',
+                                                wrap: true
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        type: 'box',
+                                        layout: 'horizontal',
+                                        contents: [
+                                            {
+                                                type: 'text',
+                                                text: '會員編號',
+                                                size: 'sm',
+                                                color: '#999999',
+                                                flex: 0
+                                            },
+                                            {
+                                                type: 'text',
+                                                text: memberData.member_code || '未設定',
+                                                size: 'sm',
+                                                color: '#667eea',
+                                                align: 'end',
+                                                weight: 'bold',
+                                                style: 'normal'
+                                            }
+                                        ],
+                                        margin: 'md'
+                                    }
+                                ]
+                            },
+                            // 分隔線
+                            {
+                                type: 'separator',
+                                margin: 'xl'
+                            },
+                            // 條碼
+                            {
+                                type: 'box',
+                                layout: 'vertical',
+                                margin: 'xl',
+                                spacing: 'sm',
+                                contents: [
+                                    {
+                                        type: 'text',
+                                        text: '會員條碼',
+                                        size: 'sm',
+                                        color: '#999999',
+                                        align: 'center'
+                                    },
+                                    {
+                                        type: 'image',
+                                        url: barcodeImageUrl,
+                                        size: 'full',
+                                        aspectMode: 'fit',
+                                        aspectRatio: '3:1',
+                                        margin: 'md'
+                                    },
+                                    {
+                                        type: 'text',
+                                        text: '請在結帳時出示此條碼',
+                                        size: 'xs',
+                                        color: '#999999',
+                                        align: 'center',
+                                        margin: 'md',
+                                        wrap: true
+                                    }
+                                ]
+                            },
+                            // 分隔線
+                            {
+                                type: 'separator',
+                                margin: 'xl'
+                            },
+                            // 餘額資訊
+                            {
+                                type: 'box',
+                                layout: 'vertical',
+                                margin: 'xl',
+                                spacing: 'sm',
+                                contents: [
+                                    {
+                                        type: 'box',
+                                        layout: 'horizontal',
+                                        contents: [
+                                            {
+                                                type: 'text',
+                                                text: '💰 儲值金',
+                                                size: 'sm',
+                                                color: '#666666',
+                                                flex: 0
+                                            },
+                                            {
+                                                type: 'text',
+                                                text: `NT$ ${memberData.wallet_balance || 0}`,
+                                                size: 'sm',
+                                                color: '#ff6b6b',
+                                                align: 'end',
+                                                weight: 'bold'
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        type: 'box',
+                                        layout: 'horizontal',
+                                        contents: [
+                                            {
+                                                type: 'text',
+                                                text: '⭐ 積分',
+                                                size: 'sm',
+                                                color: '#666666',
+                                                flex: 0
+                                            },
+                                            {
+                                                type: 'text',
+                                                text: `${memberData.points_balance || 0} 點`,
+                                                size: 'sm',
+                                                color: '#ffd93d',
+                                                align: 'end',
+                                                weight: 'bold'
+                                            }
+                                        ],
+                                        margin: 'md'
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    footer: {
+                        type: 'box',
+                        layout: 'vertical',
+                        spacing: 'sm',
+                        contents: [
+                            {
+                                type: 'text',
+                                text: '感謝您的支持！',
+                                size: 'xs',
+                                color: '#999999',
+                                align: 'center',
+                                wrap: true
+                            },
+                            {
+                                type: 'separator',
+                                margin: 'md'
+                            },
+                            {
+                                type: 'text',
+                                text: 'NPHONE ❤️',
+                                size: 'xs',
+                                color: '#667eea',
+                                align: 'center',
+                                margin: 'md',
+                                weight: 'bold'
+                            }
+                        ],
+                        flex: 0
+                    }
+                }
+            };
+        }
+
+        // 主要執行函數
+        async function main() {
+            try {
+                // 1. 初始化 LIFF
+                updateStatus('🔄', '初始化中...', '正在連接 LINE');
+                
+                if (typeof liff === 'undefined') {
+                    throw new Error('LIFF SDK 未載入');
+                }
+                
+                await liff.init({ liffId: CONFIG.LIFF_SEND_CARD_ID });
+                
+                if (!liff.isLoggedIn()) {
+                    liff.login();
+                    return;
+                }
+                
+                // 2. 取得會員資訊
+                updateStatus('👤', '載入會員資訊...', '正在取得您的資料');
+                
+                const profile = await liff.getProfile();
+                const lineUserId = profile.userId;
+                
+                CONFIG.log('LIFF Profile', profile);
+                
+                // 從資料庫取得完整會員資訊
+                const { data: memberData, error: memberError } = await getSupabase()
+                    .from('members')
+                    .select('*')
+                    .eq('line_user_id', lineUserId)
+                    .single();
+                
+                if (memberError || !memberData) {
+                    throw new Error('找不到會員資料');
+                }
+                
+                CONFIG.log('會員資料', memberData);
+                
+                // 檢查是否有會員編號
+                if (!memberData.member_code) {
+                    throw new Error('您還沒有會員編號，請聯繫商家設定');
+                }
+                
+                // 3. 取得儲值金和積分
+                updateStatus('💰', '載入餘額資訊...', '正在取得儲值金與積分');
+                
+                const { data: walletData } = await getSupabase()
+                    .from('wallets')
+                    .select('balance')
+                    .eq('member_id', memberData.id)
+                    .single();
+                
+                const { data: pointsData } = await getSupabase()
+                    .from('points')
+                    .select('balance')
+                    .eq('member_id', memberData.id)
+                    .single();
+                
+                memberData.wallet_balance = walletData?.balance || 0;
+                memberData.points_balance = pointsData?.balance || 0;
+                
+                // 4. 生成條碼
+                updateStatus('📊', '生成條碼...', '正在製作您的會員卡');
+                
+                const barcodeImageUrl = generateBarcodeSVG(memberData.member_code);
+                
+                // 5. 創建 Flex Message
+                const flexMessage = createMemberCardFlexMessage(memberData, barcodeImageUrl);
+                
+                CONFIG.log('Flex Message', flexMessage);
+                
+                // 6. 發送訊息
+                updateStatus('📤', '發送會員卡...', '正在發送到聊天室');
+                
+                await liff.sendMessages([flexMessage]);
+                
+                // 7. 顯示成功並關閉
+                updateStatus('✅', '會員卡已發送！', '視窗即將關閉...');
+                
+                setTimeout(() => {
+                    liff.closeWindow();
+                }, 1500);
+                
+            } catch (error) {
+                CONFIG.error('發送會員卡失敗', error);
+                updateStatus('❌', '發送失敗', error.message || '請稍後再試');
+                
+                setTimeout(() => {
+                    liff.closeWindow();
+                }, 3000);
+            }
+        }
+
+        // 頁面載入時執行
+        window.addEventListener('DOMContentLoaded', main);
+    </script>
+</body>
+</html>
+

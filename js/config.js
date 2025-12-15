@@ -35,7 +35,8 @@ const CONFIG = {
   // =============================================
   // 從 LINE Developers Console > LIFF 取得
   // 格式：1234567890-abcdefgh
-  LIFF_ID: '2008674758-uH75pBkr',  // 替換為您的 LIFF ID
+  LIFF_ID: '2008674758-uH75pBkr',  // 會員系統 LIFF ID
+  LIFF_SEND_CARD_ID: '2008674758-5mczIgOu',  // 發送會員卡 LIFF ID（需要新建）
   
   // =============================================
   // Supabase Edge Function URL

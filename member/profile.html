@@ -38,6 +38,11 @@
                 <div style="font-size: var(--font-size-sm); color: var(--text-secondary); margin-bottom: var(--spacing-sm);">會員條碼</div>
                 <svg id="barcode" style="max-width: 100%; height: auto;"></svg>
                 <div id="member-code-text" style="font-size: var(--font-size-sm); color: var(--text-hint); margin-top: var(--spacing-xs);"></div>
+                
+                <!-- 發送會員卡按鈕 -->
+                <button id="btn-send-card" class="ds-btn ds-btn-primary" style="margin-top: var(--spacing-md); font-size: var(--font-size-sm); padding: 8px 16px;">
+                    📤 發送會員卡到 LINE
+                </button>
             </div>
         </div>
 
@@ -246,6 +251,22 @@
             }
         }
 
+        // 發送會員卡按鈕
+        document.getElementById('btn-send-card').addEventListener('click', () => {
+            const liffUrl = `https://liff.line.me/${CONFIG.LIFF_SEND_CARD_ID}/member/send-member-card.html`;
+            
+            // 判斷是否在 LINE 環境中
+            if (typeof liff !== 'undefined' && liff.isInClient()) {
+                // 在 LINE 內，直接開啟 LIFF URL
+                window.location.href = liffUrl;
+            } else {
+                // 在外部瀏覽器，提示用戶在 LINE 中開啟
+                UI.info('請在 LINE 中開啟此功能');
+                // 也可以選擇開啟 LINE 分享連結
+                // window.open(`https://line.me/R/msg/text/?${encodeURIComponent('點擊連結發送會員卡: ' + liffUrl)}`);
+            }
+        });
+        
         // 登出按鈕
         document.getElementById('btn-logout').addEventListener('click', () => {
             if (confirm('確定要登出嗎？')) {
