@@ -7,7 +7,6 @@
     <link rel="stylesheet" href="../css/styles.css">
     <link rel="stylesheet" href="../css/design-system.css">
     <link rel="stylesheet" href="../css/animations.css">
-    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
 </head>
 <body class="ds-page">
     <!-- 頁面頭部 -->
@@ -33,15 +32,17 @@
                 </a>
             </div>
 
-            <!-- 會員編號條碼 -->
+            <!-- 會員卡操作 -->
             <div style="text-align: center; padding: var(--spacing-lg); background: var(--gray-50); border-radius: var(--radius-md);">
-                <div style="font-size: var(--font-size-sm); color: var(--text-secondary); margin-bottom: var(--spacing-sm);">會員條碼</div>
-                <svg id="barcode" style="max-width: 100%; height: auto;"></svg>
-                <div id="member-code-text" style="font-size: var(--font-size-sm); color: var(--text-hint); margin-top: var(--spacing-xs);"></div>
+                <!-- 會員編號顯示 -->
+                <div style="margin-bottom: var(--spacing-md);">
+                    <div style="font-size: var(--font-size-sm); color: var(--text-secondary); margin-bottom: var(--spacing-xs);">會員編號</div>
+                    <div id="member-code-text" style="font-size: var(--font-size-xl); font-weight: var(--font-weight-bold); color: var(--primary); letter-spacing: 2px;"></div>
+                </div>
                 
-                <!-- 發送會員卡按鈕 -->
-                <button id="btn-send-card" class="ds-btn ds-btn-primary" style="margin-top: var(--spacing-md); font-size: var(--font-size-sm); padding: 8px 16px;">
-                    📤 發送會員卡到 LINE
+                <!-- 出示會員卡按鈕 -->
+                <button id="btn-send-card" class="ds-btn ds-btn-primary" style="width: 100%; font-size: var(--font-size-md); padding: 12px 24px;">
+                    🎫 出示會員卡
                 </button>
             </div>
         </div>
@@ -184,20 +185,12 @@
                     `);
                 }
 
-                // 顯示會員條碼
+                // 顯示會員編號
                 if (memberData.member_code) {
-                    try {
-                        JsBarcode("#barcode", memberData.member_code, {
-                            format: "CODE128",
-                            width: 2,
-                            height: 60,
-                            displayValue: false,
-                            margin: 0
-                        });
-                        document.getElementById('member-code-text').textContent = memberData.member_code;
-                    } catch (error) {
-                        console.error('條碼生成失敗', error);
-                    }
+                    document.getElementById('member-code-text').textContent = memberData.member_code;
+                } else {
+                    document.getElementById('member-code-text').textContent = '未設定';
+                    document.getElementById('member-code-text').style.color = 'var(--text-hint)';
                 }
 
                 // 載入儲值金和積分
