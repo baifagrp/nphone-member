@@ -108,13 +108,19 @@
                         window.location.href = '/member/profile.html';
                     } else {
                         // 未找到 LINE user id 對應的會員
-                        // 可能是：1) 完全未註冊 2) 已註冊但無 LINE 資料
+                        // 可能是：1) 完全未註冊 2) 已註冊但無 LINE 資料（透過Email註冊的）
                         // 導向 Email 驗證/註冊流程
+                        // email-verification.html 會自動判斷是「註冊」還是「登入+關聯LINE」
                         console.log('🔄 未找到 LINE 資料，導向 Email 註冊/驗證');
                         sessionStorage.setItem('temp_line_user_id', profile.userId);
                         sessionStorage.setItem('temp_line_display_name', profile.displayName);
                         sessionStorage.setItem('temp_line_picture_url', profile.pictureUrl || '');
                         sessionStorage.setItem('liff_mode', 'true'); // 標記為 LIFF 模式
+                        // 保存 LIFF access token（如果可用）
+                        const liffAccessToken = LiffClient.getAccessToken();
+                        if (liffAccessToken) {
+                            sessionStorage.setItem('temp_liff_access_token', liffAccessToken);
+                        }
                         window.location.href = '/member/email-verification.html';
                     }
                 } catch (error) {

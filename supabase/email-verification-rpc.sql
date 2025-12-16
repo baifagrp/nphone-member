@@ -371,6 +371,33 @@ BEGIN
         RAISE EXCEPTION 'Email 未註冊或尚未驗證';
     END IF;
     
+    -- 檢查該會員是否已經有 LINE 資料
+    IF v_member.line_user_id IS NOT NULL AND v_member.line_user_id != '' THEN
+        -- 如果已經有 LINE 資料
+        IF v_member.line_user_id = p_line_user_id THEN
+            -- 是同一個 LINE 帳號，直接返回會員資料（不需要更新）
+            v_result := jsonb_build_object(
+                'success', true,
+                'message', 'LINE 帳號已綁定',
+                'member', jsonb_build_object(
+                    'id', v_member.id,
+                    'name', v_member.name,
+                    'email', v_member.email,
+                    'phone', v_member.phone,
+                    'line_user_id', v_member.line_user_id,
+                    'member_code', v_member.member_code,
+                    'birthday', v_member.birthday,
+                    'gender', v_member.gender,
+                    'avatar_url', v_member.avatar_url
+                )
+            );
+            RETURN v_result;
+        ELSE
+            -- 是不同的 LINE 帳號，不允許
+            RAISE EXCEPTION '此 Email 帳號已綁定到其他 LINE 帳號';
+        END IF;
+    END IF;
+    
     -- 檢查 LINE User ID 是否已被其他會員使用
     IF EXISTS (
         SELECT 1 FROM public.members
@@ -380,7 +407,7 @@ BEGIN
         RAISE EXCEPTION '此 LINE 帳號已綁定到其他會員';
     END IF;
     
-    -- 關聯 LINE 帳號
+    -- 關聯 LINE 帳號（會員沒有 LINE 資料的情況）
     UPDATE public.members
     SET 
         line_user_id = p_line_user_id,

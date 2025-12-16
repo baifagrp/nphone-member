@@ -448,12 +448,30 @@
                     
                     // 3. 儲存 Session
                     if (finalResult.member) {
+                        // 獲取 LIFF access token（如果有的話）
+                        let accessToken = null;
+                        if (isLiffMode) {
+                            // 從 sessionStorage 獲取保存的 LIFF access token
+                            accessToken = sessionStorage.getItem('temp_liff_access_token');
+                            // 或者嘗試從 LIFF Client 獲取（如果可用）
+                            if (!accessToken && typeof LiffClient !== 'undefined' && LiffClient.getAccessToken) {
+                                accessToken = LiffClient.getAccessToken();
+                            }
+                        }
+                        
                         // 使用 Auth.js 的標準方法儲存 session
                         Auth.saveMemberSession(
                             finalResult.member, 
-                            finalResult.member.line_user_id || null, 
-                            null
+                            finalResult.member.line_user_id || lineUserId || null, 
+                            accessToken
                         );
+                        
+                        // 清理臨時資料
+                        sessionStorage.removeItem('temp_line_user_id');
+                        sessionStorage.removeItem('temp_line_display_name');
+                        sessionStorage.removeItem('temp_line_picture_url');
+                        sessionStorage.removeItem('temp_liff_access_token');
+                        sessionStorage.removeItem('liff_mode');
                     }
                     
                     // 4. 顯示完成訊息
@@ -463,12 +481,26 @@
                     
                     if (emailExists) {
                         // 登入成功
-                        completeTitle.textContent = '登入成功！';
-                        messageEl.textContent = '歡迎回來 NPHONE';
+                        if (isLiffMode && lineUserId) {
+                            // LIFF 模式下，Email已存在 → 登入+關聯LINE
+                            completeTitle.textContent = '登入成功！';
+                            messageEl.textContent = 'LINE 帳號已綁定\n歡迎回來 NPHONE';
+                        } else {
+                            // 網頁模式，Email已存在 → 純登入
+                            completeTitle.textContent = '登入成功！';
+                            messageEl.textContent = '歡迎回來 NPHONE';
+                        }
                     } else {
                         // 註冊成功
-                        completeTitle.textContent = '註冊成功！';
-                        messageEl.textContent = '歡迎加入 NPHONE';
+                        if (isLiffMode && lineUserId) {
+                            // LIFF 模式下，Email未存在 → 註冊+關聯LINE
+                            completeTitle.textContent = '註冊成功！';
+                            messageEl.textContent = 'LINE 帳號已綁定\n歡迎加入 NPHONE';
+                        } else {
+                            // 網頁模式，Email未存在 → 純註冊
+                            completeTitle.textContent = '註冊成功！';
+                            messageEl.textContent = '歡迎加入 NPHONE';
+                        }
                     }
                     
                     // 5. 檢查是否需要補充資料
