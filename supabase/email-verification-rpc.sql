@@ -99,10 +99,11 @@ BEGIN
     SELECT * INTO v_existing_member
     FROM public.members
     WHERE email = p_email
+      AND email NOT LIKE '%@nphone.temp'  -- 排除臨時 email
     LIMIT 1;
     
     -- 準備返回結果
-    IF v_existing_member.id IS NOT NULL THEN
+    IF FOUND AND v_existing_member.id IS NOT NULL THEN
         -- 找到現有會員
         v_result := jsonb_build_object(
             'success', true,
