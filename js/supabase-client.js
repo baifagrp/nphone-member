@@ -145,7 +145,7 @@ const MemberAPI = {
     }
   },
   
-  // 更新會員資料（使用 RPC 函數）
+  // 更新會員資料（使用 RPC 函數，透過 LINE User ID）
   async updateByLineId(lineUserId, updates) {
     try {
       const client = getSupabase();
@@ -162,6 +162,30 @@ const MemberAPI = {
       if (error) throw error;
       
       CONFIG.log('會員資料更新成功', data);
+      return data;
+    } catch (error) {
+      CONFIG.error('更新會員資料失敗', error);
+      throw error;
+    }
+  },
+  
+  // 更新會員資料（使用 RPC 函數，透過 Member ID）- 用於純 Email 會員
+  async updateById(memberId, updates) {
+    try {
+      const client = getSupabase();
+      const { data, error } = await client
+        .rpc('update_member_profile_by_id', {
+          p_member_id: memberId,
+          p_name: updates.name,
+          p_phone: updates.phone || null,
+          p_email: updates.email || null,
+          p_birthday: updates.birthday || null,
+          p_gender: updates.gender || null,
+        });
+      
+      if (error) throw error;
+      
+      CONFIG.log('會員資料更新成功（透過 Member ID）', data);
       return data;
     } catch (error) {
       CONFIG.error('更新會員資料失敗', error);

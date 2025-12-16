@@ -150,8 +150,9 @@ const Member = {
         });
       } else if (session.member.id) {
         // 如果沒有 LINE user id，使用 member id 更新（純 Email 會員）
+        // 使用 RPC 函數，避免 RLS 政策問題
         CONFIG.log('使用 member id 更新會員資料（純 Email 會員）');
-        updated = await MemberAPI.update(session.member.id, {
+        updated = await MemberAPI.updateById(session.member.id, {
           name: formData.name.trim(),
           phone: formData.phone || null,
           email: formData.email || null,
