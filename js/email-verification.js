@@ -41,7 +41,8 @@ const EmailVerificationAPI = {
                 to_email: email,
                 verification_code: code,
                 to_name: 'NPHONE 會員',
-                expiry_minutes: '10'
+                expiry_minutes: '10',
+                now_year: new Date().getFullYear().toString()  // 當前年份
             };
             
             await emailjs.send(

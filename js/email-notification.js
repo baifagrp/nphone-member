@@ -46,6 +46,7 @@ const EmailNotificationAPI = {
                 member_name: bookingData.member_name || '未提供',
                 member_phone: bookingData.member_phone || '未提供',
                 member_email: bookingData.member_email || '未提供',
+                member_gend: this.formatGender(bookingData.member_gender),  // 會員性別
                 
                 // 預約資訊
                 service_name: bookingData.service_name || '未知服務',
@@ -57,6 +58,7 @@ const EmailNotificationAPI = {
                 // 系統資訊
                 booking_id: bookingData.booking_id || bookingData.id || '未知',
                 created_at: new Date().toLocaleString('zh-TW'),
+                now_year: new Date().getFullYear().toString(),  // 當前年份
                 
                 // 管理後台連結
                 admin_url: `${CONFIG.APP_BASE_URL}/admin/bookings.html`
@@ -104,6 +106,22 @@ const EmailNotificationAPI = {
         } catch (error) {
             return dateString;
         }
+    },
+    
+    /**
+     * 格式化性別
+     * @param {string} gender - 性別代碼
+     * @returns {string} 格式化後的性別稱呼
+     */
+    formatGender(gender) {
+        const genderMap = {
+            'male': '先生',
+            'female': '小姐',
+            'other': null,
+            'prefer_not_to_say': null
+        };
+        
+        return genderMap[gender] || null;
     }
 };
 

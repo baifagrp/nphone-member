@@ -23,11 +23,23 @@ const Member = {
     
     // 重新從資料庫載入最新資料
     try {
-      const latestMember = await MemberAPI.getByLineId(session.lineUserId);
+      let latestMember = null;
+      
+      // 如果有 LINE user id，優先使用它查詢
+      if (session.lineUserId) {
+        latestMember = await MemberAPI.getByLineId(session.lineUserId);
+      }
+      
+      // 如果沒找到且有 member id，使用 member id 查詢
+      if (!latestMember && session.member?.id) {
+        CONFIG.log('使用 member id 查詢會員資料');
+        latestMember = await MemberAPI.getById(session.member.id);
+      }
+      
       if (latestMember) {
         this.currentMember = latestMember;
         // 更新 Session
-        Auth.saveMemberSession(latestMember, session.lineUserId, session.accessToken);
+        Auth.saveMemberSession(latestMember, session.lineUserId || null, session.accessToken);
       } else {
         // 如果資料庫中找不到會員，使用 Session 中的資料
         CONFIG.log('資料庫中找不到會員，使用 Session 資料');
@@ -119,26 +131,42 @@ const Member = {
         throw new Error(CONFIG.VALIDATION.emailMessage);
       }
       
-      // 取得 line_user_id
+      // 取得 session 和會員 ID
       const session = Auth.getMemberSession();
-      if (!session || !session.lineUserId) {
-        throw new Error('無法取得 LINE 使用者 ID');
+      if (!session || !session.member) {
+        throw new Error('無法取得會員資料');
       }
       
-      // 使用 RPC 函數更新資料庫（會自動驗證 line_user_id）
-      const updated = await MemberAPI.updateByLineId(session.lineUserId, {
-        name: formData.name.trim(),
-        phone: formData.phone || null,
-        email: formData.email || null,
-        birthday: formData.birthday || null,
-        gender: formData.gender || null,
-      });
+      let updated = null;
+      
+      // 如果有 LINE user id，使用 updateByLineId（會自動驗證 line_user_id）
+      if (session.lineUserId) {
+        updated = await MemberAPI.updateByLineId(session.lineUserId, {
+          name: formData.name.trim(),
+          phone: formData.phone || null,
+          email: formData.email || null,
+          birthday: formData.birthday || null,
+          gender: formData.gender || null,
+        });
+      } else if (session.member.id) {
+        // 如果沒有 LINE user id，使用 member id 更新（純 Email 會員）
+        CONFIG.log('使用 member id 更新會員資料（純 Email 會員）');
+        updated = await MemberAPI.update(session.member.id, {
+          name: formData.name.trim(),
+          phone: formData.phone || null,
+          email: formData.email || null,
+          birthday: formData.birthday || null,
+          gender: formData.gender || null,
+        });
+      } else {
+        throw new Error('無法取得會員 ID');
+      }
       
       // 更新本地資料
       this.currentMember = updated;
       
       // 更新 Session
-      Auth.saveMemberSession(updated, session.lineUserId, session.accessToken);
+      Auth.saveMemberSession(updated, session.lineUserId || null, session.accessToken);
       
       hideLoading();
       showMessage('資料儲存成功！', 'success');
